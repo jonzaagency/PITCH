@@ -9,6 +9,9 @@ const path = require('path');
 const SRC = path.join(__dirname, 'src');
 const ORDER = ['config.js', 'content.js', 'engine.js', 'net.js', 'ui-core.js', 'ui-tv.js', 'ui-phone.js', 'app.js'];
 const read = f => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\n+$/, '') + '\n';
+// Images in src/assets are inlined as data URLs so each build stays one self-contained file.
+const asset = f => 'data:image/' + (f.endsWith('.webp') ? 'webp' : 'png') + ';base64,' + fs.readFileSync(path.join(SRC, 'assets', f)).toString('base64');
+const ASSETS = { logo: asset('logo.webp'), icon: asset('icon-64.png'), touchIcon: asset('icon-180.png') };
 
 function bundle(artifact) {
   const js = ORDER.map(f => {
@@ -16,9 +19,12 @@ function bundle(artifact) {
     if (f === 'config.js' && artifact) code = code.replace('artifact: false', 'artifact: true');
     return `/* ===== ${f} ===== */\n${code}`;
   }).join('\n');
+  const assets = `/* ===== assets ===== */\nwindow.PITCH = window.PITCH || {};\nwindow.PITCH.assets = { logo: '${ASSETS.logo}' };\n`;
   const head = [
     '<title>P!TCH Party Game</title>',
     '<meta name="claude:viewport-fit-sides" content="cover">',
+    `<link rel="icon" type="image/png" href="${ASSETS.icon}">`,
+    `<link rel="apple-touch-icon" href="${ASSETS.touchIcon}">`,
     '<link rel="preconnect" href="https://fonts.googleapis.com">',
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
     '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;500;600;700;800&display=swap">',
@@ -28,7 +34,7 @@ function bundle(artifact) {
     '<div id="app"></div>',
     '<noscript>P!TCH needs JavaScript turned on.</noscript>',
     '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" async></script>',
-    `<script>\n${js}\n/* ${artifact ? 'artifact' : 'site'} build */\n</script>`
+    `<script>\n${assets}\n${js}\n/* ${artifact ? 'artifact' : 'site'} build */\n</script>`
   ].join('\n');
   if (artifact) return `${head}\n\n${body}\n`; // the artifact service adds its own page skeleton
   return `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n` +

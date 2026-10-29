@@ -84,8 +84,8 @@
       const qr = opts.practice ? '' : U.qr(url + (url.indexOf('?') < 0 ? '?' : '&') + 'room=' + v.code);
       const players = v.players;
       return '<section class="lobby">' +
-        (opts.practice ? '<div class="join-card practice-note"><div class="eyebrow">Practice mode</div><h2>Everyone plays on this screen</h2><p>Use the phone panel to act as each player. Turn on bots to let the other players act on their own.</p></div>' :
-          '<div class="join-card"><div class="eyebrow">Join on your phone</div><p class="join-url">' + esc(shortUrl) + '</p>' +
+        (opts.practice ? '<div class="join-card practice-note">' + U.logo('lobby') + '<div class="eyebrow">Practice mode</div><h2>Everyone plays on this screen</h2><p>Use the phone panel to act as each player. Turn on bots to let the other players act on their own.</p></div>' :
+          '<div class="join-card">' + U.logo('lobby') + '<div class="eyebrow">Join on your phone</div><p class="join-url">' + esc(shortUrl) + '</p>' +
           '<div class="code-tag" aria-label="Room code ' + esc(v.code.split('').join(' ')) + '">' + esc(v.code) + '</div>' +
           (qr ? '<div class="qr">' + qr + '</div>' : '') + '<p class="muted">3 to 20+ players. Phones are the controllers; this screen is the stage.</p></div>') +
         '<div class="lobby-main"><div class="lobby-head"><h2>Players <span class="count">' + players.filter((p) => p.connected).length + '</span></h2>' +

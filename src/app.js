@@ -31,7 +31,7 @@
     const canRejoin = onlineAllowed() && last && Date.now() - last.at < 4 * 3600e3;
     const hofCount = U.store.get('pitch.hof', []).length;
     root.innerHTML =
-      '<div class="home"><header class="hero"><div class="eyebrow">The party game of impossible sales</div><h1 class="logo big">P<span>!</span>TCH</h1>' +
+      '<div class="home"><header class="hero"><div class="eyebrow">The party game of impossible sales</div><h1 class="hero-logo">' + U.logo() + '</h1>' +
       '<p class="tagline">Do you have what it takes to sell the impossible, learn about your prospects, and survive their objections?</p>' +
       '<p class="meta">3–20+ players · 1 Peddler · 1–3 Prospects · everyone else: Philanthropists</p></header>' +
       '<div class="choices">' +
@@ -204,7 +204,7 @@
     reset('home-mode');
     let n = U.store.get('pitch.practiceN', 5);
     const draw = () => {
-      root.innerHTML = '<div class="home"><header class="hero small"><div class="eyebrow">Practice mode</div><h1 class="logo">P<span>!</span>TCH</h1><p class="tagline">The TV and every phone on one screen. Switch phones with the tabs. Bots play every seat except the phone you’re looking at.</p></header>' +
+      root.innerHTML = '<div class="home"><header class="hero small"><h1 class="hero-logo">' + U.logo('sm') + '</h1><div class="eyebrow">Practice mode</div><p class="tagline">The TV and every phone on one screen. Switch phones with the tabs. Bots play every seat except the phone you’re looking at.</p></header>' +
         '<section class="setup"><h3>How many players?</h3><div class="seg big-seg">' + [3, 4, 5, 6, 8, 10].map((k) => '<button data-n="' + k + '" class="' + (k === n ? 'on' : '') + '">' + k + '</button>').join('') + '</div>' +
         '<p class="muted">' + PRACTICE_NAMES.slice(0, n).join(', ') + '</p><div class="actions"><button class="btn ghost" data-go="back">Back</button><button class="btn gold big" data-go="start">Start practice</button></div></section></div>';
     };

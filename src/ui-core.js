@@ -9,6 +9,10 @@
   U.avatar = (p, size) => '<span class="av' + (size ? ' av-' + size : '') + '" style="--c:' + U.esc(p.color) + '">' + U.esc(U.initials(p.name)) + '</span>';
   U.fmtTime = (ms) => { const s = Math.ceil(Math.max(0, ms) / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
   U.roleName = (r) => P.engine.ROLE_NAMES[r] || '';
+  /** The P!TCH logo artwork (inlined by build.js), with the text logo as a fallback. */
+  U.logo = (cls) => P.assets && P.assets.logo
+    ? '<img class="logo-img' + (cls ? ' ' + cls : '') + '" src="' + P.assets.logo + '" alt="P!TCH">'
+    : '<span class="logo big">P<span>!</span>TCH</span>';
   /** The SCREW! logo: a red screw on the diagonal, threads and all. */
   U.screwIcon = (cls) => '<svg class="screw-icon' + (cls ? ' ' + cls : '') + '" viewBox="-4 -2 128 130" role="img" aria-label="Red screw">' +
     '<defs><linearGradient id="screwShank" x1="0" x2="1"><stop offset="0" stop-color="#9b2219"/><stop offset="0.55" stop-color="#ef4b3f"/><stop offset="1" stop-color="#b8271d"/></linearGradient><linearGradient id="screwHead" x1="0" x2="1"><stop offset="0" stop-color="#b8271d"/><stop offset="0.5" stop-color="#ff5a4c"/><stop offset="1" stop-color="#9b2219"/></linearGradient></defs>' +

@@ -133,6 +133,10 @@ button.deck.on { border-color: var(--card-ink); transform: translateY(-3px); box
 .hero { text-align: center; padding-top: 2vh; }
 .hero .eyebrow { margin-bottom: 6px; }
 .hero.small .logo { font-size: 2.4rem; margin: 6px 0; }
+.hero-logo { margin: 0; line-height: 0; }
+.logo-img { display: block; width: min(620px, 92%); height: auto; margin: 0 auto; filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.45)); }
+.logo-img.sm { width: min(340px, 80%); }
+.logo-img.lobby { width: min(19em, 100%); margin-bottom: -0.3em; align-self: center; }
 .tagline { max-width: 34em; margin: 10px auto 0; font-size: 1.15rem; }
 .meta { margin-top: 10px; color: var(--muted); font-size: 0.9rem; }
 .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
