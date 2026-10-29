@@ -56,8 +56,8 @@
       return '<div class="profile"><div class="eyebrow">Your character</div><h3>' + esc(pr.name) + '</h3><ul class="facts"><li><b>Age</b> ' + esc(pr.age) + '</li><li><b>Status</b> ' + esc(pr.marital) +
         '</li><li><b>Kids</b> ' + esc(pr.kids) + '</li><li><b>Job</b> ' + esc(pr.job) + '</li></ul><p class="bg">' + esc(pr.background) + '</p>' +
         (withSecret ? '<div class="top-secret"><span class="lbl">Top secret: only you can see this</span>' + esc(pr.secret) + '</div>' +
-          (pr.secretTip ? '<p class="secret-tip"><b>Work it in:</b> ' + esc(pr.secretTip) + '</p>' : '') +
-          '<p class="hint">Answer in character and leave hints, but only confirm the secret if the Peddler genuinely uncovers it with good questions.</p>' : '') + '</div>';
+          (pr.secretHints && pr.secretHints.length ? '<div class="secret-tip"><b>How to play it</b><ul class="hint-list">' + pr.secretHints.map((h) => '<li>' + esc(h) + '</li>').join('') + '</ul></div>' : '') +
+          '<p class="hint">Stay in character and leave clues, but don’t just say it. Tap “They found my secret!” only when the Peddler figures it out.</p>' : '') + '</div>';
     }
     function confirmBtn(key, label, act, data, cls) {
       const attrs = Object.keys(data || {}).map((k) => ' data-' + k + '="' + esc(data[k]) + '"').join('');
@@ -97,12 +97,12 @@
       const done = r.briefed && r.briefed[p.pid];
       const items = {
         peddler: ['<b>Creation Lab (' + mm(t.lab) + '):</b> pick one Item and one Function card, name your invention, and sketch how it works.',
-          '<b>Fact-Finding (' + mm(t.fact) + '):</b> ask every Prospect real questions. Each secret you uncover earns <b>$25</b>.',
+          '<b>Fact-Finding (' + mm(t.fact) + '):</b> ask every Prospect real questions and say your guesses out loud. Each secret you uncover earns <b>$25</b>. No typing needed.',
           '<b>PITCH! (' + mm(t.pitch) + '):</b> sell it using what you learned. Each Prospect can SCREW! you once; you get ' + t.screw + ' seconds to respond, then the table votes on how you did.',
           '<b>Objections + Close (' + mm(t.close) + '):</b> answer every objection, then clearly ask for the sale.',
           'Philanthropists score you in six categories, $0–$50 each.'],
         prospect: ['<b>Draw</b> a portrait of your character during the Creation Lab.',
-          '<b>Answer in character</b> when the Peddler questions you. Drop hints about your secret, but only confirm it if they genuinely uncover it.',
+          '<b>Answer in character</b> when the Peddler questions you. Your phone gives you ways to hint at your secret. When they guess it out loud, tap <b>They found my secret!</b>',
           '<b>During the pitch,</b> play one of your three SCREW! cards to throw the Peddler off. When another Prospect plays one, vote on your phone: did the Peddler nail it?',
           '<b>After the pitch,</b> raise one objection and decide whether your character would buy.',
           'Philanthropists can award you up to <b>$25</b> for great role-play.'],
@@ -174,14 +174,13 @@
 
     function peddlerFact() {
       const v = st.pub, r = v.round, p = st.priv;
-      return '<section><h2>Fact-Finding</h2><p class="muted">Ask every Prospect at least one meaningful question. Uncover a secret for <b>$25</b>.</p>' +
+      return '<section><h2>Fact-Finding</h2><p class="muted">Ask every Prospect at least one meaningful question. Uncover a secret for <b>$25</b>. Just say your guess out loud: the Prospect confirms it on their phone. Eyes up, phone down!</p>' +
         '<p class="hint"><b>Secrets hide in everyday topics.</b> Try asking about ' + esc(C.peddlerQuestionTips.join(', ')) + '.</p></section>' +
         r.prospects.map((id) => {
           const pr = r.profiles[id], s = r.secrets[id];
           return '<section class="pros-card" data-key="pf-' + esc(id) + '"><h3>' + esc(pr.name) + '</h3><ul class="facts"><li><b>Age</b> ' + esc(pr.age) + '</li><li><b>Status</b> ' + esc(pr.marital) + '</li><li><b>Kids</b> ' + esc(pr.kids) + '</li><li><b>Job</b> ' + esc(pr.job) + '</li></ul><p class="bg">' + esc(pr.background) + '</p>' +
             (s === 'confirmed' ? '<div class="secret unlocked"><span class="lbl">Secret unlocked +$25</span>' + esc(pr.secret || '') + '</div>'
-              : s === 'claimed' ? '<p class="muted">Waiting for them to confirm…</p>'
-                : '<label class="field"><span>' + (s === 'denied' ? 'They said no. The Host may settle it, or try again:' : 'I think their secret is…') + '</span><input id="guess-' + esc(id) + '" maxlength="100" data-draft="guess-' + esc(id) + '" value="' + esc(draft('guess-' + id, '')) + '" autocomplete="off"></label><button class="btn mint" data-act="claim" data-target="' + esc(id) + '">I found their secret</button>') +
+              : '<p class="muted">Secret still hidden. Say your guess out loud; they’ll tap it in if you’re right.</p>') +
             '</section>';
         }).join('') + insiderUse() + daddyUse() + notes();
     }
@@ -208,15 +207,12 @@
 
     function prospectFact() {
       const p = st.priv;
-      let claim = '';
-      if (p.secretStatus === 'claimed') {
-        claim = '<section class="claim"><h3>The Peddler says they found your secret</h3><p class="guess">“' + esc(p.claimGuess || '(they said it out loud)') + '”</p><p>Did they genuinely uncover it?</p>' +
-          '<div class="btn-row"><button class="btn mint" data-act="answer" data-yes="1">Yes, they found it</button><button class="btn ghost" data-act="answer" data-yes="0">No</button></div></section>';
-      }
       const found = p.secretStatus === 'confirmed';
-      return claim + profileCard(p.profile, true) +
-        '<section class="btn-col">' + (p.asked ? '<p class="ok">You confirmed you were questioned ✓</p>' : '<button class="btn ghost" data-act="asked">The Peddler asked me a real question</button>') +
-        (found ? '<p class="ok">Your secret was discovered. The Peddler earns $25.</p>' : confirmBtn('reveal', 'They uncovered my secret', 'selfReveal', {}, 'mint')) + '</section>';
+      return '<section class="found-sec">' + (found ? '<p class="ok center">Your secret is out. The Peddler earns $25.</p>'
+        : st.confirm === 'reveal' ? '<p class="center"><b>Did they really figure it out?</b></p><div class="confirm"><button class="btn mint big" data-act="selfReveal">Yes, award them $25</button><button class="btn ghost" data-act="cancel">Not yet</button></div>'
+          : '<button class="btn mint big found-btn" data-act="ask" data-ck="reveal">They found my secret!</button><p class="hint center">Tap this the moment the Peddler says it out loud.</p>') + '</section>' +
+        profileCard(p.profile, true) +
+        '<section class="btn-col">' + (p.asked ? '<p class="ok">You confirmed you were questioned ✓</p>' : '<button class="btn ghost" data-act="asked">The Peddler asked me a real question</button>') + '</section>';
     }
 
     function peddlerPitch() {
@@ -478,7 +474,6 @@
       else if (a === 'notToday') send({ type: 'nepo', card: 'notToday' });
       else if (a === 'screwDone') send({ type: 'screwDone' });
       else if (a === 'screwVote') { (st.priv.screwVotes || []).forEach((x) => { if (x.by === d.by) x.mine = d.result; }); send({ type: 'screwVote', by: d.by, result: d.result }); U.toast('Vote in ✓'); }
-      else if (a === 'claim') send({ type: 'secretClaim', target: d.target, guess: draft('guess-' + d.target, '') });
       else if (a === 'answer') send({ type: 'secretAnswer', yes: d.yes === '1' });
       else if (a === 'selfReveal') { send({ type: 'secretAnswer', yes: true }); st.confirm = null; }
       else if (a === 'asked') send({ type: 'asked' });

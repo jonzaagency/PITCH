@@ -302,10 +302,7 @@
       if (!p.labDone && chance(0.3)) send({ type: 'labDone' });
     } else if (v.phase === 'fact' && p.role === 'prospect') {
       if (!p.asked && chance(0.25)) send({ type: 'asked' });
-      if (p.secretStatus === 'claimed' && chance(0.5)) send({ type: 'secretAnswer', yes: chance(0.65) });
-    } else if (v.phase === 'fact' && p.role === 'peddler') {
-      const hidden = r.prospects.filter((id) => r.secrets[id] === 'hidden');
-      if (hidden.length && chance(0.07)) send({ type: 'secretClaim', target: hidden[rnd(hidden.length)], guess: ['They are afraid of something', 'They secretly sing', 'They have a hidden pet', 'They won money'][rnd(4)] });
+      if (p.secretStatus !== 'confirmed' && chance(0.004)) send({ type: 'secretAnswer', yes: true });
     } else if (v.phase === 'fact' && p.role === 'phil') {
       (p.sleuth || []).forEach((t) => { if (!t.locked && (p.sleuthPicks || {})[t.pid] === undefined) once('sleuth-' + t.pid, () => setTimeout(() => send({ type: 'sleuthPick', target: t.pid, idx: rnd(t.options.length) }), 1500 + rnd(6000))); });
     } else if (v.phase === 'pitch' && (p.screwVotes || []).some((x) => !x.mine && !(r.activeScrew && r.activeScrew.by === x.by))) {

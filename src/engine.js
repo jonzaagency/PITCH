@@ -409,7 +409,7 @@
         background: this.pick(C.backgrounds),
         secret: sec.text,
         secretTopic: sec.topic,
-        secretTip: sec.tip
+        secretHints: sec.hints
       };
     }
 

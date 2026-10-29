@@ -217,6 +217,9 @@ details summary { cursor: pointer; font-weight: 600; margin-top: 6px; }
 .top-secret .lbl { color: #ff9b92; }
 .secret-tip { font-size: 0.9rem; padding: 8px 10px; border-radius: 10px; background: var(--panel-2); }
 .secret-tip b { color: var(--gold); }
+.hint-list { margin: 6px 0 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 5px; }
+.ph-body > section.found-sec { background: transparent; padding: 4px 0; align-items: stretch; }
+.found-btn { font-size: 1.25rem; min-height: 60px; }
 .claim { border: 3px solid var(--gold); }
 .guess { font-size: 1.2rem; font-weight: 700; }
 .screws { display: grid; gap: 10px; }
