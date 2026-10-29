@@ -11,7 +11,7 @@ const ORDER = ['config.js', 'content.js', 'engine.js', 'net.js', 'ui-core.js', '
 const read = f => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\n+$/, '') + '\n';
 // Images in src/assets are inlined as data URLs so each build stays one self-contained file.
 const asset = f => 'data:image/' + (f.endsWith('.webp') ? 'webp' : 'png') + ';base64,' + fs.readFileSync(path.join(SRC, 'assets', f)).toString('base64');
-const ASSETS = { logo: asset('logo.webp'), icon: asset('icon-64.png'), touchIcon: asset('icon-180.png') };
+const ASSETS = { logo: asset('logo.webp'), wordmark: asset('wordmark.webp'), icon: asset('icon-64.png'), touchIcon: asset('icon-180.png') };
 
 function bundle(artifact) {
   const js = ORDER.map(f => {
@@ -19,7 +19,7 @@ function bundle(artifact) {
     if (f === 'config.js' && artifact) code = code.replace('artifact: false', 'artifact: true');
     return `/* ===== ${f} ===== */\n${code}`;
   }).join('\n');
-  const assets = `/* ===== assets ===== */\nwindow.PITCH = window.PITCH || {};\nwindow.PITCH.assets = { logo: '${ASSETS.logo}' };\n`;
+  const assets = `/* ===== assets ===== */\nwindow.PITCH = window.PITCH || {};\nwindow.PITCH.assets = { logo: '${ASSETS.logo}', wordmark: '${ASSETS.wordmark}' };\n`;
   const head = [
     '<title>P!TCH Party Game</title>',
     '<meta name="claude:viewport-fit-sides" content="cover">',

@@ -13,6 +13,10 @@
   U.logo = (cls) => P.assets && P.assets.logo
     ? '<img class="logo-img' + (cls ? ' ' + cls : '') + '" src="' + P.assets.logo + '" alt="P!TCH">'
     : '<span class="logo big">P<span>!</span>TCH</span>';
+  /** Just the P!TCH letters (no burst or megaphone), for headers. */
+  U.wordmark = () => P.assets && P.assets.wordmark
+    ? '<img class="wordmark" src="' + P.assets.wordmark + '" alt="P!TCH">'
+    : '<span class="logo">P<span>!</span>TCH</span>';
   /** The SCREW! logo: a red screw on the diagonal, threads and all. */
   U.screwIcon = (cls) => '<svg class="screw-icon' + (cls ? ' ' + cls : '') + '" viewBox="-4 -2 128 130" role="img" aria-label="Red screw">' +
     '<defs><linearGradient id="screwShank" x1="0" x2="1"><stop offset="0" stop-color="#9b2219"/><stop offset="0.55" stop-color="#ef4b3f"/><stop offset="1" stop-color="#b8271d"/></linearGradient><linearGradient id="screwHead" x1="0" x2="1"><stop offset="0" stop-color="#b8271d"/><stop offset="0.5" stop-color="#ff5a4c"/><stop offset="1" stop-color="#9b2219"/></linearGradient></defs>' +
