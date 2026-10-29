@@ -9,12 +9,18 @@
   E.ROLES = ['peddler', 'prospect', 'phil'];
   E.ROLE_NAMES = { peddler: 'Peddler', prospect: 'Prospect', phil: 'Philanthropist', sitout: 'Sitting out' };
   E.DEFAULT_SETTINGS = {
-    timers: { lab: 120, fact: 150, pitch: 90, close: 45, screw: 15 }, // seconds (rulebook section 5)
+    timers: { brief: 45, lab: 120, fact: 150, pitch: 90, close: 45, screw: 15 }, // seconds (rulebook section 5; brief = role briefing)
     maxProspects: 3,  // Host may reduce to 1 or 2
     rounds: 0,        // 0 = keep going until everyone who wants to has pitched once
-    autoAdvance: true // move on automatically when a timer runs out or everyone is done
+    autoAdvance: true, // move on automatically when a timer runs out or everyone is done
+    sleuth: true,     // Secret Sleuth: Philanthropists pick hidden secrets for bonus money
+    trimOutliers: true, // set aside a scorecard that is dramatically out of line (4+ scorecards)
+    briefing: true,     // Role briefing at the start of each round (veterans can turn it off)
+    awards: true        // End-of-night awards vote before the final results
   };
   E.SECRET_BONUS = 25;
+  E.SLEUTH_BONUS = 10; // Secret Sleuth: per hidden secret a Philanthropist picks correctly
+  E.SLEUTH_OPTIONS = 4; // the real secret plus 3 decoys
   E.CATEGORY_MAX = 50;
   E.PROSPECT_AWARD_MAX = 25;
   E.SCREW_LOCKOUT_MS = 10000; // no SCREW! in the final 10 seconds of the pitch
@@ -23,8 +29,8 @@
     '#A3E048', '#6C9BFF', '#FFD166', '#E07AFF', '#3DDC97', '#FF6F91', '#8FD3FF', '#FFB4A2',
     '#B8F2E6', '#F9C80E', '#9EE493', '#FFA69E'];
 
-  const TIMED_PHASES = { lab: 'lab', fact: 'fact', pitch: 'pitch', close: 'close' };
-  const NEXT_PHASE = { lab: 'fact', fact: 'pitch', pitch: 'close', close: 'scoring' };
+  const TIMED_PHASES = { brief: 'brief', lab: 'lab', fact: 'fact', pitch: 'pitch', close: 'close' };
+  const NEXT_PHASE = { brief: 'lab', lab: 'fact', fact: 'pitch', pitch: 'close', close: 'scoring' };
 
   const round2 = (x) => Math.round(x * 100) / 100;
   const clampInt = (v, lo, hi) => { v = Math.round(Number(v) || 0); return Math.max(lo, Math.min(hi, v)); };
@@ -35,20 +41,56 @@
    *  scorecards: [{cats:{invention:..}, prospects:{pid: amount}}]
    *  Returns base (average scorecard total), bonus ($25 per confirmed secret), total, per-category averages,
    *  and each Prospect's role-play award (average of the Philanthropists' awards). */
-  E.computeEarnings = function (scorecards, secretsConfirmed, prospectIds) {
-    const n = scorecards.length;
+  /** House rule: with 4+ scorecards, set aside the lowest and/or highest scorecard if it is DRAMATICALLY
+   *  out of line: more than $100 (a third of the $300 maximum) away from the middle (median) scorecard.
+   *  At most one low and one high card are set aside. Returns indexes into `totals`. */
+  E.OUTLIER_MIN_CARDS = 4;
+  E.OUTLIER_GAP = 100;
+  E.findOutliers = function (totals) {
+    const out = { low: null, high: null, median: null };
+    if (totals.length < E.OUTLIER_MIN_CARDS) return out;
+    const sorted = totals.slice().sort((a, b) => a - b);
+    const m = sorted.length;
+    const median = m % 2 ? sorted[(m - 1) / 2] : (sorted[m / 2 - 1] + sorted[m / 2]) / 2;
+    out.median = median;
+    const lo = Math.min.apply(null, totals), hi = Math.max.apply(null, totals);
+    if (median - lo > E.OUTLIER_GAP) out.low = totals.indexOf(lo);
+    if (hi - median > E.OUTLIER_GAP) out.high = totals.indexOf(hi);
+    return out;
+  };
+
+  /** Rulebook section 9 + 10. Pure function, unit-tested.
+   *  scorecards: [{cats:{invention:..}, prospects:{pid: amount}}]
+   *  Returns base (average scorecard total), bonus ($25 per confirmed secret), total, per-category averages,
+   *  and each Prospect's role-play award (average of the Philanthropists' awards).
+   *  opts.trim: set aside dramatic outliers (see findOutliers); the averages use the remaining scorecards. */
+  E.computeEarnings = function (scorecards, secretsConfirmed, prospectIds, opts) {
+    const totalOf = (sc) => C.categories.reduce((s, c) => s + clampInt(sc.cats[c.id], 0, E.CATEGORY_MAX), 0);
+    const allTotals = scorecards.map(totalOf);
+    const setAside = [];
+    let kept = scorecards;
+    if (opts && opts.trim) {
+      const o = E.findOutliers(allTotals);
+      const drop = [o.low, o.high].filter((i) => i !== null);
+      if (drop.length) {
+        kept = scorecards.filter((_, i) => drop.indexOf(i) < 0);
+        if (o.low !== null) setAside.push({ side: 'low', total: allTotals[o.low] });
+        if (o.high !== null) setAside.push({ side: 'high', total: allTotals[o.high] });
+      }
+    }
+    const n = kept.length;
     const catAvg = {};
     C.categories.forEach((c) => {
-      catAvg[c.id] = n ? round2(scorecards.reduce((s, sc) => s + clampInt(sc.cats[c.id], 0, E.CATEGORY_MAX), 0) / n) : 0;
+      catAvg[c.id] = n ? round2(kept.reduce((s, sc) => s + clampInt(sc.cats[c.id], 0, E.CATEGORY_MAX), 0) / n) : 0;
     });
-    const totals = scorecards.map((sc) => C.categories.reduce((s, c) => s + clampInt(sc.cats[c.id], 0, E.CATEGORY_MAX), 0));
+    const totals = kept.map(totalOf);
     const base = n ? round2(totals.reduce((a, b) => a + b, 0) / n) : 0;
     const bonus = E.SECRET_BONUS * secretsConfirmed;
     const prospectAwards = {};
     (prospectIds || []).forEach((pid) => {
-      prospectAwards[pid] = n ? round2(scorecards.reduce((s, sc) => s + clampInt((sc.prospects || {})[pid], 0, E.PROSPECT_AWARD_MAX), 0) / n) : 0;
+      prospectAwards[pid] = n ? round2(kept.reduce((s, sc) => s + clampInt((sc.prospects || {})[pid], 0, E.PROSPECT_AWARD_MAX), 0) / n) : 0;
     });
-    return { scorecards: n, totals, catAvg, base, bonus, secrets: secretsConfirmed, total: round2(base + bonus), prospectAwards };
+    return { scorecards: n, submitted: scorecards.length, setAside, totals, catAvg, base, bonus, secrets: secretsConfirmed, total: round2(base + bonus), prospectAwards };
   };
 
   /** Default Prospect count from the rulebook table: 3 players -> 1, 4 -> 2, 5+ -> 3. */
@@ -75,6 +117,11 @@
       if (opts.saved) {
         this.s = opts.saved.state;
         this.assets = opts.saved.assets || {};
+        if (this.s.settings.sleuth === undefined) this.s.settings.sleuth = true;
+        if (this.s.settings.trimOutliers === undefined) this.s.settings.trimOutliers = true;
+        if (this.s.settings.briefing === undefined) this.s.settings.briefing = true;
+        if (this.s.settings.awards === undefined) this.s.settings.awards = true;
+        if (this.s.settings.timers.brief === undefined) this.s.settings.timers.brief = 45;
         // timers were frozen when saved; leave them paused so the Host can resume
         this.s.hostPaused = this.s.timer && this.s.timer.main ? true : this.s.hostPaused;
         Object.values(this.s.players).forEach((p) => { p.connected = false; });
@@ -98,7 +145,7 @@
           history: [],
           feed: [],
           feedSeq: 0,
-          used: { items: [], functions: [], spokespeople: [], secrets: [], screws: [] }
+          used: { items: [], functions: [], secrets: [], screws: [] }
         };
       }
     }
@@ -331,14 +378,27 @@
     }
 
     // ---------- round lifecycle ----------
-    makeProfile(takenNames) {
+    /** One everyday secret, never repeating a topic already used by another Prospect this round,
+     *  and avoiding secrets used earlier in the session until the pool runs low. */
+    drawSecret(takenTopics) {
+      const used = this.s.used.secrets;
+      let pool = C.secrets.filter((x) => used.indexOf(x.text) < 0 && takenTopics.indexOf(x.topic) < 0);
+      if (!pool.length) { this.s.used.secrets = []; pool = C.secrets.filter((x) => takenTopics.indexOf(x.topic) < 0); }
+      if (!pool.length) pool = C.secrets.slice();
+      const pick = this.pick(pool);
+      this.s.used.secrets.push(pick.text);
+      takenTopics.push(pick.topic);
+      return pick;
+    }
+
+    makeProfile(takenNames, takenTopics) {
       let name;
       for (let i = 0; i < 20; i++) {
         name = this.pick(C.firstNames) + ' ' + this.pick(C.lastNames);
         if (takenNames.indexOf(name) < 0) break;
       }
       takenNames.push(name);
-      const secret = this.draw('secrets', C.secrets, 1)[0];
+      const sec = this.drawSecret(takenTopics || []);
       const marital = this.pick(C.marital);
       return {
         name,
@@ -347,7 +407,9 @@
         kids: Math.floor(this.rand() * this.rand() * 6),
         job: this.pick(C.occupations),
         background: this.pick(C.backgrounds),
-        secret
+        secret: sec.text,
+        secretTopic: sec.topic,
+        secretTip: sec.tip
       };
     }
 
@@ -359,13 +421,12 @@
       s.roundNo += 1;
       const hand = {
         items: this.draw('items', C.items, 3),
-        functions: this.draw('functions', C.functions, 3),
-        spokespeople: this.draw('spokespeople', C.spokespeople, 3)
+        functions: this.draw('functions', C.functions, 3)
       };
-      const taken = [];
+      const taken = [], takenTopics = [];
       const profiles = {}, screwHands = {}, secrets = {};
       pr.prospects.forEach((id) => {
-        profiles[id] = this.makeProfile(taken);
+        profiles[id] = this.makeProfile(taken, takenTopics);
         screwHands[id] = this.draw('screws', C.screws, 3);
         secrets[id] = 'hidden';
       });
@@ -376,11 +437,12 @@
         phils: pr.phils.filter((id) => s.players[id] && s.players[id].connected),
         sitOut: this.activePlayers().map((p) => p.id).filter((id) => id !== pr.peddler && pr.prospects.indexOf(id) < 0 && pr.phils.indexOf(id) < 0),
         hand,
-        invention: { item: null, func: null, spokes: null, name: '', slogan: '', sketch: null },
+        invention: { item: null, func: null, name: '', slogan: '', sketch: null },
         profiles, screwHands, secrets,
         claims: {},
         portraits: {},
         labDone: {},
+        briefed: {},
         asked: {},
         screwPlayed: {},
         activeScrew: null,
@@ -398,7 +460,7 @@
       s.proposal = null;
       s.need = null;
       this.log('round', 'Round ' + s.roundNo + ': ' + s.players[pr.peddler].name + ' is the Peddler!');
-      this.enterPhase('lab');
+      this.enterPhase(s.settings.briefing ? 'brief' : 'lab');
       return { ok: true };
     }
 
@@ -410,7 +472,33 @@
       if (s.round) { s.round.activeScrew = null; if (phase !== 'fact' && phase !== 'pitch' && phase !== 'close') s.round.daddy = null; }
       s.timer.main = TIMED_PHASES[phase] ? this.newTimer(s.settings.timers[TIMED_PHASES[phase]]) : null;
       if (phase === 'fact') this.finalizeInvention();
-      if (phase === 'scoring') this.checkAllDone();
+      if (phase === 'scoring') { this.setupSleuth(); this.checkAllDone(); }
+    }
+
+    /** Secret Sleuth (house rule): once the Objections + Close are over, each Philanthropist sees
+     *  4 possible secrets for every Prospect the Peddler did NOT uncover, and picks one.
+     *  Opening only now means nobody can hint the options to the Peddler. */
+    setupSleuth() {
+      const s = this.s, r = s.round;
+      if (!r) return;
+      r.sleuth = null;
+      if (!s.settings.sleuth) return;
+      const targets = r.prospects.filter((id) => r.secrets[id] !== 'confirmed');
+      if (!targets.length) { r.sleuth = { targets: [], options: {}, answer: {} }; return; }
+      const roundSecrets = r.prospects.map((id) => r.profiles[id].secret);
+      const options = {}, answer = {};
+      targets.forEach((id) => {
+        const real = r.profiles[id].secret;
+        // one decoy from the same topic (rewards listening to the details) + the rest from other topics
+        const topic = r.profiles[id].secretTopic;
+        const free = C.secrets.filter((x) => roundSecrets.indexOf(x.text) < 0 && x.text !== real);
+        const same = this.shuffle(free.filter((x) => x.topic === topic)).slice(0, 1);
+        const other = this.shuffle(free.filter((x) => x.topic !== topic && same.indexOf(x) < 0));
+        const decoys = same.concat(other).slice(0, E.SLEUTH_OPTIONS - 1).map((x) => x.text);
+        options[id] = this.shuffle([real].concat(decoys));
+        answer[id] = options[id].indexOf(real);
+      });
+      r.sleuth = { targets, options, answer };
     }
 
     finalizeInvention() {
@@ -418,7 +506,6 @@
       const inv = r.invention;
       if (inv.item == null) inv.item = 0;
       if (inv.func == null) inv.func = 0;
-      if (inv.spokes == null) inv.spokes = 0;
       if (!inv.name) inv.name = 'The ' + r.hand.items[inv.item] + '-Matic';
     }
 
@@ -435,7 +522,10 @@
     checkAllDone() {
       const s = this.s, r = s.round;
       if (!r || !s.settings.autoAdvance) return;
-      if (s.phase === 'lab') {
+      if (s.phase === 'brief') {
+        const need = [r.peddler].concat(r.prospects, r.phils).filter((id) => s.players[id] && s.players[id].connected);
+        if (need.length && need.every((id) => r.briefed[id])) { this.log('info', 'Everyone is ready. Creation Lab!'); this.enterPhase('lab'); }
+      } else if (s.phase === 'lab') {
         const need = [r.peddler].concat(r.prospects).filter((id) => s.players[id].connected);
         if (need.length && need.every((id) => r.labDone[id])) { this.log('info', 'Everyone is ready.'); this.enterPhase('fact'); }
       } else if (s.phase === 'scoring') {
@@ -449,7 +539,7 @@
       if (!r || s.phase !== 'scoring') return { ok: false, error: 'Scoring is not open.' };
       const cards = r.phils.map((id) => r.scorecards[id]).filter(Boolean);
       const confirmed = r.prospects.filter((id) => r.secrets[id] === 'confirmed').length;
-      const res = E.computeEarnings(cards, confirmed, r.prospects);
+      const res = E.computeEarnings(cards, confirmed, r.prospects, { trim: s.settings.trimOutliers });
       r.results = res;
       const pay = (pid, amt) => {
         const p = s.players[pid];
@@ -460,13 +550,38 @@
       };
       pay(r.peddler, res.total);
       r.prospects.forEach((id) => pay(id, res.prospectAwards[id]));
+      // Secret Sleuth payouts. A secret the Host awarded to the Peddler during scoring no longer counts.
+      if (r.sleuth) {
+        const targets = r.sleuth.targets.filter((id) => r.secrets[id] !== 'confirmed');
+        const byPhil = {}, byTarget = {};
+        targets.forEach((id) => { byTarget[id] = { right: 0, of: 0 }; });
+        r.phils.forEach((pid) => {
+          const sc = r.scorecards[pid];
+          if (!sc) return;
+          let correct = 0;
+          targets.forEach((id) => {
+            const pick = (sc.sleuth || {})[id];
+            if (pick === undefined) return;
+            byTarget[id].of += 1;
+            if (pick === r.sleuth.answer[id]) { correct += 1; byTarget[id].right += 1; }
+          });
+          byPhil[pid] = { correct, of: targets.length, amount: correct * E.SLEUTH_BONUS };
+          pay(pid, byPhil[pid].amount);
+        });
+        res.sleuth = { targets, byPhil, byTarget, bonus: E.SLEUTH_BONUS };
+      }
       const inv = r.invention;
       s.history.push({
         n: r.n, peddler: r.peddler, peddlerName: s.players[r.peddler].name,
         name: inv.name, slogan: inv.slogan,
-        item: r.hand.items[inv.item], func: r.hand.functions[inv.func], spokes: r.hand.spokespeople[inv.spokes],
+        item: r.hand.items[inv.item], func: r.hand.functions[inv.func],
         total: res.total, base: res.base, bonus: res.bonus, sketch: inv.sketch,
-        buys: r.prospects.filter((id) => r.verdicts[id] === 'buy').length, prospects: r.prospects.length
+        buys: r.prospects.filter((id) => r.verdicts[id] === 'buy').length, prospects: r.prospects.length,
+        // for the end-of-night awards
+        cast: r.prospects.map((id) => ({ pid: id, name: r.profiles[id].name, playerName: (s.players[id] || {}).name || '', portrait: r.portraits[id] || null })),
+        screws: Object.keys(r.screwPlayed).filter((by) => r.screwPlayed[by].result !== 'cancelled')
+          .map((by) => ({ by, t: r.screwPlayed[by].card.t, d: r.screwPlayed[by].card.d, result: r.screwPlayed[by].result })),
+        hof: {}
       });
       s.phase = 'reveal';
       s.timer.main = null; s.timer.screw = null;
@@ -568,7 +683,6 @@
       const idx = (v) => (v === null || v === undefined ? null : clampInt(v, 0, 2));
       if ('item' in a) inv.item = idx(a.item);
       if ('func' in a) inv.func = idx(a.func);
-      if ('spokes' in a) inv.spokes = idx(a.spokes);
       if ('name' in a) inv.name = str(a.name, 40);
       if ('slogan' in a) inv.slogan = str(a.slogan, 90);
       return { ok: true };
@@ -600,10 +714,19 @@
       if (!r || s.phase !== 'lab') return { ok: false, error: 'The Creation Lab is closed.' };
       if (r.peddler === p.id) {
         const inv = r.invention;
-        if (inv.item == null || inv.func == null || inv.spokes == null) return { ok: false, error: 'Pick one Item, one Function, and one Spokesperson.' };
+        if (inv.item == null || inv.func == null) return { ok: false, error: 'Pick one Item and one Function.' };
         if (!inv.name) return { ok: false, error: 'Give your invention a name.' };
       } else if (r.prospects.indexOf(p.id) < 0) return { ok: false, error: 'Nothing to submit.' };
       r.labDone[p.id] = a.done !== false;
+      this.checkAllDone();
+      return { ok: true };
+    }
+
+    a_briefed(p) {
+      const s = this.s, r = s.round;
+      if (!r || s.phase !== 'brief') return { ok: false, error: 'The briefing is over.' };
+      if (this.roleOf(p.id) === 'sitout') return { ok: true };
+      r.briefed[p.id] = true;
       this.checkAllDone();
       return { ok: true };
     }
@@ -698,7 +821,12 @@
       const cats = {}, pros = {};
       C.categories.forEach((c) => { cats[c.id] = clampInt((a.cats || {})[c.id], 0, E.CATEGORY_MAX); });
       r.prospects.forEach((id) => { pros[id] = clampInt((a.prospects || {})[id], 0, E.PROSPECT_AWARD_MAX); });
-      r.scorecards[p.id] = { cats, prospects: pros };
+      const sleuth = {};
+      if (r.sleuth) r.sleuth.targets.forEach((id) => {
+        const v = (a.sleuth || {})[id];
+        if (v !== undefined && v !== null && v !== '') sleuth[id] = clampInt(v, 0, E.SLEUTH_OPTIONS - 1);
+      });
+      r.scorecards[p.id] = { cats, prospects: pros, sleuth };
       this.checkAllDone();
       return { ok: true };
     }
@@ -767,7 +895,84 @@
       const r = this.s.round;
       if (!r || (r.peddler !== p.id && r.prospects.indexOf(p.id) < 0)) return { ok: false, error: 'Nothing to feature.' };
       r.hof[p.id] = !!a.yes;
+      const h = this.s.history[this.s.history.length - 1];
+      if (h && h.n === r.n) { h.hof = h.hof || {}; h.hof[p.id] = !!a.yes; }
       return { ok: true };
+    }
+
+    // ---------- End-of-night awards ----------
+    /** Everyone votes, from their phone, on tonight's Funniest Invention, Best Prospect and Best
+     *  Recovery (best answer to a SCREW!). No voting for yourself. Honorary: no money changes hands. */
+    awardCandidates() {
+      const s = this.s;
+      const inv = [], pros = [], recs = [];
+      s.history.forEach((h) => {
+        inv.push({ key: 'inv-' + h.n, label: h.name, sub: 'by ' + h.peddlerName, owner: h.peddler, image: h.sketch || null, n: h.n });
+        (h.cast || []).forEach((c) => pros.push({ key: 'pro-' + h.n + '-' + c.pid, label: c.name, sub: 'played by ' + c.playerName, owner: c.pid, image: c.portrait || null, n: h.n }));
+        (h.screws || []).forEach((x) => recs.push({ key: 'rec-' + h.n + '-' + x.by, label: h.peddlerName + ' vs. “' + x.t + '”', sub: x.d, owner: h.peddler, image: null, n: h.n }));
+      });
+      return [
+        { id: 'funniest', title: 'Funniest Invention', candidates: inv },
+        { id: 'prospect', title: 'Best Prospect', candidates: pros },
+        { id: 'recovery', title: 'Best Recovery', candidates: recs }
+      ].filter((c) => c.candidates.length >= 2);
+    }
+    startAwards() {
+      const s = this.s;
+      const cats = this.awardCandidates();
+      if (!cats.length) return false;
+      s.awards = { cats, votes: {}, results: null };
+      s.phase = 'awards';
+      s.timer.main = null; s.timer.screw = null;
+      this.log('awards', 'End-of-night awards! Vote on your phone.');
+      return true;
+    }
+    a_vote(p, a) {
+      const s = this.s, aw = s.awards;
+      if (s.phase !== 'awards' || !aw) return { ok: false, error: 'Voting is closed.' };
+      const cat = aw.cats.find((c) => c.id === a.cat);
+      const cand = cat && cat.candidates.find((c) => c.key === a.key);
+      if (!cand) return { ok: false, error: 'Pick one of the nominees.' };
+      if (cand.owner === p.id) return { ok: false, error: "You can't vote for yourself." };
+      aw.votes[p.id] = Object.assign({}, aw.votes[p.id], { [cat.id]: cand.key });
+      this.checkAwardsDone();
+      return { ok: true };
+    }
+    checkAwardsDone() {
+      const s = this.s, aw = s.awards;
+      if (!aw || !s.settings.autoAdvance) return;
+      const voters = this.activePlayers();
+      const done = voters.length && voters.every((p) => aw.cats.every((c) =>
+        !c.candidates.some((x) => x.owner !== p.id) || (aw.votes[p.id] && aw.votes[p.id][c.id])));
+      if (done) this.finishAwards();
+    }
+    finishAwards() {
+      const s = this.s, aw = s.awards;
+      if (!aw || s.phase !== 'awards') return { ok: false, error: 'No awards vote running.' };
+      aw.results = aw.cats.map((c) => {
+        const count = {};
+        Object.values(aw.votes).forEach((v) => { if (v[c.id]) count[v[c.id]] = (count[v[c.id]] || 0) + 1; });
+        const max = Math.max(0, ...Object.values(count));
+        return { id: c.id, title: c.title, votes: max, winners: max ? c.candidates.filter((x) => count[x.key] === max) : [] };
+      });
+      s.phase = 'final';
+      this.log('final', 'And the winners are...');
+      return { ok: true };
+    }
+    /** Hall of Fame entries for award winners whose creators opted in to being featured. */
+    awardHofEntries() {
+      const s = this.s, aw = s.awards;
+      if (!aw || !aw.results) return [];
+      const out = [];
+      aw.results.forEach((res) => res.winners.forEach((w) => {
+        const h = s.history.find((x) => x.n === w.n);
+        if (!h || !(h.hof || {})[w.owner]) return;
+        out.push({
+          kind: 'award', award: res.title, key: s.createdAt + '-award-' + res.id + '-' + w.key, name: w.label, slogan: w.sub,
+          creator: (s.players[w.owner] || {}).name || '', earned: null, date: this.now(), image: w.image ? this.assets[w.image.id] || null : null
+        });
+      }));
+      return out;
     }
 
     // ---------- Host commands ----------
@@ -785,6 +990,10 @@
       if (a.maxProspects != null) st.maxProspects = clampInt(a.maxProspects, 1, 3);
       if (a.rounds != null) st.rounds = clampInt(a.rounds, 0, 50);
       if (a.autoAdvance != null) st.autoAdvance = !!a.autoAdvance;
+      if (a.sleuth != null) st.sleuth = !!a.sleuth;
+      if (a.trimOutliers != null) st.trimOutliers = !!a.trimOutliers;
+      if (a.briefing != null) st.briefing = !!a.briefing;
+      if (a.awards != null) st.awards = !!a.awards;
       if (this.s.phase === 'roles' && a.maxProspects != null) this.proposeRoles();
       return { ok: true };
     }
@@ -805,7 +1014,7 @@
     h_kick(a) {
       const s = this.s, p = s.players[a.pid];
       if (!p) return { ok: false };
-      if (s.round && (s.round.peddler === p.id || s.round.prospects.indexOf(p.id) >= 0) && ['lobby', 'roles', 'reveal', 'final'].indexOf(s.phase) < 0)
+      if (s.round && (s.round.peddler === p.id || s.round.prospects.indexOf(p.id) >= 0) && ['lobby', 'roles', 'reveal', 'awards', 'final'].indexOf(s.phase) < 0)
         return { ok: false, error: "Can't remove the Peddler or a Prospect mid-round." };
       s.banned[p.id] = true;
       delete s.players[p.id];
@@ -859,18 +1068,23 @@
     }
     h_daddyDone() { if (this.s.round) this.s.round.daddy = null; return { ok: true }; }
     h_reveal() { return this.reveal(); }
+    h_finishAwards() { return this.finishAwards(); }
     h_nextRound() { return this.nextRound(); }
     h_end() {
       const s = this.s;
-      if (s.round && ['lab', 'fact', 'pitch', 'close', 'scoring'].indexOf(s.phase) >= 0) return { ok: false, error: 'Finish the round (or reveal the money) first.' };
-      s.phase = 'final'; s.timer.main = null; s.timer.screw = null;
+      if (s.round && ['brief', 'lab', 'fact', 'pitch', 'close', 'scoring'].indexOf(s.phase) >= 0) return { ok: false, error: 'Finish the round (or reveal the money) first.' };
+      if (s.phase === 'final') return { ok: true };
+      s.timer.main = null; s.timer.screw = null;
+      if (s.phase !== 'awards' && s.settings.awards && this.startAwards()) return { ok: true };
+      if (s.phase === 'awards') return this.finishAwards();
+      s.phase = 'final';
       this.log('final', 'Final results!');
       return { ok: true };
     }
     h_newGame() {
       const s = this.s;
       Object.values(s.players).forEach((p) => { p.session = { earned: 0, peddler: 0, prospect: 0, phil: 0 }; p.volunteer = null; });
-      s.phase = 'lobby'; s.round = null; s.roundNo = 0; s.history = []; s.proposal = null; s.need = null;
+      s.phase = 'lobby'; s.round = null; s.roundNo = 0; s.history = []; s.proposal = null; s.need = null; s.awards = null;
       s.timer = { main: null, screw: null }; s.hostPaused = false;
       return { ok: true };
     }
@@ -898,11 +1112,11 @@
         const inv = r.invention;
         round = {
           n: r.n, peddler: r.peddler, prospects: r.prospects, phils: r.phils, sitOut: r.sitOut,
-          profiles, portraits: r.portraits, labDone: r.labDone, asked: r.asked, secrets: r.secrets,
+          profiles, portraits: r.portraits, labDone: r.labDone, briefed: r.briefed || {}, asked: r.asked, secrets: r.secrets,
           disputes: Object.keys(r.secrets).filter((id) => r.secrets[id] === 'denied').map((id) => ({ pid: id, guess: r.claims[id] || '' })),
           invention: showInvention ? {
             name: inv.name, slogan: inv.slogan, sketch: inv.sketch,
-            item: r.hand.items[inv.item], func: r.hand.functions[inv.func], spokes: r.hand.spokespeople[inv.spokes]
+            item: r.hand.items[inv.item], func: r.hand.functions[inv.func]
           } : { started: !!inv.name, sketch: inv.sketch ? { id: inv.sketch.id, v: inv.sketch.v, hidden: true } : null },
           screwPlayed: r.screwPlayed, activeScrew: r.activeScrew,
           objections: r.objections,
@@ -920,6 +1134,10 @@
         proposalError: s.phase === 'roles' ? this.validateProposal(s.proposal) : null,
         round, roundNo: s.roundNo, history: s.history.map((h) => Object.assign({}, h)),
         standings: this.standings(), roundsDone: s.round ? this.roundsDone() : false,
+        awards: s.awards ? {
+          cats: s.awards.cats, results: s.awards.results,
+          voted: Object.keys(s.awards.votes)
+        } : null,
         feed: s.feed.slice(-12)
       };
     }
@@ -933,7 +1151,8 @@
       const out = {
         pid, name: p.name, color: p.color, ackSeq: p.ackSeq, wallet: p.wallet, prefs: p.prefs,
         excluded: p.excluded, volunteer: p.volunteer, role, earned: p.session.earned,
-        lastError: p.lastError || null
+        lastError: p.lastError || null,
+        votes: s.awards && s.awards.votes[pid] ? s.awards.votes[pid] : {}
       };
       if (s.phase === 'roles' && s.proposal) {
         const pr = s.proposal;
@@ -955,11 +1174,21 @@
         out.verdict = r.verdicts[pid] || null;
         out.asked = !!r.asked[pid];
       }
-      if (r && role === 'phil') out.scorecard = r.scorecards[pid] || null;
+      if (r && role === 'phil') {
+        out.scorecard = r.scorecards[pid] || null;
+        if (r.sleuth && (s.phase === 'scoring' || s.phase === 'reveal')) {
+          out.sleuth = r.sleuth.targets.map((id) => ({ pid: id, name: r.profiles[id].name, options: r.sleuth.options[id] }));
+          if (s.phase === 'reveal') {
+            out.sleuthAnswers = r.sleuth.answer;
+            out.sleuthResult = (r.results.sleuth && r.results.sleuth.byPhil[pid]) || null;
+          }
+        }
+      }
       if (r && (s.phase === 'reveal')) {
         out.hofChoice = r.hof[pid];
         if (role === 'peddler') out.myEarnings = r.results.total;
         if (role === 'prospect') out.myEarnings = r.results.prospectAwards[pid];
+        if (role === 'phil' && r.results.sleuth && r.results.sleuth.targets.length) out.myEarnings = out.sleuthResult ? out.sleuthResult.amount : 0;
       }
       return out;
     }
@@ -973,7 +1202,7 @@
       if (r.hof[r.peddler] && s.players[r.peddler]) {
         out.push({
           kind: 'invention', key: s.createdAt + '-' + r.n, name: inv.name, slogan: inv.slogan,
-          item: r.hand.items[inv.item], func: r.hand.functions[inv.func], spokes: r.hand.spokespeople[inv.spokes],
+          item: r.hand.items[inv.item], func: r.hand.functions[inv.func],
           creator: s.players[r.peddler].name, earned: r.results.total, date: this.now(),
           image: inv.sketch ? this.assets[inv.sketch.id] || null : null
         });

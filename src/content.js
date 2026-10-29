@@ -1,10 +1,10 @@
 /* PITCH! card decks and prospect profile pieces.
  * Edit these lists freely: add a line, save, rebuild. Every deck is shuffled each round.
- * House rule from the rulebook: spokespeople are fictional characters, never real celebrities. */
+ * The Peddler builds an invention from two decks: Items and Functions. */
 (function (P) {
   const C = (P.content = {});
 
-  // Peddler deck 1 of 3: the physical object the invention starts from.
+  // Peddler deck 1 of 2: the physical object the invention starts from.
   C.items = [
     'Toaster', 'Umbrella', 'Garden gnome', 'Rubber duck', 'Bowling ball', 'Sock', 'Lawn chair',
     'Step ladder', 'Lunchbox', 'Hairbrush', 'Trampoline', 'Kazoo', 'Disco ball', 'Fanny pack',
@@ -18,7 +18,7 @@
     'Garden hose', 'Recliner', 'Cuckoo clock', 'Salad spinner', 'Ski goggles', 'Baby monitor'
   ];
 
-  // Peddler deck 2 of 3: what the invention does.
+  // Peddler deck 2 of 2: what the invention does.
   C.functions = [
     'Predicts the weather', 'Plays smooth jazz', 'Folds laundry', 'Translates baby talk',
     'Detects lies', 'Walks your dog', 'Grows vegetables', 'Brews coffee', 'Tells bedtime stories',
@@ -34,26 +34,6 @@
     'Wakes you up gently', 'Cheers you on', 'Babysits', 'Paints portraits', 'Makes popcorn',
     'Measures vibes', 'Tells the future', 'Scares away raccoons', 'Writes thank-you notes',
     'Helps you parallel park', 'Composes theme music', 'Teaches karate', 'Cures hiccups'
-  ];
-
-  // Peddler deck 3 of 3: who endorses it. Fictional archetypes only.
-  C.spokespeople = [
-    'A retired pirate', 'Your brutally honest grandma', 'A sleep-deprived new dad',
-    'A medieval knight who time-traveled', 'A golden retriever (with a translator)',
-    'A conspiracy-loving ghost', 'A kindergarten teacher on summer break', 'An alien tourist',
-    'A grumpy lighthouse keeper', 'A motivational goat', 'A soap opera villain',
-    'An overly dramatic weather reporter', 'A vending machine that gained sentience',
-    'Your high school gym coach', 'A Victorian chimney sweep', 'A cowboy from the year 3000',
-    'A mime who just broke his silence', 'A suburban mom with a black belt', 'A nervous magician',
-    'A robot learning human emotions', 'A yoga instructor who hates yoga',
-    'A smooth-talking used-car dealer', 'A fairy godmother on her last day', 'A very tired superhero',
-    'A bake-off champion', 'A detective who has never solved a case', 'A rapping librarian',
-    'A surfer philosopher', 'A wise old tortoise', 'A game show host', 'A friendly haunted doll',
-    'A space station chef', 'A Shakespearean actor', 'An influencer with 12 followers',
-    'A drill sergeant', 'A spa receptionist', 'A vampire with a day job', 'A clown on vacation',
-    'A lumberjack poet', 'A toddler CEO', 'An opera singer', 'A theme park mascot',
-    'A news anchor stuck in 1985', 'A zen monk', 'A dinosaur who survived', 'A professional hype man',
-    'A retired secret agent', 'A royal butler'
   ];
 
   // Prospect profile pieces. Each Prospect gets a random combination.
@@ -114,54 +94,67 @@
     'Travels constantly for work and misses home.',
     'Has never once been on time for anything.'
   ];
-  // One secret per Prospect. The Peddler has to uncover it with good questions.
-  C.secrets = [
-    'Is secretly terrified of birds.',
-    'Won $50,000 in a scratch-off and has told no one.',
-    'Has a fake British accent at work and cannot stop now.',
-    'Is allergic to the main material of their own job.',
-    'Has 14 cats and tells people it is "a few."',
-    'Is quietly planning to run away and join the circus.',
-    'Has never learned to ride a bike.',
-    'Is the anonymous author of a popular romance novel series.',
-    'Cannot swim, despite their job or hobbies suggesting otherwise.',
-    'Is a two-time regional yodeling champion.',
-    'Sleeps with a nightlight shaped like a dolphin.',
-    'Is secretly building a time machine in the basement.',
-    'Has been pretending to like their in-laws\' cooking for 10 years.',
-    'Is deeply afraid of the dark.',
-    'Gets motion sick on escalators.',
-    'Talks to their houseplants and thinks the plants talk back.',
-    'Has a second phone just for playing mobile games.',
-    'Hates the beach but keeps getting invited.',
-    'Is saving up to buy a llama.',
-    'Has a secret talent for opera singing.',
-    'Has been lying about knowing how to cook.',
-    'Is learning to read music in secret to impress someone.',
-    'Is scared of their own smart speaker.',
-    'Still has every tooth they ever lost, in a jar.',
-    'Cries at every single commercial.',
-    'Has never seen the ocean.',
-    'Is up for a huge promotion but does not want it.',
-    'Is secretly very afraid of heights.',
-    'Has a hidden tattoo of a cartoon frog.',
-    'Is hopelessly addicted to reality TV.',
-    'Has never paid a parking ticket on time.',
-    'Is quietly writing a musical about their own life.',
-    'Owns 200 pairs of sneakers.',
-    'Lost their wedding ring and has been wearing a replica.',
-    'Is terrified of clowns.',
-    'Can only fall asleep with the TV on.',
-    'Is hiding a pet snake from the landlord.',
-    'Has been taking secret dance lessons for a year.',
-    'Hates the color of their own house.',
-    'Is about to quit their job to open a food truck.',
-    'Has a phobia of buttons.',
-    'Is a champion competitive whistler.',
-    'Has not changed their password since 2009.',
-    'Is pretending to be vegetarian for someone they like.',
-    'Has never once used the gym membership they pay for.'
+  // SECRETS. Every Prospect gets one. They are everyday, believable, and easy to uncover with good
+  // questions, built from topics a Peddler would naturally ask about (hobbies, fears, plans, money...).
+  // `tip` is shown to the Prospect: how to work the secret into conversation without blurting it out.
+  // Secret Sleuth also uses this pool for its decoy options, so it is big on purpose (~220 secrets).
+  // To add secrets: add a line to any `fill` list, or add a whole new topic.
+  C.secretTopics = [
+    { id: 'learning', lead: 'Is secretly learning to ', tip: 'Mention your evenings are busy lately, or that you signed up for a class.',
+      fill: ['play the ukulele', 'speak Italian', 'salsa dance', 'bake sourdough bread', 'ride a motorcycle', 'ice skate', 'juggle',
+        'paint with watercolors', 'do stand-up comedy', 'surf', 'knit', 'play chess', 'sing opera', 'skateboard', 'play the drums',
+        'speak sign language', 'build websites', 'do magic tricks', 'fly a drone', 'ballroom dance'] },
+    { id: 'fear', lead: 'Is afraid of ', tip: 'Steer away from anything related to it, and flinch a little if it comes up.',
+      fill: ['spiders', 'deep water', 'elevators', 'flying', 'heights', 'big dogs', 'the dentist', 'driving on the highway',
+        'public speaking', 'birds', 'the dark', 'clowns', 'escalators', 'thunderstorms', 'roller coasters', 'boats', 'horses', 'bees'] },
+    { id: 'never', lead: 'Has never ', tip: 'If travel, food or "firsts" come up, change the subject a little too fast.',
+      fill: ['been on a plane', 'learned to swim', 'ridden a bike', 'seen snow', 'eaten sushi', 'been to the ocean', 'driven a car',
+        'had a pet', 'left their home state', 'been to a concert', 'cooked a turkey', 'been camping', 'watched a horror movie',
+        'been on a boat', 'ridden a roller coaster', 'been to a wedding', 'stayed in a hotel', 'had a birthday party'] },
+    { id: 'saving', lead: 'Is saving up for ', tip: 'Act careful with money. Say you are "cutting back" for something special.',
+      fill: ['a trip to Japan', 'a hot tub', 'a fishing boat', 'a vintage car', 'a tiny house', 'a horse', 'a food truck', 'a backyard pool',
+        'a motorcycle', 'their dream wedding', 'a trip to Paris', 'a new kitchen', 'a camper van', 'a home recording studio',
+        'a cruise around the world', 'a fancy espresso machine', 'a cabin in the woods', 'season tickets'] },
+    { id: 'hates', lead: 'Secretly hates ', tip: 'Act a little too enthusiastic about it, or make a face when it comes up.',
+      fill: ['pizza', 'the beach', 'birthday parties', 'coffee', 'holiday music', 'chocolate', 'cats', 'camping', 'football',
+        'brunch', 'karaoke', 'board games', 'surprise parties', 'road trips', 'theme parks', 'gardening', 'small talk', 'their own car'] },
+    { id: 'plan', lead: 'Is planning to ', tip: 'Hint that big changes are coming. Sound a little too excited about "next year."',
+      fill: ['quit their job', 'move to another state', 'propose to their partner', 'go back to school', 'adopt a dog', 'open a bakery',
+        'run for city council', 'start a podcast', 'buy a farm', 'run a marathon', 'sell their house', 'retire early', 'write a book',
+        'join a band', 'start a YouTube channel', 'move to the beach', 'renovate their kitchen', 'get a second puppy'] },
+    { id: 'talent', lead: 'Has a hidden talent for ', tip: 'Drop a hint about something you are secretly good at, or offer to "show them sometime."',
+      fill: ['yodeling', 'opera singing', 'card tricks', 'beatboxing', 'origami', 'doing impressions', 'speed typing', 'whistling',
+        'baking wedding cakes', 'solving puzzle cubes', 'tap dancing', 'ventriloquism', 'calligraphy', 'arm wrestling', 'writing poetry',
+        'painting portraits', 'bowling', 'parallel parking'] },
+    { id: 'obsessed', lead: 'Is obsessed with ', tip: 'Bring it up more than you should, and light up when it is mentioned.',
+      fill: ['reality dating shows', 'true-crime podcasts', 'bird-watching', 'video games', 'collecting sneakers', 'houseplants', 'model trains',
+        'crossword puzzles', 'cooking competitions', 'horoscopes', 'fantasy football', 'garage sales', 'scented candles', 'coupons',
+        "a '90s boy band", 'soap operas', 'jigsaw puzzles', 'their air fryer'] },
+    { id: 'justDid', lead: 'Just ', tail: " and hasn't told anyone", tip: 'Act like something big happened this week, and be vague about what.',
+      fill: ['got a tattoo', 'bought a motorcycle', 'got a promotion', 'failed their driving test', 'won a radio contest', 'adopted a second cat',
+        'dyed their hair blue', 'bought a timeshare', 'quit the gym', 'booked a solo trip', 'entered a pie contest', 'sold their car',
+        'joined a bowling league', 'started a side business', 'won a cooking contest', 'auditioned for a reality show', 'bought a drum set', 'got bangs'] },
+    { id: 'pretends', lead: 'Pretends to ', tip: 'Claim to love it, but get vague when asked for details.',
+      fill: ["like their in-laws' cooking", 'know how to cook', 'understand wine', 'enjoy jogging', 'be a morning person', 'speak French',
+        'like jazz', 'read the news every day', 'know how to swim', 'love their job', 'be good with kids', 'enjoy yoga', 'understand football',
+        'be handy around the house', 'like spicy food', 'be a vegetarian', 'have read all the classics', 'follow the stock market'] },
+    { id: 'still', lead: 'Still ', tip: 'Let a childhood habit slip out when you talk about your daily routine.',
+      fill: ['sleeps with a stuffed animal', 'calls their mom every single day', 'eats cereal for dinner', 'sleeps with a nightlight',
+        'collects trading cards', 'watches Saturday morning cartoons', 'keeps every birthday card they ever got', 'has their baby blanket',
+        'gets their parents to do their taxes', 'writes in a diary', 'plays with action figures', 'carries a lucky charm everywhere',
+        'counts on their fingers', 'has a curfew at their parents\' house', 'can\'t whistle', 'takes naps every afternoon'] },
+    { id: 'owns', lead: 'Secretly owns ', tip: 'Mention your place is "a little full" or that you need more storage.',
+      fill: ['40 pairs of sneakers', 'a closet full of costumes', 'six cats', 'a pet snake', '300 coffee mugs', 'a jukebox', 'a karaoke machine',
+        'a hot sauce collection', 'a suit of armor', 'a pet tarantula', 'a vintage pinball machine', 'a drawer full of hotel soaps',
+        'a motorcycle they can\'t ride', 'nine bicycles', 'a mannequin named Steve', 'a popcorn machine', 'a cotton candy maker', 'a llama'] }
   ];
+  C.secrets = [];
+  C.secretTopics.forEach((t) => t.fill.forEach((f) => {
+    C.secrets.push({ text: t.lead + f + (t.tail || '') + '.', topic: t.id, tip: t.tip });
+  }));
+  // Shown to the Peddler during Fact-Finding: the kinds of questions that uncover secrets.
+  C.peddlerQuestionTips = ['hobbies and weekends', 'fears', 'plans for next year', 'what they are saving for', 'hidden talents',
+    'things they have never done', 'what they are into lately', 'their daily routine'];
 
   // SCREW! cards: each Prospect gets three and may play one during the pitch.
   // The Peddler gets 15 seconds to respond. Keep them playful, never personal.
@@ -169,7 +162,7 @@
     { t: 'Allergy Alert', d: "I'm allergic to your product's main ingredient. Convince me it's safe." },
     { t: 'Sticker Shock', d: 'It costs $10,000. Justify the price.' },
     { t: 'Rhyme Time', d: 'Answer my next question only in rhymes.' },
-    { t: 'Spokesperson Quit', d: 'Your spokesperson just quit on live TV. Introduce their replacement.' },
+    { t: 'Mascot Time', d: 'Invent a mascot for the product on the spot and do its voice.' },
     { t: 'Show Me', d: 'Demonstrate the product using only mime. No words.' },
     { t: 'Cheaper Next Door', d: 'My neighbor sells the same thing for half the price. Why yours?' },
     { t: 'Under the Sea', d: 'I live on a submarine. How does it work for me?' },
@@ -239,7 +232,7 @@
     { id: 'ingenuity', name: 'Ingenuity', hint: 'Originality, creative thinking, and adaptation under pressure.' },
     { id: 'factFinding', name: 'Fact-Finding', hint: 'Questions, listening, follow-ups, and discoveries across Prospects.' },
     { id: 'objections', name: 'Overcoming Objections', hint: 'Direct, confident, credible handling of SCREW! and customer concerns.' },
-    { id: 'pitch', name: 'Overall Pitch', hint: 'Persuasion, clear value, delivery, and spokesperson integration.' },
+    { id: 'pitch', name: 'Overall Pitch', hint: 'Persuasion, clear value, and delivery.' },
     { id: 'close', name: 'The Close', hint: 'Clear call to action and appropriate request for commitment.' }
   ];
 })(window.PITCH = window.PITCH || {});

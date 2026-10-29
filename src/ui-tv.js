@@ -5,8 +5,8 @@
   const esc = U.esc;
 
   const PHASE_TITLE = {
-    lobby: 'Lobby', roles: 'Up Next', lab: 'Creation Lab', fact: 'Fact-Finding', pitch: 'PITCH!',
-    close: 'Objections + Close', scoring: 'Scoring', reveal: 'Money Reveal', final: 'Final Results'
+    lobby: 'Lobby', roles: 'Up Next', brief: 'Role Briefing', lab: 'Creation Lab', fact: 'Fact-Finding', pitch: 'PITCH!',
+    close: 'Objections + Close', scoring: 'Scoring', reveal: 'Money Reveal', awards: 'Awards', final: 'Final Results'
   };
   // the rulebook's numbered round sequence (section 5)
   const STEPS = [['lab', 'Creation Lab'], ['fact', 'Fact-Finding'], ['pitch', 'PITCH! + SCREW!'], ['close', 'Objections + Close'], ['scoring', 'Money Reveal']];
@@ -22,8 +22,8 @@
       if (res && !res.ok && res.error) U.toast(res.error, 'warn');
       return res;
     }
-    function saveHof() {
-      const add = game.hofEntries();
+    function saveHof() { saveHofList(game.hofEntries()); }
+    function saveHofList(add) {
       if (!add.length) return;
       const list = U.store.get('pitch.hof', []);
       add.forEach((e) => { if (!list.some((x) => x.key === e.key)) list.unshift(e); });
@@ -74,7 +74,7 @@
         '<div class="sketch">' + (img ? '<img alt="Sketch of ' + esc(inv.name) + '" src="' + img + '">' : '<span class="portrait-empty">No sketch</span>') + '</div>' +
         '<div class="show-info"><div class="eyebrow">' + esc(player(r.peddler).name) + ' presents</div><h2 class="prod">' + esc(inv.name) + '</h2>' +
         (inv.slogan ? '<p class="slogan">“' + esc(inv.slogan) + '”</p>' : '') +
-        '<div class="decks">' + deckCard('item', 'Item', inv.item) + deckCard('func', 'Function', inv.func) + deckCard('spokes', 'Spokesperson', inv.spokes) + '</div></div></div>';
+        '<div class="decks">' + deckCard('item', 'Item', inv.item) + deckCard('func', 'Function', inv.func) + '</div></div></div>';
     }
 
     // ---------- phases ----------
@@ -101,10 +101,14 @@
       const st = v.settings;
       const num = (k, label) => '<label class="set-num"><span>' + label + '</span><input type="number" min="5" max="900" step="5" id="set-' + k + '" data-set="timers.' + k + '" value="' + st.timers[k] + '"><em>sec</em></label>';
       return '<div class="settings' + (inline ? ' inline' : ' panel') + '"><div class="set-head"><h3>Game settings</h3>' + (inline ? '' : '<button class="btn ghost sm" data-act="settings">Close</button>') + '</div>' +
-        '<div class="set-grid">' + num('lab', 'Creation Lab') + num('fact', 'Fact-Finding') + num('pitch', 'Pitch') + num('close', 'Objections + Close') + num('screw', 'SCREW! response') + '</div>' +
+        '<div class="set-grid">' + num('brief', 'Role briefing') + num('lab', 'Creation Lab') + num('fact', 'Fact-Finding') + num('pitch', 'Pitch') + num('close', 'Objections + Close') + num('screw', 'SCREW! response') + '</div>' +
         '<div class="set-row"><span>Prospects per round (max)</span><div class="seg">' + [1, 2, 3].map((n) => '<button data-act="setProspects" data-n="' + n + '" class="' + (st.maxProspects === n ? 'on' : '') + '">' + n + '</button>').join('') + '</div></div>' +
         '<div class="set-row"><span>Rounds</span><div class="seg">' + [0, 3, 5, 8].map((n) => '<button data-act="setRounds" data-n="' + n + '" class="' + (st.rounds === n ? 'on' : '') + '">' + (n ? n : 'Everyone pitches once') + '</button>').join('') + '</div></div>' +
         '<label class="set-row toggle"><span>Move on automatically when time runs out or everyone is done</span><input type="checkbox" id="set-auto" data-set="autoAdvance"' + (st.autoAdvance ? ' checked' : '') + '></label>' +
+        '<label class="set-row toggle"><span>Secret Sleuth: Philanthropists earn ' + U.money(E.SLEUTH_BONUS) + ' for each hidden secret they pick</span><input type="checkbox" id="set-sleuth" data-set="sleuth"' + (st.sleuth ? ' checked' : '') + '></label>' +
+        '<label class="set-row toggle"><span>Set aside a scorecard that is way out of line (more than ' + U.money(E.OUTLIER_GAP) + ' from the middle, with 4+ Philanthropists)</span><input type="checkbox" id="set-trim" data-set="trimOutliers"' + (st.trimOutliers ? ' checked' : '') + '></label>' +
+        '<label class="set-row toggle"><span>Role briefing at the start of each round (turn off for veteran players)</span><input type="checkbox" id="set-brief" data-set="briefing"' + (st.briefing ? ' checked' : '') + '></label>' +
+        '<label class="set-row toggle"><span>End-of-night awards vote before the final results</span><input type="checkbox" id="set-awards" data-set="awards"' + (st.awards ? ' checked' : '') + '></label>' +
         '<label class="set-row toggle"><span>Sound effects on this screen</span><input type="checkbox" id="set-sound" data-set="sound"' + (!U.muted ? ' checked' : '') + '></label></div>';
     }
 
@@ -123,16 +127,30 @@
         '<div class="round-title"><div class="eyebrow">Round ' + (v.roundNo + 1) + '</div><h2>Here is the table</h2><p class="muted">Tap a player to move them. Roles respect everyone’s opt-outs.</p></div>' +
         (pr ? '<div class="rcols">' + col('Peddler', [pr.peddler], 'peddler') + col('Prospects', pr.prospects, 'prospect') + col('Philanthropists', pr.phils, 'phil') + (pr.sitOut.length ? col('Sitting out', pr.sitOut, 'sitout') : '') + '</div>' : '') +
         '<div class="actions">' + '<button class="btn ghost" data-act="shuffle">Shuffle roles</button>' +
-        '<button class="btn gold big" data-act="begin"' + (v.proposalError ? ' disabled' : '') + '>Start the Creation Lab</button></div>' +
+        '<button class="btn gold big" data-act="begin"' + (v.proposalError ? ' disabled' : '') + '>Start the round</button></div>' +
         (v.proposalError && pr ? '<p class="err center">' + esc(v.proposalError) + '</p>' : '') +
         '<p class="center muted shop-note">The <b>NEPO BABY!</b> shop is open on everyone’s phone until the round starts.</p>' +
         (v.roundNo ? '<div class="side-board"><h3>Session money</h3>' + leaderboard(v, 10) + '</div>' : '') + '</section>';
     }
 
+    function brief(v) {
+      const r = v.round, st = v.settings.timers;
+      const who = (ids, role) => '<div class="rcol rcol-' + role + '"><h3>' + (role === 'peddler' ? 'Peddler' : role === 'prospect' ? 'Prospects' : 'Philanthropists') + '</h3>' +
+        ids.map((id) => '<div class="rplayer" data-key="br-' + esc(id) + '">' + U.avatar(player(id), 'lg') + '<span>' + esc(player(id).name) + '</span>' + (r.briefed[id] ? '<span class="ok">Ready ✓</span>' : '') + '</div>').join('') + '</div>';
+      const mm = (sec) => U.fmtTime(sec * 1000);
+      return '<section class="brief"><div class="round-title"><h2>Check your phone for your role</h2><p class="muted">Read it, then tap “Got it.”</p></div>' +
+        '<div class="rcols">' + who([r.peddler], 'peddler') + who(r.prospects, 'prospect') + who(r.phils, 'phil') + '</div>' +
+        '<ol class="brief-steps"><li><b>Creation Lab</b> ' + mm(st.lab) + '<span>The Peddler invents; Prospects draw their characters.</span></li>' +
+        '<li><b>Fact-Finding</b> ' + mm(st.fact) + '<span>The Peddler interviews every Prospect. +$25 per secret uncovered.</span></li>' +
+        '<li><b>PITCH!</b> ' + mm(st.pitch) + '<span>Each Prospect may SCREW! the Peddler once.</span></li>' +
+        '<li><b>Objections + Close</b> ' + mm(st.close) + '<span>Final objections, then ask for the sale.</span></li>' +
+        '<li><b>Money Reveal</b><span>Philanthropists score six categories, $0–$50 each' + (v.settings.sleuth ? ', and play Secret Sleuth' : '') + '.</span></li></ol></section>';
+    }
+
     function lab(v) {
       const r = v.round;
       return '<section class="lab"><div class="lab-ped">' + U.avatar(player(r.peddler), 'xl') + '<div><div class="eyebrow">Peddler</div><h2>' + esc(player(r.peddler).name) + ' is inventing' + '</h2>' +
-        '<p>' + (r.labDone[r.peddler] ? '<span class="ok">Ready ✓</span>' : 'Choosing an Item, a Function and a Spokesperson, then sketching it.') + '</p></div></div>' +
+        '<p>' + (r.labDone[r.peddler] ? '<span class="ok">Ready ✓</span>' : 'Choosing an Item and a Function, then sketching it.') + '</p></div></div>' +
         '<div class="lab-pros"><h3>Prospects are drawing their characters</h3><div class="lab-grid">' + r.prospects.map((id) =>
           '<div class="lab-p" data-key="lp-' + esc(id) + '">' + U.avatar(player(id), 'lg') + '<span>' + esc(player(id).name) + '</span>' + (r.labDone[id] ? '<span class="ok">Ready ✓</span>' : '<span class="muted">Drawing…</span>') + '</div>').join('') + '</div></div>' +
         '<p class="center muted">Philanthropists: you will score six categories, $0 to $50 each. Watch closely.</p></section>';
@@ -191,7 +209,8 @@
     function scoring(v) {
       const r = v.round;
       const confirmed = r.prospects.filter((id) => r.secrets[id] === 'confirmed').length;
-      return '<section class="scoring"><div class="round-title"><div class="eyebrow">Philanthropists</div><h2>Score the pitch on your phone</h2><p class="muted">Six categories, $0 to $50 each. Score what you saw, not who you like.</p></div>' +
+      return '<section class="scoring"><div class="round-title"><div class="eyebrow">Philanthropists</div><h2>Score the pitch on your phone</h2><p class="muted">Six categories, $0 to $50 each. Score what you saw, not who you like.</p>' +
+        (r.prospects.some((id) => r.secrets[id] !== 'confirmed') && v.settings.sleuth ? '<p class="sleuth-call"><b>Secret Sleuth:</b> pick each hidden secret on your phone for <b>+' + U.money(E.SLEUTH_BONUS) + '</b> apiece.</p>' : '') + '</div>' +
         '<div class="phil-grid">' + r.phils.map((id) => '<div class="phil' + (r.scorecardsIn.indexOf(id) >= 0 ? ' in' : '') + '" data-key="ph-' + esc(id) + '">' + U.avatar(player(id), 'lg') + '<span>' + esc(player(id).name) + '</span>' +
           (r.scorecardsIn.indexOf(id) >= 0 ? '<span class="ok">Scored ✓</span>' : '<span class="muted">Scoring…</span>') + '</div>').join('') + '</div>' +
         '<p class="center">Secrets discovered: <b>' + confirmed + ' of ' + r.prospects.length + '</b> (+' + U.money(confirmed * 25) + ' bonus)</p>' +
@@ -205,24 +224,58 @@
       const bars = C.categories.map((c, i) => '<div class="bar-row" style="--d:' + (0.25 * i).toFixed(2) + 's"><span class="bar-name">' + esc(c.name) + '</span><span class="bar"><i style="--w:' + ((res.catAvg[c.id] / 50) * 100).toFixed(1) + '%"></i></span><span class="bar-amt">' + U.money(res.catAvg[c.id]) + '</span></div>').join('');
       return '<section class="reveal"><div class="rv-main"><div class="eyebrow">' + esc(player(r.peddler).name) + '’s pitch</div><h2 class="prod">' + esc(r.invention.name) + '</h2>' +
         '<div class="bars">' + bars + '</div>' +
-        '<div class="math"><div><span>Average scorecard</span><b>' + U.money2(res.base) + '</b><em>' + res.scorecards + ' Philanthropist' + (res.scorecards === 1 ? '' : 's') + '</em></div>' +
+        '<div class="math"><div><span>Average scorecard</span><b>' + U.money2(res.base) + '</b><em>' + res.scorecards + ' scorecard' + (res.scorecards === 1 ? '' : 's') + '</em></div>' +
         '<div class="plus">+</div><div><span>Secrets found</span><b>' + U.money2(res.bonus) + '</b><em>' + res.secrets + ' × $25</em></div><div class="plus">=</div>' +
-        '<div class="price-tag big-tag"><span>Peddler earns</span><b>' + U.money2(res.total) + '</b></div></div></div>' +
+        '<div class="price-tag big-tag"><span>Peddler earns</span><b>' + U.money2(res.total) + '</b></div></div>' +
+        (res.setAside && res.setAside.length ? '<p class="set-aside">' + res.setAside.map((x) => 'One ' + U.money(x.total) + ' scorecard was set aside for being way ' + (x.side === 'low' ? 'below' : 'above') + ' the rest of the room.').join(' ') + '</p>' : '') + '</div>' +
         '<div class="rv-side"><h3>Prospects</h3>' + r.prospects.map((id) => '<div class="rv-pro" data-key="rv-' + esc(id) + '">' + portrait(gr, id, 'sm') + '<div><span><b>' + esc(r.profiles[id].name) + '</b><span class="muted"> · ' + esc(player(id).name) + '</span></span>' +
           '<p class="rv-secret">' + (r.secrets[id] === 'confirmed' ? '<span class="ok">Found:</span> ' : '<span class="muted">Hidden:</span> ') + esc(gr.profiles[id].secret) + '</p>' +
           '<span class="stamp ' + (r.verdicts[id] === 'buy' ? 'buy' : 'pass') + '">' + (r.verdicts[id] === 'buy' ? 'Would buy' : r.verdicts[id] === 'pass' ? 'Pass' : 'Undecided') + '</span>' +
-          '<span class="award">Role-play award ' + U.money2(res.prospectAwards[id]) + '</span></div></div>').join('') +
+          '<span class="award">Role-play award ' + U.money2(res.prospectAwards[id]) + '</span>' +
+          (res.sleuth && res.sleuth.byTarget[id] && res.sleuth.byTarget[id].of ? '<span class="sleuth-tally">Sleuths: ' + res.sleuth.byTarget[id].right + ' of ' + res.sleuth.byTarget[id].of + ' picked it</span>' : '') + '</div></div>').join('') +
+        sleuthBoard(res) +
         '<h3>Session money</h3>' + leaderboard(v, 8) + '</div></section>';
+    }
+
+    function sleuthBoard(res) {
+      const sl = res.sleuth;
+      if (!sl || !sl.targets.length) return '';
+      const winners = Object.keys(sl.byPhil).filter((id) => sl.byPhil[id].amount > 0).sort((a, b) => sl.byPhil[b].amount - sl.byPhil[a].amount);
+      return '<h3>Secret Sleuths</h3>' + (winners.length ? '<div class="sleuth-board">' + winners.map((id) => '<span class="chip" data-key="sb-' + esc(id) + '">' + U.avatar(player(id)) + '<span class="chip-name">' + esc(player(id).name) + '</span><b class="sleuth-amt">+' + U.money(sl.byPhil[id].amount) + '</b></span>').join('') + '</div>'
+        : '<p class="muted">No Philanthropist picked a hidden secret this time.</p>');
+    }
+
+    function nomineeImg(c) {
+      const src = c.image ? game.assets[c.image.id] : null;
+      return src ? '<img alt="" src="' + src + '">' : '';
+    }
+    function awards(v) {
+      const aw = v.awards;
+      const voters = v.players.filter((p) => p.connected);
+      return '<section class="awards"><div class="round-title"><div class="eyebrow">End-of-night awards</div><h2>Vote on your phone</h2><p class="muted">You can’t vote for yourself. Bragging rights only: no money changes hands.</p></div>' +
+        aw.cats.map((c) => '<div class="award-cat" data-key="ac-' + c.id + '"><h3 class="trophy-title">' + esc(c.title) + '</h3><div class="nominees">' +
+          c.candidates.map((x) => '<div class="nominee" data-key="nm-' + esc(x.key) + '">' + nomineeImg(x) + '<b>' + esc(x.label) + '</b><span class="muted">' + esc(x.sub) + '</span></div>').join('') + '</div></div>').join('') +
+        '<div class="phil-grid">' + voters.map((p) => '<div class="phil' + (aw.voted.indexOf(p.id) >= 0 ? ' in' : '') + '" data-key="av-' + esc(p.id) + '">' + U.avatar(p) + '<span>' + esc(p.name) + '</span>' +
+          (aw.voted.indexOf(p.id) >= 0 ? '<span class="ok">Voted ✓</span>' : '<span class="muted">Voting…</span>') + '</div>').join('') + '</div></section>';
+    }
+    function trophies(v) {
+      const res = v.awards && v.awards.results;
+      if (!res || !res.length) return '';
+      return '<div class="trophies">' + res.map((r) => '<div class="trophy" data-key="tr-' + r.id + '"><span class="eyebrow">' + esc(r.title) + '</span>' +
+        (r.winners.length ? r.winners.map((w) => nomineeImg(w) + '<b>' + esc(w.label) + '</b><span class="muted">' + esc(w.sub) + '</span>').join('<hr>') + '<span class="votes">' + r.votes + ' vote' + (r.votes === 1 ? '' : 's') + (r.winners.length > 1 ? ' each · tie' : '') + '</span>'
+          : '<span class="muted">No votes</span>') + '</div>').join('') + '</div>';
     }
 
     function final(v) {
       const st = v.standings;
       const winners = st.filter((p) => p.winner);
       const pod = st.slice(0, 3);
-      return '<section class="final"><div class="eyebrow">Session champion' + (winners.length > 1 ? 's' : '') + '</div>' +
+      const tro = trophies(v);
+      return '<section class="final"><div class="final-top' + (tro ? ' with-awards' : '') + '"><div class="final-left"><div class="eyebrow">Session champion' + (winners.length > 1 ? 's' : '') + '</div>' +
         '<h2 class="champ">' + (winners.length ? winners.map((w) => esc(w.name)).join(' & ') : 'Nobody earned money yet') + '</h2>' +
         (winners.length > 1 ? '<p class="muted">A tie! Declare co-winners, or run a quick tiebreaker pitch.</p>' : '') +
-        '<div class="podium">' + pod.map((p, i) => '<div class="pod pod-' + (i + 1) + '" data-key="pod-' + esc(p.id) + '">' + U.avatar(p, 'xl') + '<b>' + esc(p.name) + '</b><span class="price-tag"><b>' + U.money2(p.earned) + '</b></span><span class="pod-block">' + (i + 1) + '</span></div>').join('') + '</div>' +
+        '<div class="podium">' + pod.map((p, i) => '<div class="pod pod-' + (i + 1) + '" data-key="pod-' + esc(p.id) + '">' + U.avatar(p, 'xl') + '<b>' + esc(p.name) + '</b><span class="price-tag"><b>' + U.money2(p.earned) + '</b></span><span class="pod-block">' + (i + 1) + '</span></div>').join('') + '</div></div>' +
+        (tro ? '<div class="final-right"><div class="eyebrow">End-of-night awards</div>' + tro + '</div>' : '') + '</div>' +
         (st.length > 3 ? '<div class="side-board"><h3>Everyone</h3>' + leaderboard(v, 40) + '</div>' : '') +
         (v.history.length ? '<div class="hist"><h3>Tonight’s inventions</h3><div class="hist-grid">' + v.history.map((h) => '<div class="hist-card" data-key="hc-' + h.n + '">' +
           (h.sketch && game.assets[h.sketch.id] ? '<img alt="Sketch of ' + esc(h.name) + '" src="' + game.assets[h.sketch.id] + '">' : '') + '<b>' + esc(h.name) + '</b><span class="muted">' + esc(h.peddlerName) + ' · ' + U.money2(h.total) + '</span></div>').join('') + '</div></div>' : '') +
@@ -286,13 +339,14 @@
     }
 
     function dock(v) {
-      const timed = ['lab', 'fact', 'pitch', 'close'].indexOf(v.phase) >= 0;
-      const nextLabel = { lab: 'Skip to Fact-Finding', fact: 'Start the PITCH!', pitch: 'End pitch', close: 'Open scoring' }[v.phase];
+      const timed = ['brief', 'lab', 'fact', 'pitch', 'close'].indexOf(v.phase) >= 0;
+      const nextLabel = { brief: 'Start the Creation Lab', lab: 'Skip to Fact-Finding', fact: 'Start the PITCH!', pitch: 'End pitch', close: 'Open scoring' }[v.phase];
       return '<div class="dock">' +
         (timed ? (v.hostPaused ? '<button class="btn gold" data-act="resume">Resume</button>' : '<button class="btn ghost" data-act="pause">Pause</button>') +
           '<button class="btn ghost" data-act="addTime">+30s</button><button class="btn ghost" data-act="next">' + nextLabel + ' ›</button>' : '') +
         (v.round && ['fact', 'pitch', 'close', 'scoring'].indexOf(v.phase) >= 0 ? '<button class="btn ghost" data-act="rulings">Rulings</button>' : '') +
         (v.phase === 'scoring' ? '<button class="btn gold" data-act="reveal">Reveal the money</button>' : '') +
+        (v.phase === 'awards' ? '<button class="btn gold" data-act="finishAwards">Reveal the winners (' + v.awards.voted.length + ' voted)</button>' : '') +
         (v.phase === 'reveal' ? (v.roundsDone ? '<button class="btn ghost" data-act="nextRound">One more round</button><button class="btn gold" data-act="end">Final results</button>'
           : '<button class="btn ghost" data-act="end">End game now</button><button class="btn gold" data-act="nextRound">Next round</button>') : '') +
         '<button class="btn ghost icon" data-act="mute" aria-label="' + (U.muted ? 'Turn sound on' : 'Mute') + '">' + (U.muted ? 'Sound off' : 'Sound on') + '</button>' +
@@ -309,11 +363,11 @@
       const v = view = game.publicView();
       recvAt = Date.now();
       const ph = v.phase;
-      const body = { lobby, roles, lab, fact, pitch, close, scoring, reveal, final }[ph](v);
+      const body = { lobby, roles, brief, lab, fact, pitch, close, scoring, reveal, final, awards }[ph](v);
       const timer = v.timer.main && !v.round?.activeScrew ? U.timerHTML(v.timer.main, recvAt, 'main-timer', true) : (v.timer.main ? U.timerHTML(v.timer.main, recvAt, 'main-timer paused-by-screw') : '');
       const html = '<div class="tv phase-' + ph + '">' +
         '<header class="tv-top"><div class="logo" aria-label="PITCH!">PITCH<span>!</span></div>' +
-        '<div class="tv-phase">' + (v.round && ph !== 'lobby' && ph !== 'final' && ph !== 'roles' ? '<span class="eyebrow">Round ' + v.round.n + '</span>' : '') + '<span class="ph-name">' + PHASE_TITLE[ph] + '</span>' + stepper(ph) + '</div>' +
+        '<div class="tv-phase">' + (v.round && ['lobby', 'final', 'roles', 'awards'].indexOf(ph) < 0 ? '<span class="eyebrow">Round ' + v.round.n + '</span>' : '') + '<span class="ph-name">' + PHASE_TITLE[ph] + '</span>' + stepper(ph) + '</div>' +
         '<div class="tv-right">' + (v.hostPaused ? '<span class="tag red">Paused</span>' : '') + (v.expired && !v.settings.autoAdvance ? '<span class="tag red">Time!</span>' : '') + timer + '</div></header>' +
         '<main class="tv-stage" data-key="stage-' + ph + '">' + body + '</main>' +
         '<footer class="tv-bottom">' + strip(v) + dock(v) + '</footer>' +
@@ -324,7 +378,8 @@
 
     function effects(v) {
       if (lastPhase !== v.phase) {
-        if (lastPhase !== null) U.sound(v.phase === 'reveal' ? 'cash' : 'start');
+        if (lastPhase !== null) U.sound(v.phase === 'reveal' || v.phase === 'final' ? 'cash' : 'start');
+        if (lastPhase !== null && v.phase === 'final') saveHofList(game.awardHofEntries());
         lastPhase = v.phase;
       }
       const sc = v.round && v.round.activeScrew ? v.round.activeScrew.by + v.round.activeScrew.card.t : null;
@@ -352,7 +407,7 @@
       if (el.tagName === 'INPUT') return; // handled on change
       U.unlockAudio();
       const d = el.dataset, a = d.act;
-      const simple = ['start', 'shuffle', 'begin', 'next', 'pause', 'resume', 'reveal', 'nextRound', 'end', 'newGame', 'daddyDone'];
+      const simple = ['start', 'shuffle', 'begin', 'next', 'pause', 'resume', 'reveal', 'nextRound', 'end', 'newGame', 'daddyDone', 'finishAwards'];
       if (simple.indexOf(a) >= 0) { host(a); if (a === 'end' || a === 'newGame') ui.menu = false; }
       else if (a === 'addTime') host('addTime', { sec: 30 });
       else if (a === 'judge') host('screwJudge', { pid: d.pid, result: d.result });
@@ -382,6 +437,10 @@
       if (!k) return;
       if (k === 'sound') { U.muted = !el.checked; U.store.set('pitch.muted', U.muted); }
       else if (k === 'autoAdvance') host('settings', { autoAdvance: el.checked });
+      else if (k === 'sleuth') host('settings', { sleuth: el.checked });
+      else if (k === 'trimOutliers') host('settings', { trimOutliers: el.checked });
+      else if (k === 'briefing') host('settings', { briefing: el.checked });
+      else if (k === 'awards') host('settings', { awards: el.checked });
       else if (k.indexOf('timers.') === 0) host('settings', { timers: { [k.slice(7)]: Number(el.value) } });
       render();
     });

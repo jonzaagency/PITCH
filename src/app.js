@@ -66,7 +66,8 @@
       '<li><b>Philanthropists</b> (everyone else) score the Peddler with game money.</li></ul></div>' +
       '<div><h4>Each round</h4><ol><li>Creation Lab · 2:00</li><li>Fact-Finding · 2:30 · $25 per secret uncovered</li><li>PITCH! · 1:30 · each Prospect may SCREW! once (15 s, clock pauses)</li><li>Objections + Close · 0:45</li><li>Money Reveal</li></ol></div>' +
       '<div><h4>Money</h4><p>Each Philanthropist awards $0–$50 in six categories: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close. ' +
-      'The Peddler earns the average scorecard plus $25 per secret. Prospects earn the average of up to $25 each for role-play. Most money tonight wins.</p>' +
+      'The Peddler earns the average scorecard plus $25 per secret (with 4+ Philanthropists, a scorecard more than $100 away from the rest of the room is set aside). Prospects earn the average of up to $25 each for role-play. ' +
+      '<b>Secret Sleuth:</b> after the close, Philanthropists pick each secret the Peddler missed from 4 options, $10 per correct pick. Most money tonight wins.</p>' +
       '<p>Spend cash between rounds on NEPO BABY! Power Cards: NOT TODAY! ($75), I KNOW PEOPLE ($100), DADDY MADE A CALL ($125).</p></div></div>';
   }
 
@@ -288,10 +289,12 @@
     const send = (a) => seat.link.send(a);
     const rnd = (n) => Math.floor(Math.random() * n);
     const chance = (x) => Math.random() < x;
-    if (v.phase === 'lab' && p.role === 'peddler') {
+    if (v.phase === 'brief' && p.role && p.role !== 'sitout') {
+      once('brief', () => setTimeout(() => send({ type: 'briefed' }), 800 + rnd(2500)));
+    } else if (v.phase === 'lab' && p.role === 'peddler') {
       if (p.invention.item == null) {
         const it = rnd(3);
-        send({ type: 'invention', item: it, func: rnd(3), spokes: rnd(3), name: 'The ' + p.hand.items[it] + ' ' + ['3000', 'Deluxe', 'Pro Max', '-inator', 'Supreme'][rnd(5)], slogan: ['You need this.', 'Why not?', 'Life, upgraded.', 'Patent pending.'][rnd(4)] });
+        send({ type: 'invention', item: it, func: rnd(3), name: 'The ' + p.hand.items[it] + ' ' + ['3000', 'Deluxe', 'Pro Max', '-inator', 'Supreme'][rnd(5)], slogan: ['You need this.', 'Why not?', 'Life, upgraded.', 'Patent pending.'][rnd(4)] });
       } else once('draw', () => { const pad = new U.DrawPad(); pad.scribble(); send({ type: 'drawing', data: pad.export() }); });
       if (p.invention.item != null && !p.labDone && chance(0.3)) send({ type: 'labDone' });
     } else if (v.phase === 'lab' && p.role === 'prospect') {
@@ -314,10 +317,16 @@
       once('score', () => {
         const cats = {}; C.categories.forEach((c) => { cats[c.id] = 15 + rnd(8) * 5; });
         const pros = {}; r.prospects.forEach((id) => { pros[id] = rnd(6) * 5; });
-        setTimeout(() => send({ type: 'scorecard', cats, prospects: pros }), 1000 + rnd(3000));
+        const sleuth = {}; (p.sleuth || []).forEach((t) => { if (chance(0.85)) sleuth[t.pid] = rnd(t.options.length); });
+        setTimeout(() => send({ type: 'scorecard', cats, prospects: pros, sleuth }), 1000 + rnd(3000));
       });
     } else if (v.phase === 'scoring' && p.role === 'prospect') {
       if (!p.verdict) send({ type: 'verdict', buy: chance(0.5) });
+    } else if (v.phase === 'awards' && v.awards) {
+      v.awards.cats.forEach((c) => {
+        const opts = c.candidates.filter((x) => x.owner !== p.pid);
+        if (opts.length && !(p.votes || {})[c.id]) once('vote-' + c.id, () => setTimeout(() => send({ type: 'vote', cat: c.id, key: opts[rnd(opts.length)].key }), 600 + rnd(3000)));
+      });
     } else if (v.phase === 'reveal' && (p.role === 'peddler' || p.role === 'prospect')) {
       once('hof', () => send({ type: 'hof', yes: chance(0.5) }));
     }
