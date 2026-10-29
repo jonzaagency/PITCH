@@ -1,23 +1,25 @@
-/* P!TCH look: a late-night infomercial game show. Navy stage, gold marquee type, price-tag money.
+/* P!TCH look: a comic-book game show built from the logo. Dusty purple stage, ink outlines with
+   offset shadows, soft gold money, coral accents, Archivo Black headlines.
    Single deliberate dark theme (a stage), so colors are set explicitly everywhere. */
 :root {
-  --ink: #10152a;       /* page background */
-  --stage: #1b2138;     /* rulebook navy */
-  --panel: #242c4a;
-  --panel-2: #2f3961;
-  --line: #3d4877;
-  --cream: #fff4de;     /* text */
-  --muted: #a9b2d6;
-  --gold: #f2b544;      /* Peddler, money, primary action */
-  --gold-ink: #2a1c00;
-  --red: #ef4b3f;       /* SCREW! */
-  --sky: #5ec8f2;       /* Prospect */
-  --mint: #7ee08a;      /* Philanthropist, good */
-  --coral: #ff7a6b;
-  --violet: #c99bff;    /* NEPO BABY! */
-  --card: #fffaf0;
-  --card-ink: #1b2138;
-  --display: 'Bungee', 'Arial Black', Impact, sans-serif;
+  --ink: #140b30;       /* page background */
+  --stage: #1d1248;
+  --panel: #271a5e;
+  --panel-2: #322474;
+  --line: #0c0620;
+  --cream: #f6ecd6;     /* text */
+  --muted: #b8b0d8;
+  --gold: #f0c35a;      /* Peddler, money, primary action */
+  --gold-ink: #1a1230;
+  --red: #e2584c;       /* SCREW! */
+  --sky: #8d98f2;       /* Prospect */
+  --mint: #82d69c;      /* Philanthropist, good */
+  --coral: #ee7b6f;
+  --violet: #cfa5f0;    /* NEPO BABY! */
+  --card: #f6ecd6;
+  --card-ink: #1a1230;
+  --inkline: #0c0620;   /* comic ink: outlines and offset shadows */
+  --display: 'Archivo Black', 'Arial Black', Helvetica, sans-serif;
   --body: 'Rubik', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --r: 14px;
   color-scheme: dark;
@@ -26,7 +28,11 @@
 html, body { height: 100%; }
 body {
   margin: 0; background: var(--ink); color: var(--cream); font-family: var(--body); font-size: 16px; line-height: 1.45;
-  background-image: radial-gradient(1200px 600px at 50% -10%, rgba(242, 181, 68, 0.13), transparent 60%), radial-gradient(900px 500px at 100% 110%, rgba(94, 200, 242, 0.08), transparent 60%);
+  background-image:
+    radial-gradient(rgba(246, 236, 214, 0.045) 1.4px, transparent 1.6px),
+    radial-gradient(1100px 600px at 50% -10%, rgba(94, 24, 234, 0.32), transparent 65%),
+    radial-gradient(900px 600px at 100% 110%, rgba(238, 123, 111, 0.08), transparent 60%);
+  background-size: 20px 20px, auto, auto;
   background-attachment: fixed;
   -webkit-tap-highlight-color: transparent;
 }
@@ -81,9 +87,15 @@ button { font: inherit; color: inherit; }
 .big-seg button { min-width: 64px; font-size: 1.2rem; }
 
 /* ---------- avatars, chips, tags ---------- */
-.av { display: inline-grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--c); color: #1b2138; font-weight: 800; font-size: 0.8rem; letter-spacing: 0.02em; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.18); }
-.av-lg { width: 52px; height: 52px; font-size: 1.1rem; }
-.av-xl { width: 84px; height: 84px; font-size: 1.8rem; }
+/* player avatars: the comic burst from the logo, outlined in ink, with the initials in the middle */
+.av { --burst: polygon(50.0% 0.0%, 60.4% 14.5%, 76.2% 12.2%, 76.5% 27.1%, 94.1% 28.6%, 87.6% 44.6%, 93.4% 57.5%, 82.7% 65.0%, 88.2% 82.3%, 68.4% 78.6%, 62.2% 95.4%, 50.0% 87.0%, 38.6% 93.5%, 30.5% 80.3%, 11.7% 82.1%, 18.2% 64.5%, 4.6% 57.3%, 12.4% 44.6%, 6.9% 28.8%, 22.8% 26.4%, 24.8% 12.7%, 40.1% 16.4%);
+  position: relative; isolation: isolate; display: inline-grid; place-items: center; flex: none; width: 38px; height: 38px;
+  background: var(--inkline); clip-path: var(--burst); color: #1a1230; font-weight: 800; font-size: 0.78rem; letter-spacing: 0.02em; }
+.av::before { content: ''; position: absolute; inset: 2.5px; z-index: -1; background: var(--c); clip-path: var(--burst); }
+.av-lg { width: 58px; height: 58px; font-size: 1.05rem; }
+.av-lg::before { inset: 3px; }
+.av-xl { width: 92px; height: 92px; font-size: 1.7rem; }
+.av-xl::before { inset: 4px; }
 .chip { display: inline-flex; align-items: center; gap: 8px; }
 .tag { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--panel-2); font-size: 0.78rem; font-weight: 600; margin: 4px 6px 0 0; }
 .tag.ok { background: rgba(126, 224, 138, 0.18); color: var(--mint); }
@@ -554,12 +566,42 @@ input[type=range] { width: 100%; accent-color: var(--gold); height: 34px; }
 .pr-side { position: sticky; top: env(safe-area-inset-top, 0px); max-height: 100vh; overflow: auto; display: flex; flex-direction: column; gap: 8px; padding: 10px 0 20px; }
 .pr-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
 .pr-tab { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 999px; border: 2px solid var(--line); background: var(--panel); cursor: pointer; font-weight: 600; font-size: 0.85rem; }
-.pr-tab .av { width: 26px; height: 26px; font-size: 0.65rem; }
+.pr-tab .av { width: 30px; height: 30px; font-size: 0.62rem; }
+.pr-tab .av::before { inset: 2px; }
 .pr-tab.on { border-color: var(--gold); background: var(--panel-2); }
 .pr-bots { font-size: 0.85rem; padding: 4px 0; }
 .pr-phone { border: 2px solid var(--line); border-radius: 26px; padding: 0 12px 12px; background: var(--ink); }
 .pr-phone .phone { padding-bottom: 8px; }
 .pr-phone .ph-top { top: 0; }
+
+/* ---------- comic ink ---------- */
+/* ink outlines + small offset shadows on panels */
+.choice, .join-card, .ph-body > section:not(.hello):not(.found-sec), .rcol, .pro, .settings, .lab-ped, .lab-p, .phil, .rv-main, .rv-pro,
+.side-board, .howto, .setup, .mini-pro, .obj, .dispute, .brief-steps li, .pcard, .pr-phone, .award-cat, .trophy, .hist-card, .sleuth, .nepo {
+  border: 2px solid var(--inkline) !important;
+  box-shadow: 4px 4px 0 var(--inkline) !important;
+}
+.choice:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--inkline) !important; border-color: var(--inkline) !important; }
+.c-host, .c-online { background: var(--panel-2); }
+.btn { border: 2px solid var(--inkline); }
+.btn.gold, .btn.mint, .btn.red, .btn.violet { box-shadow: 3px 3px 0 var(--inkline); }
+.btn.ghost { border-color: rgba(246, 236, 214, 0.55); }
+.btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--inkline); }
+.seg button { border-color: var(--inkline); background: var(--panel); }
+.seg button.on { background: var(--gold); color: var(--gold-ink); border-color: var(--inkline); }
+/* headlines: clean heavy sans with a subtle coral offset */
+.choice b, .tv-phase .ph-name, .lobby-head h2, .round-title h2, .lab-ped h2, .pro-body h3, .prod, .champ, .hello h2, .next-role h2, .brief-card h2 {
+  color: var(--cream); letter-spacing: 0.01em; text-shadow: 2px 2px 0 rgba(238, 123, 111, 0.85);
+}
+.eyebrow { color: var(--gold); }
+.tv-top, .tv-bottom { border-color: var(--inkline); border-width: 2px; }
+.ph-top { background: var(--stage); border-bottom: 2px solid var(--inkline); }
+.deck, .portrait, .sketch { border: 2px solid var(--inkline); }
+.tag { background: var(--panel-2); border: 1.5px solid var(--inkline); }
+input[type=text], input:not([type]), input[type=number], select, textarea { border: 2px solid var(--inkline); background: #0f0826; }
+.top-secret { border-color: var(--coral); }
+.pr-tab { border-color: var(--inkline); }
+.pr-tab.on { border-color: var(--gold); }
 
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {

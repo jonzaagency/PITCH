@@ -27,7 +27,7 @@ function bundle(artifact) {
     `<link rel="apple-touch-icon" href="${ASSETS.touchIcon}">`,
     '<link rel="preconnect" href="https://fonts.googleapis.com">',
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
-    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;500;600;700;800&display=swap">',
+    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Rubik:wght@400;500;600;700;800&display=swap">',
     `<style>\n${read('style.css')}\n</style>`
   ].join('\n');
   const body = [

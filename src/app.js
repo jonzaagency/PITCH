@@ -303,9 +303,9 @@
     } else if (v.phase === 'fact' && p.role === 'prospect') {
       if (p.secretStatus !== 'confirmed' && chance(0.004)) send({ type: 'secretAnswer', yes: true });
     } else if (v.phase === 'fact' && p.role === 'phil') {
-      (p.sleuth || []).forEach((t) => { if (!t.locked && (p.sleuthPicks || {})[t.pid] === undefined) once('sleuth-' + t.pid, () => setTimeout(() => send({ type: 'sleuthPick', target: t.pid, idx: rnd(t.options.length) }), 1500 + rnd(6000))); });
+      (p.sleuth || []).forEach((t) => { if (!t.locked && (p.sleuthPicks || {})[t.pid] === undefined) once('sleuth-' + t.pid, () => setTimeout(() => { if (st.pub.phase === 'fact') send({ type: 'sleuthPick', target: t.pid, idx: rnd(t.options.length) }); }, 1500 + rnd(6000))); });
     } else if (v.phase === 'pitch' && (p.screwVotes || []).some((x) => !x.mine && !(r.activeScrew && r.activeScrew.by === x.by))) {
-      p.screwVotes.forEach((x) => { if (!x.mine && !(r.activeScrew && r.activeScrew.by === x.by)) once('vote-screw-' + x.by, () => setTimeout(() => send({ type: 'screwVote', by: x.by, result: chance(0.6) ? 'done' : 'missed' }), 800 + rnd(3000))); });
+      p.screwVotes.forEach((x) => { if (!x.mine && !(r.activeScrew && r.activeScrew.by === x.by)) once('vote-screw-' + x.by, () => setTimeout(() => { if (st.pub.phase === 'pitch') send({ type: 'screwVote', by: x.by, result: chance(0.6) ? 'done' : 'missed' }); }, 800 + rnd(3000))); });
     } else if (v.phase === 'pitch' && p.role === 'prospect') {
       const t = v.timer.main;
       const left = t ? t.remaining - (t.running ? Date.now() - st.recvAt : 0) : 0;
