@@ -54,7 +54,7 @@
     }
     function profileCard(pr, withSecret) {
       return '<div class="profile"><div class="eyebrow">Your character</div><h3>' + esc(pr.name) + '</h3><ul class="facts"><li><b>Age</b> ' + esc(pr.age) + '</li><li><b>Status</b> ' + esc(pr.marital) +
-        '</li><li><b>Kids</b> ' + esc(pr.kids) + '</li><li><b>Job</b> ' + esc(pr.job) + '</li></ul><p class="bg">' + esc(pr.background) + '</p>' +
+        '</li><li><b>Kids</b> ' + esc(pr.kids) + '</li><li><b>Job</b> ' + esc(pr.job) + '</li></ul><p class="bg"><b>Fun fact:</b> ' + esc(pr.background) + '</p>' +
         (withSecret ? '<div class="top-secret"><span class="lbl">Top secret: only you can see this</span>' + esc(pr.secret) + '</div>' +
           (pr.secretHints && pr.secretHints.length ? '<div class="secret-tip"><b>How to play it</b><ul class="hint-list">' + pr.secretHints.map((h) => '<li>' + esc(h) + '</li>').join('') + '</ul></div>' : '') +
           '<p class="hint">Stay in character and leave clues, but don’t just say it. Tap “They found my secret!” only when the Peddler figures it out.</p>' : '') + '</div>';
@@ -175,10 +175,10 @@
     function peddlerFact() {
       const v = st.pub, r = v.round, p = st.priv;
       return '<section><h2>Fact-Finding</h2><p class="muted">Ask every Prospect at least one meaningful question. Uncover a secret for <b>$25</b>. Just say your guess out loud: the Prospect confirms it on their phone. Eyes up, phone down!</p>' +
-        '<p class="hint"><b>Secrets hide in everyday topics.</b> Try asking about ' + esc(C.peddlerQuestionTips.join(', ')) + '.</p></section>' +
+        '<p class="hint"><b>Every secret grows out of the Prospect’s fun fact.</b> Dig into it with follow-up questions.</p></section>' +
         r.prospects.map((id) => {
           const pr = r.profiles[id], s = r.secrets[id];
-          return '<section class="pros-card" data-key="pf-' + esc(id) + '"><h3>' + esc(pr.name) + '</h3><ul class="facts"><li><b>Age</b> ' + esc(pr.age) + '</li><li><b>Status</b> ' + esc(pr.marital) + '</li><li><b>Kids</b> ' + esc(pr.kids) + '</li><li><b>Job</b> ' + esc(pr.job) + '</li></ul><p class="bg">' + esc(pr.background) + '</p>' +
+          return '<section class="pros-card" data-key="pf-' + esc(id) + '"><h3>' + esc(pr.name) + '</h3><ul class="facts"><li><b>Age</b> ' + esc(pr.age) + '</li><li><b>Status</b> ' + esc(pr.marital) + '</li><li><b>Kids</b> ' + esc(pr.kids) + '</li><li><b>Job</b> ' + esc(pr.job) + '</li></ul><p class="bg"><b>Fun fact:</b> ' + esc(pr.background) + '</p>' +
             (s === 'confirmed' ? '<div class="secret unlocked"><span class="lbl">Secret unlocked +$25</span>' + esc(pr.secret || '') + '</div>'
               : '<p class="muted">Secret still hidden. Say your guess out loud; they’ll tap it in if you’re right.</p>') +
             '</section>';

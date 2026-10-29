@@ -219,6 +219,7 @@ details summary { cursor: pointer; font-weight: 600; margin-top: 6px; }
 .profile .facts, .pros-card .facts { list-style: none; padding: 0; margin: 4px 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; font-size: 0.92rem; }
 .facts b { color: var(--muted); font-weight: 600; margin-right: 4px; }
 .bg { font-style: italic; color: var(--cream); opacity: 0.9; font-size: 0.92rem; }
+.bg b { font-style: normal; color: var(--gold); }
 .top-secret { margin-top: 8px; padding: 12px; border-radius: 12px; background: repeating-linear-gradient(-45deg, rgba(239, 75, 63, 0.16) 0 10px, rgba(239, 75, 63, 0.08) 10px 20px); border: 2px dashed var(--red); font-weight: 600; }
 .top-secret .lbl { color: #ff9b92; }
 .secret-tip { font-size: 0.9rem; padding: 8px 10px; border-radius: 10px; background: var(--panel-2); }
@@ -676,318 +677,138 @@ window.PITCH.config = {
     'Golf course groundskeeper', 'Taxidermist', 'Air traffic controller', 'Clown college dropout',
     'Chicken farmer', 'Substitute teacher', 'Bounty hunter (retired)', 'Ferry captain', 'Florist'
   ];
-  C.backgrounds = [
-    'Grew up on a houseboat and still gets landsick.',
-    'Has lived in the same small town for 60 years and knows everyone.',
-    'Just moved to the city after a big life change.',
-    'Coaches a very bad youth soccer team with great enthusiasm.',
-    'Spends every weekend at flea markets hunting for treasure.',
-    'Is training for a marathon for the fourth year in a row.',
-    'Runs a neighborhood watch group that mostly watches birds.',
-    'Recently inherited a large, slightly haunted farmhouse.',
-    'Hosts a weekly trivia night at the local bowling alley.',
-    'Is the family member everyone calls in an emergency.',
-    'Has a garage full of half-finished projects.',
-    'Takes a cruise every year and loves the buffet.',
-    'Volunteers at the animal shelter twice a week.',
-    'Works from home and has not worn real pants since 2020.',
-    'Is famous in the family for burning the Thanksgiving turkey.',
-    'Collects vintage lunchboxes and is very serious about it.',
-    'Wakes up at 4 a.m. every day, on purpose.',
-    'Plays in a garage band that has never had a gig.',
-    'Is planning a big anniversary surprise.',
-    'Is extremely competitive about board games.',
-    'Lives with three generations under one roof.',
-    'Keeps a detailed spreadsheet of every purchase ever made.',
-    'Just started a backyard vegetable garden.',
-    'Is a lifelong night owl in a family of morning people.',
-    'Drives a 1987 station wagon named Doris.',
-    'Recently took up ballroom dancing.',
-    'Has strong opinions about pizza toppings.',
-    'Is the self-appointed mayor of the apartment building.',
-    'Travels constantly for work and misses home.',
-    'Has never once been on time for anything.'
+  // FUN FACTS + SECRETS. Every Prospect gets one fun fact (everyone can see it) and a secret that grows
+  // out of it (only they can see it), so digging into the fun fact is how the Peddler finds the secret.
+  // Each secret is [secret, [two ways to act it out], one line to try].
+  // Secret Sleuth uses the other secrets of the same fun fact as decoys, so keep at least 3 per fun fact.
+  // To add one: add a [secret, [act, act], try] entry to any fun fact, or add a whole new fun fact.
+  C.funFacts = [
+    { fact: 'Grew up on a houseboat and still gets landsick.', secrets: [
+      ['Is secretly a pirate. A real one.', ['Say “arr” or “matey” once, then pretend you coughed.', 'Get strangely interested in anything gold or shiny.'], 'Mention you “borrowed” your boat and never gave it back.'],
+      ['Has never actually learned to swim.', ['Change the subject whenever swimming comes up.', 'Brag about boat life, but go vague on the water itself.'], 'Say you “always stayed on deck.”'],
+      ['Sold the family houseboat without telling anyone.', ['Get a little guilty when family comes up.', 'Talk about the houseboat in the past tense, then fix it.'], 'Say you “came into some money recently.”']] },
+    { fact: 'Has lived in the same small town for 60 years and knows everyone.', secrets: [
+      ['Is the anonymous gossip columnist for the town paper.', ['Know a little too much about everyone.', 'Ask the Peddler a nosy question back.'], 'Say “you didn’t hear it from me…”'],
+      ['Has never once left the county.', ['Call the next town over “abroad.”', 'Get vague about vacations.'], 'Ask whether the product is “allowed across the county line.”'],
+      ['Secretly runs the whole town from behind the scenes.', ['Talk like every decision goes through you.', 'Mention you “know a guy” for everything.'], 'Say the mayor “still owes you one.”']] },
+    { fact: 'Just moved to the city after a big life change.', secrets: [
+      ['Is dodging the tax man back home.', ['Get vague about why you moved.', 'Flinch whenever anyone says “taxes,” “paperwork” or “audit.”'], 'Say you’re “keeping a low profile” for now.'],
+      ['Left town after losing a bet with the mayor.', ['Act like you never want to talk about your old town.', 'Get competitive about anything that sounds like a bet.'], 'Say you’ll “never wager on a pie-eating contest again.”'],
+      ['Is in the world’s least secret witness protection.', ['Forget your own name for a second when asked.', 'Glance over your shoulder now and then.'], 'Say “my name is… what I said it was.”']] },
+    { fact: 'Coaches a very bad youth soccer team with great enthusiasm.', secrets: [
+      ['Has never actually watched a soccer game.', ['Use sports words a little wrong.', 'Get vague when asked about the rules.'], 'Call the goal “the net zone.”'],
+      ['Bribes the kids with candy to show up.', ['Mention snacks way more than soccer.', 'Get defensive about your “coaching methods.”'], 'Say practice is “mostly about morale.”'],
+      ['Secretly bets on their own team to lose.', ['Sound oddly cheerful about losing.', 'Change the subject when money and sports come up together.'], 'Say a loss is “good for business.”']] },
+    { fact: 'Spends every weekend at flea markets hunting for treasure.', secrets: [
+      ['Accidentally sold a priceless painting for $5.', ['Get quiet when anyone mentions art.', 'Sound bitter about “the one that got away.”'], 'Say you “check the auction news every day, for no reason.”'],
+      ['Resells their flea market finds online for a fortune.', ['Act casual about money, then get very specific about prices.', 'Look at objects like you’re pricing them.'], 'Ask what the Peddler would pay for “a vintage anything.”'],
+      ['Has a storage unit nobody knows about.', ['Say your home is “very minimalist.”', 'Get cagey about your weekends.'], 'Mention you carry “a key you can’t explain.”']] },
+    { fact: 'Is training for a marathon for the fourth year in a row.', secrets: [
+      ['Has never actually finished a marathon.', ['Talk a lot about training, never about finish lines.', 'Get vague about race results.'], 'Say you’re “more of a starter than a finisher.”'],
+      ['Took a taxi for part of last year’s race.', ['Get oddly defensive about race times.', 'Speak a little too warmly about taxis.'], 'Say mile 18 is “really more of a suggestion.”'],
+      ['Only runs because of a crush on the running coach.', ['Light up whenever training comes up.', 'Mention the coach by first name a lot.'], 'Say you “never miss Tuesday practice. Never.”']] },
+    { fact: 'Runs a neighborhood watch group that mostly watches birds.', secrets: [
+      ['Is secretly spying on the neighbors, not the birds.', ['Know oddly specific things about your street.', 'Squint at the Peddler like you’re taking notes.'], 'Say “I see everything on this block.”'],
+      ['Has never actually spotted a rare bird.', ['Act like a bird expert, but stay vague on details.', 'Change the subject if someone asks about your best sighting.'], 'Call every bird “a classic.”'],
+      ['Started the group just to get out of the house.', ['Talk about the meetings like they’re a vacation.', 'Dodge any questions about home life.'], 'Say the meetings are “three hours of peace and quiet.”']] },
+    { fact: 'Recently inherited a large, slightly haunted farmhouse.', secrets: [
+      ['Rents the haunted rooms out to ghost tourists.', ['Get oddly businesslike about the “haunting.”', 'Defend the ghost a little too much.'], 'Say the ghost “has great reviews.”'],
+      ['Is the one making the ghost noises.', ['Laugh a little too hard when ghosts come up.', 'Make a tiny “oooo” sound once, then deny it.'], 'Say the haunting “started the week I moved in.”'],
+      ['Is secretly too scared to sleep there.', ['Talk tough about ghosts, then get jumpy.', 'Mention you’ve been staying “with friends” lately.'], 'Say you sleep “with every light on, for the vibe.”']] },
+    { fact: 'Hosts a weekly trivia night at the local bowling alley.', secrets: [
+      ['Writes the answers on their hand before every trivia night.', ['Glance at your palm before answering anything.', 'Get defensive if anyone says “cheat.”'], 'Say you “just have a great memory. In ink.”'],
+      ['Has been banned from three other trivia nights.', ['Get way too competitive about any question.', 'Change the subject when other bars come up.'], 'Say you “can’t go to Pete’s Pub anymore.”'],
+      ['Rigs the questions so their friends always win.', ['Brag about your friends’ trivia record.', 'Get vague about how the questions get picked.'], 'Say your friends “just happen to love questions about themselves.”']] },
+    { fact: 'Is the family member everyone calls in an emergency.', secrets: [
+      ['Secretly screens every single family call.', ['Act super available, then admit you “missed a few calls.”', 'Glance at your phone and frown.'], 'Say your phone “has been acting up for three years.”'],
+      ['Has no idea what they’re doing and searches everything online.', ['Sound confident, then get vague about how you know.', 'Mention “looking things up” a lot.'], 'Say “I’m basically a doctor. An internet doctor.”'],
+      ['Is planning a fake vacation just to get a break.', ['Sound tired and a little sneaky about next month.', 'Get vague about your travel plans.'], 'Say you’ll be “very unreachable” soon.']] },
+    { fact: 'Has a garage full of half-finished projects.', secrets: [
+      ['Is building a boat in the garage that won’t fit through the door.', ['Talk about your project with enormous pride.', 'Get vague about how big it is.'], 'Ask how hard it is to “remove a garage wall.”'],
+      ['Has never finished a single thing in their life.', ['Start answers and let them trail off.', 'Get excited about starting things, quiet about finishing them.'], 'Say “I’m more of an ideas person.”'],
+      ['Is secretly building a robot butler.', ['Mention “wires” and “testing” in passing.', 'Get very protective of the garage.'], 'Say your garage has “a new roommate.”']] },
+    { fact: 'Takes a cruise every year and loves the buffet.', secrets: [
+      ['Has been banned from a cruise line for buffet behavior.', ['Get defensive about “portion sizes.”', 'Describe buffets like a battle.'], 'Say there’s “one cruise line that knows my face.”'],
+      ['Gets seasick every single time.', ['Rave about cruises, then turn a little green.', 'Dodge details about actually being on the boat.'], 'Say your favorite part is “the dock.”'],
+      ['Sneaks food containers onto the buffet every trip.', ['Ask whether the product comes “to go.”', 'Talk about leftovers a lot.'], 'Mention your bag is “mostly containers.”']] },
+    { fact: 'Volunteers at the animal shelter twice a week.', secrets: [
+      ['Has secretly adopted eleven animals from the shelter.', ['Mention “the kids” at home, very vaguely.', 'Pick fur off your clothes while you talk.'], 'Say your house is “a little noisy.”'],
+      ['Is allergic to cats and dogs.', ['Sniffle a little when animals come up.', 'Love animals loudly, from a distance.'], 'Say you “mostly volunteer at the front desk.”'],
+      ['Only volunteers because the vet is cute.', ['Mention the vet a lot.', 'Get flustered when anyone asks why you volunteer.'], 'Say you “really care about the animals. And the staff.”']] },
+    { fact: 'Works from home and has not worn real pants since 2020.', secrets: [
+      ['Secretly works two full-time jobs at once.', ['Look tired and a little too busy.', 'Get vague about who your boss is.'], 'Say you keep “two calendars.”'],
+      ['Hasn’t actually done any work since 2020.', ['Talk about “meetings” with zero details.', 'Get vague about what your job even is.'], 'Say your camera is “always broken.”'],
+      ['Moved to a beach town and never told their boss.', ['Mention the weather is “always great” lately.', 'Get cagey about where home is.'], 'Say your video background is “a virtual one.”']] },
+    { fact: 'Is famous in the family for burning the Thanksgiving turkey.', secrets: [
+      ['Burns the turkey on purpose so they never have to host.', ['Act sad about the turkey, but smirk a little.', 'Change the subject if anyone asks you to cook.'], 'Say “what a shame, I guess someone else hosts this year.”'],
+      ['Secretly orders the whole meal from a restaurant.', ['Brag about your side dishes in suspicious detail.', 'Get nervous about recipes.'], 'Say your gravy is “a family secret. The family runs a diner.”'],
+      ['Is secretly a trained chef.', ['Act clueless about cooking, then slip up with a fancy word.', 'Wince when anyone describes bad cooking.'], 'Say “a little brunoise,” then pretend you sneezed.']] },
+    { fact: 'Collects vintage lunchboxes and is very serious about it.', secrets: [
+      ['Spent their savings on a single lunchbox.', ['Get very defensive about “investments.”', 'Change the subject when savings come up.'], 'Say the lunchbox is “basically a retirement plan.”'],
+      ['Eats lunch out of a priceless lunchbox every day.', ['Mention lunch with suspicious pride.', 'Get nervous if anyone talks about spills.'], 'Say your sandwich is “worth more than my car.”'],
+      ['“Borrowed” a lunchbox from a museum display.', ['Get jumpy when museums come up.', 'Talk about your collection like a heist.'], 'Say the museum “had too many anyway.”']] },
+    { fact: 'Wakes up at 4 a.m. every day, on purpose.', secrets: [
+      ['Actually goes back to sleep at 4:15.', ['Brag about waking up, never about what you do after.', 'Yawn a lot.'], 'Say 4 a.m. is “a great time for a second nap.”'],
+      ['Runs a secret 4 a.m. donut-delivery business.', ['Mention donuts out of nowhere.', 'Get vague about where you go so early.'], 'Say the bakery “knows your car.”'],
+      ['Gets up early just to avoid their roommate.', ['Mention you “rarely see” the people you live with.', 'Change the subject when home comes up.'], 'Say you leave “before anyone can talk to me.”']] },
+    { fact: 'Plays in a garage band that has never had a gig.', secrets: [
+      ['Turned down a record deal and regrets it.', ['Get wistful whenever music comes up.', 'Change the subject when fame comes up.'], 'Say you “almost had a tour bus once.”'],
+      ['Can’t actually play their instrument.', ['Talk about the band a lot, never about playing.', 'Air-guitar badly.'], 'Say your role in the band is “more of a vibe.”'],
+      ['Secretly writes jingles for TV commercials.', ['Hum something catchy.', 'Get very interested in the product’s slogan.'], 'Offer to write the Peddler a jingle.']] },
+    { fact: 'Is planning a big anniversary surprise.', secrets: [
+      ['Forgot the anniversary last year and is overcompensating.', ['Act a little guilty when dates come up.', 'Go way too big when describing the surprise.'], 'Say you rented “a small blimp.”'],
+      ['Is planning the surprise for the wrong date.', ['Sound very sure about the date, then hesitate.', 'Ask the Peddler what today’s date is.'], 'Say the anniversary is “the twelfth. Or the twenty-first.”'],
+      ['Spent the whole surprise budget on lottery tickets.', ['Get nervous about money.', 'Sound very optimistic about “a big win.”'], 'Say the surprise “depends on Friday’s numbers.”']] },
+    { fact: 'Is extremely competitive about board games.', secrets: [
+      ['Flipped a Monopoly board at a family reunion.', ['Tense up when anyone mentions family game night.', 'Get very competitive about small things.'], 'Say you’re “not allowed to be the banker anymore.”'],
+      ['Secretly cheats at every game.', ['Brag about your record a little too much.', 'Get vague about the rules.'], 'Say rules are “more like guidelines.”'],
+      ['Has never won a single game.', ['Talk tough about strategy, but never mention a win.', 'Get prickly when anyone asks about your record.'], 'Say you’re “playing the long game.”']] },
+    { fact: 'Lives with three generations under one roof.', secrets: [
+      ['Is moving out and hasn’t told anyone.', ['Talk about family with a hint of goodbye.', 'Get vague about next year.'], 'Say you’ve been “packing a little, for fun.”'],
+      ['Is grandma’s secret partner in her poker nights.', ['Defend grandma a little too much.', 'Be oddly quick with numbers.'], 'Say grandma “has a lot of card nights.”'],
+      ['Built a secret room in the basement to get some quiet.', ['Mention you “disappear” at home a lot.', 'Get cagey about the basement.'], 'Say you have “a spot nobody can find.”']] },
+    { fact: 'Keeps a detailed spreadsheet of every purchase ever made.', secrets: [
+      ['Keeps a second spreadsheet of secret purchases.', ['Sound super organized, then get vague about one category.', 'Change the subject when shopping comes up.'], 'Say you have “a tab called Miscellaneous.”'],
+      ['Is quietly a millionaire from all that budgeting.', ['Act frugal, then slip up about something fancy.', 'Get vague about money.'], 'Say your yacht is “just a big boat.”'],
+      ['Still has no idea where their money goes.', ['Brag about the spreadsheet, never the totals.', 'Get nervous about numbers.'], 'Say the spreadsheet is “mostly color-coding.”']] },
+    { fact: 'Just started a backyard vegetable garden.', secrets: [
+      ['Buys vegetables at the store and plants them.', ['Brag about your harvest a little too much.', 'Get vague about how you grew anything.'], 'Say your tomatoes “came with stickers on them, weirdly.”'],
+      ['Is in a fierce rivalry with the neighbor’s garden.', ['Get competitive when the neighbors come up.', 'Talk about vegetables like a sport.'], 'Say “my zucchini will be bigger than Doug’s.”'],
+      ['Has killed every plant they’ve ever owned.', ['Talk about the garden with forced optimism.', 'Get quiet when asked how it’s going.'], 'Say the garden is “in a resting phase.”']] },
+    { fact: 'Is a lifelong night owl in a family of morning people.', secrets: [
+      ['Is secretly a late-night radio DJ.', ['Use a smooth, low radio voice once.', 'Get vague about where you are at night.'], 'Say “you’re listening to…” then stop.'],
+      ['Fakes being a morning person at family breakfasts.', ['Act cheerful about mornings, then yawn.', 'Get vague about breakfast.'], 'Say you’re “up with the sun. Eventually.”'],
+      ['Runs an all-night bakery nobody knows about.', ['Mention bread at odd moments.', 'Get cagey about your nights.'], 'Say you smell “like croissants for no reason.”']] },
+    { fact: 'Drives a 1987 station wagon named Doris.', secrets: [
+      ['Turned down a fortune for Doris.', ['Get protective whenever cars come up.', 'Talk about Doris like a person.'], 'Say “Doris is not for sale. Don’t ask again.”'],
+      ['Doris doesn’t actually run anymore.', ['Talk about road trips in the past tense.', 'Get vague about how you got here.'], 'Say Doris is “resting in the driveway.”'],
+      ['Lives in Doris part-time.', ['Say your “home” has wheels, then correct yourself.', 'Get cagey about your address.'], 'Say your bedroom “gets great gas mileage.”']] },
+    { fact: 'Recently took up ballroom dancing.', secrets: [
+      ['Is training for a dance competition on TV.', ['Move your feet a little while you talk.', 'Get very excited about “the big night.”'], 'Say you need to “save your knees for Saturday.”'],
+      ['Only took it up to win back an ex.', ['Get wistful about your dance partner.', 'Change the subject if love comes up.'], 'Say your ex “always wanted to waltz.”'],
+      ['Has stepped on every partner’s feet.', ['Brag about dancing, then wince.', 'Get vague about your partners.'], 'Say your instructor “now wears steel-toed shoes.”']] },
+    { fact: 'Has strong opinions about pizza toppings.', secrets: [
+      ['Secretly puts ketchup on pizza.', ['Defend weird toppings with passion.', 'Get cagey when anyone asks your order.'], 'Say ketchup is “basically tomato sauce.”'],
+      ['Got fired from a pizza place for “creative toppings.”', ['Talk about pizza like a lost career.', 'Get defensive about your ideas.'], 'Say the world “isn’t ready for pickle pizza.”'],
+      ['Has never actually eaten pizza.', ['Have strong opinions, but no details.', 'Get vague when asked your favorite slice.'], 'Ask “is it good hot?”']] },
+    { fact: 'Is the self-appointed mayor of the apartment building.', secrets: [
+      ['Is secretly running for real mayor.', ['Shake the Peddler’s hand like you’re campaigning.', 'Talk about “the community” a lot.'], 'Say “I’d appreciate your vote. For… anything.”'],
+      ['Has a key to every apartment in the building.', ['Know oddly specific things about the neighbors.', 'Get cagey about keys.'], 'Say you have “access to all areas.”'],
+      ['Is three months behind on their own rent.', ['Talk big about the building, then get nervous about the landlord.', 'Change the subject when money comes up.'], 'Say the landlord is “a misunderstanding.”']] },
+    { fact: 'Travels constantly for work and misses home.', secrets: [
+      ['Isn’t traveling for work at all: they tour with a cover band.', ['Get vague about your job title.', 'Hum when travel comes up.'], 'Say you play “a lot of hotel lobbies.”'],
+      ['Got fired months ago and still pretends to travel.', ['Talk about trips with no details.', 'Get nervous when work comes up.'], 'Say your next “meeting” is at the beach.'],
+      ['Is a professional mall Santa every December.', ['Get vague about what you do in winter.', 'Say “ho ho” once, then cough.'], 'Say your work trips are “mostly up north.”']] },
+    { fact: 'Has never once been on time for anything.', secrets: [
+      ['Has a doctor’s note saying they’re allergic to clocks.', ['Defend being late like it’s medical.', 'Avoid looking at any clock.'], 'Say you have “a condition.”'],
+      ['Is secretly early to everything and hides around the corner.', ['Act casual about being late, but know exactly what happened before you “arrived.”', 'Get vague about where you were.'], 'Say “I just got here,” too quickly.'],
+      ['Missed their own wedding.', ['Get quiet when weddings come up.', 'Over-explain why you’re late.'], 'Say your spouse “has forgiven you. Mostly.”']] }
   ];
-  // SECRETS. Every Prospect gets one. They are everyday, believable, and easy to uncover with good
-  // questions, built from topics a Peddler would naturally ask about (hobbies, fears, plans, money...).
-  // The Prospect's phone shows how to play each secret: two ways to act (`act`) plus one specific line to drop.
-  // Secret Sleuth also uses this pool for its decoy options, so it is big on purpose (~220 secrets).
-  // To add secrets: add a ['secret detail', 'line to drop'] pair to any `fill` list, or add a whole new topic.
-  C.secretTopics = [
-    { id: 'learning', lead: 'Is secretly learning to ',
-      act: ['Say your evenings are booked lately, but stay vague about why.', 'If hobbies come up, get a little shy and change the subject.'],
-      fill: [
-        ['play the ukulele', 'Mention your fingertips are sore lately.'],
-        ['speak Italian', 'Slip in a “grazie” or “ciao” without thinking.'],
-        ['salsa dance', 'Say you’ve been “practicing your footwork” every night.'],
-        ['bake sourdough bread', 'Mention there’s a jar on your counter you “have to feed.”'],
-        ['ride a motorcycle', 'Say you bought a leather jacket “just in case.”'],
-        ['ice skate', 'Mention your ankles are killing you this week.'],
-        ['juggle', 'Admit you’ve broken a few things around the house lately.'],
-        ['paint with watercolors', 'Say your fingers have been a funny color all week.'],
-        ['do stand-up comedy', 'Try a joke on the Peddler, then ask “too much?”'],
-        ['surf', 'Mention you’ve been getting up before sunrise to “catch something.”'],
-        ['knit', 'Ask the Peddler if they’d like a scarf. For no reason.'],
-        ['play chess', 'Say you’ve been “thinking three moves ahead” lately.'],
-        ['sing opera', 'Hum dramatically during a pause, then stop.'],
-        ['skateboard', 'Mention your knees are scraped up, and don’t say why.'],
-        ['play the drums', 'Tap a rhythm on the table while you talk.'],
-        ['speak sign language', 'Use your hands a lot when you talk, very precisely.'],
-        ['build websites', 'Say you’re “learning a little code” if tech comes up.'],
-        ['do magic tricks', 'Ask the Peddler to pick a number, then drop it.'],
-        ['fly a drone', 'Mention your neighbors keep complaining about “a buzzing noise.”'],
-        ['ballroom dance', 'Say you’ve been buying a lot of fancy shoes lately.']] },
-    { id: 'fear', lead: 'Is afraid of ',
-      act: ['Steer every conversation away from {x}.', 'If it comes up anyway, flinch, go quiet, or change the subject fast.'],
-      fill: [
-        ['spiders', 'Say you never go in your basement. Ever.'],
-        ['deep water', 'Mention you only like pools where you can “touch the bottom.”'],
-        ['elevators', 'Say you always take the stairs, “for the exercise.”'],
-        ['flying', 'Say you’d rather drive 14 hours than “deal with airports.”'],
-        ['heights', 'Mention you live on the ground floor on purpose.'],
-        ['big dogs', 'Ask nervously whether the Peddler has any pets.'],
-        ['the dentist', 'Smile with your mouth closed, and dodge any question about your teeth.'],
-        ['driving on the highway', 'Say you know “all the back roads” around here.'],
-        ['public speaking', 'Say you’d rather do anything than give a toast at a wedding.'],
-        ['birds', 'Say you never eat outside “because of the pigeons.”'],
-        ['the dark', 'Mention you keep a lamp on “just for the mood.”'],
-        ['clowns', 'Say you skip birthday parties and circuses. Don’t explain.'],
-        ['escalators', 'Say shopping malls are “too complicated” for you.'],
-        ['thunderstorms', 'Mention you check the weather app ten times a day.'],
-        ['roller coasters', 'Say you’re “always the one holding the bags” at theme parks.'],
-        ['boats', 'Say you get “a little queasy” just thinking about the lake.'],
-        ['horses', 'Say you skipped every pony ride as a kid.'],
-        ['bees', 'Mention you never wear perfume outside.']] },
-    { id: 'never', lead: 'Has never ',
-      act: ['When travel, food or “firsts” come up, change the subject a little too fast.', 'Nod along like you know what they mean, then get vague.'],
-      fill: [
-        ['been on a plane', 'Ask the Peddler what airplane food actually tastes like.'],
-        ['learned to swim', 'Say you prefer “the shallow end of life.”'],
-        ['ridden a bike', 'Say you’ve always been “more of a walker.”'],
-        ['seen snow', 'Ask whether snow is “more like sugar or salt.”'],
-        ['eaten sushi', 'Ask if wasabi is “the green one or the pink one.”'],
-        ['been to the ocean', 'Ask if the ocean really smells “like the candles.”'],
-        ['driven a car', 'Mention you’re great at giving directions from the passenger seat.'],
-        ['had a pet', 'Say you’d “probably be good with a hamster.”'],
-        ['left their home state', 'Call the next town over “the big city.”'],
-        ['been to a concert', 'Ask whether you’re supposed to stand or sit at concerts.'],
-        ['cooked a turkey', 'Say you’re “more of a side dishes person” at Thanksgiving.'],
-        ['been camping', 'Ask how tents “actually stay up.”'],
-        ['watched a horror movie', 'Say you always “fall asleep” right before the scary part.'],
-        ['been on a boat', 'Say your sea legs are “theoretical.”'],
-        ['ridden a roller coaster', 'Ask whether roller coasters go upside down “on purpose.”'],
-        ['been to a wedding', 'Ask what you’re supposed to do with the little almonds.'],
-        ['stayed in a hotel', 'Ask if the tiny shampoos are free.'],
-        ['had a birthday party', 'Say birthdays are “just another day” a little too firmly.']] },
-    { id: 'saving', lead: 'Is saving up for ',
-      act: ['Act careful with money. Say you’re cutting back for something special.', 'Light up whenever anything about {x} comes up.'],
-      fill: [
-        ['a trip to Japan', 'Mention you’ve been practicing with chopsticks.'],
-        ['a hot tub', 'Say your back could really use “some bubbles.”'],
-        ['a fishing boat', 'Tell a quick story about “the one that got away.”'],
-        ['a vintage car', 'Say they “don’t make them like they used to.”'],
-        ['a tiny house', 'Say you’ve been getting rid of half your stuff.'],
-        ['a horse', 'Mention you’ve been pricing out hay “for a friend.”'],
-        ['a food truck', 'Say your tacos could “feed a whole city.”'],
-        ['a backyard pool', 'Mention you’ve been measuring your backyard.'],
-        ['a motorcycle', 'Say you’ve been watching a lot of biker movies.'],
-        ['their dream wedding', 'Say you’ve already picked the cake flavor. For someday.'],
-        ['a trip to Paris', 'Mention you’ve been eating a lot of croissants “for research.”'],
-        ['a new kitchen', 'Say your oven is “on its last legs.”'],
-        ['a camper van', 'Say you’d love to “live on the open road.”'],
-        ['a home recording studio', 'Mention you’ve been writing songs in the shower.'],
-        ['a cruise around the world', 'Ask whether the Peddler gets seasick.'],
-        ['a fancy espresso machine', 'Say coffee shop prices are “highway robbery.”'],
-        ['a cabin in the woods', 'Say you need to “get away from it all.”'],
-        ['season tickets', 'Know the whole team’s schedule by heart.']] },
-    { id: 'hates', lead: 'Secretly hates ',
-      act: ['Act a little too enthusiastic about {x}.', 'Make a quick face when it comes up, then smile through it.'],
-      fill: [
-        ['pizza', 'Say you “love pizza” but only ever eat the crust.'],
-        ['the beach', 'Complain that sand gets “everywhere, forever.”'],
-        ['birthday parties', 'Say you always “have a conflict” on party days.'],
-        ['coffee', 'Order “the tea one” whenever coffee comes up.'],
-        ['holiday music', 'Say December is your “least favorite radio month.”'],
-        ['chocolate', 'Say you’re “more of a fruit person” a little too fast.'],
-        ['cats', 'Say cats are “fine” through a tight smile.'],
-        ['camping', 'Ask why anyone would sleep outside “on purpose.”'],
-        ['football', 'Say you “love that sport with the ball.”'],
-        ['brunch', 'Call brunch “lunch with a tax.”'],
-        ['karaoke', 'Say you somehow lose your voice every time someone suggests it.'],
-        ['board games', 'Say you’re “terrible at rules” and always leave early.'],
-        ['surprise parties', 'Say you hate being surprised “by anything.”'],
-        ['road trips', 'Mention you get carsick after ten minutes.'],
-        ['theme parks', 'Complain about the lines before anyone asks.'],
-        ['gardening', 'Say plants “just die around you.”'],
-        ['small talk', 'Answer the first friendly question very, very briefly.'],
-        ['their own car', 'Call your car “the situation.”']] },
-    { id: 'plan', lead: 'Is planning to ',
-      act: ['Hint that big changes are coming. Sound a little too excited about next year.', 'If asked about the future, say “we’ll see” with a knowing smile.'],
-      fill: [
-        ['quit their job', 'Say you’ve “got one foot out the door” at work.'],
-        ['move to another state', 'Mention you’ve been collecting moving boxes.'],
-        ['propose to their partner', 'Ask the Peddler what ring size “most people” are.'],
-        ['go back to school', 'Mention you just bought a new backpack.'],
-        ['adopt a dog', 'Ask whether the product is “pet-friendly.”'],
-        ['open a bakery', 'Say you’ve been testing recipes on your neighbors.'],
-        ['run for city council', 'Ask the Peddler what they think of the potholes downtown.'],
-        ['start a podcast', 'Say “great question, let’s unpack that” like a host.'],
-        ['buy a farm', 'Ask how much a goat costs, casually.'],
-        ['run a marathon', 'Mention you’ve been running every morning at 5 a.m.'],
-        ['sell their house', 'Say your house would be “a great starter home for someone.”'],
-        ['retire early', 'Say you’ve been “counting the days.”'],
-        ['write a book', 'Say “that would make a great chapter” about something.'],
-        ['join a band', 'Mention you’ve been “rehearsing” a lot lately.'],
-        ['start a YouTube channel', 'Say “don’t forget to like and subscribe” by accident.'],
-        ['move to the beach', 'Mention you just bought a lot of sunscreen.'],
-        ['renovate their kitchen', 'Talk about countertops with real passion.'],
-        ['get a second puppy', 'Say your dog “seems lonely.”']] },
-    { id: 'talent', lead: 'Has a hidden talent for ',
-      act: ['Offer to “show them sometime” without saying what.', 'Get modest, then a little proud, whenever skills come up.'],
-      fill: [
-        ['yodeling', 'Say your voice “carries really well in the mountains.”'],
-        ['opera singing', 'Hit one high note when you laugh.'],
-        ['card tricks', 'Shuffle an imaginary deck while you talk.'],
-        ['beatboxing', 'Make a little drum sound when you’re thinking.'],
-        ['origami', 'Fold any paper near you into something.'],
-        ['doing impressions', 'Answer one question in a funny voice, then say “sorry, habit.”'],
-        ['speed typing', 'Drum your fingers really fast on the table.'],
-        ['whistling', 'Whistle a tune during a pause.'],
-        ['baking wedding cakes', 'Say cakes are “all about the layers.”'],
-        ['solving puzzle cubes', 'Say you’re “good at twisting things around.”'],
-        ['tap dancing', 'Tap your feet in rhythm while you talk.'],
-        ['ventriloquism', 'Answer one question without moving your lips.'],
-        ['calligraphy', 'Offer to write their product name “beautifully.”'],
-        ['arm wrestling', 'Offer to settle any disagreement “the old-fashioned way.”'],
-        ['writing poetry', 'Answer one question in a rhyme.'],
-        ['painting portraits', 'Study the Peddler’s face very closely while they talk.'],
-        ['bowling', 'Say you know “how to pick up a spare.”'],
-        ['parallel parking', 'Brag that you can fit a car “anywhere.”']] },
-    { id: 'obsessed', lead: 'Is obsessed with ',
-      act: ['Bring up {x} more than you should.', 'Light up and talk faster whenever it’s mentioned.'],
-      fill: [
-        ['reality dating shows', 'Say someone is “not here for the right reasons.”'],
-        ['true-crime podcasts', 'Ask the Peddler where they were last Tuesday.'],
-        ['bird-watching', 'Point at the window and ask “was that a warbler?”'],
-        ['video games', 'Say you need to “save your progress” before answering.'],
-        ['collecting sneakers', 'Look at the Peddler’s shoes before their face.'],
-        ['houseplants', 'Mention you have to get home to “water everyone.”'],
-        ['model trains', 'Say “all aboard!” when the pitch starts.'],
-        ['crossword puzzles', 'Ask “what’s a five-letter word for…” mid-answer.'],
-        ['cooking competitions', 'Say “chef, you have ten minutes left.”'],
-        ['horoscopes', 'Ask the Peddler for their star sign.'],
-        ['fantasy football', 'Mention your “lineup” is stressing you out.'],
-        ['garage sales', 'Ask if the product will be cheaper on Saturday morning.'],
-        ['scented candles', 'Ask what the product “smells like.”'],
-        ['coupons', 'Ask if there’s a discount code.'],
-        ["a '90s boy band", 'Say “bye bye bye” when someone leaves.'],
-        ['soap operas', 'Gasp dramatically at small news.'],
-        ['jigsaw puzzles', 'Say you love it “when the pieces come together.”'],
-        ['their air fryer', 'Ask if the product can go in the air fryer.']] },
-    { id: 'justDid', lead: 'Just ', tail: " and hasn't told anyone",
-      act: ['Act like something big happened this week, and be vague about what.', 'Almost tell them, then say “never mind, it’s nothing.”'],
-      fill: [
-        ['got a tattoo', 'Keep one sleeve pulled down and touch your arm a lot.'],
-        ['bought a motorcycle', 'Blame “helmet hair” for how your hair looks.'],
-        ['got a promotion', 'Say you’re “kind of a big deal at work now.”'],
-        ['failed their driving test', 'Say you got here “by bus. By choice.”'],
-        ['won a radio contest', 'Say “you know caller number nine?” then stop.'],
-        ['adopted a second cat', 'Say “they” when you talk about your cat.'],
-        ['dyed their hair blue', 'Keep touching your hat or hood.'],
-        ['bought a timeshare', 'Get defensive about “good investments.”'],
-        ['quit the gym', 'Say exercise is “really more of a mindset.”'],
-        ['booked a solo trip', 'Say you’ll be “unreachable” for a while.'],
-        ['entered a pie contest', 'Ask the Peddler their favorite pie. Take mental notes.'],
-        ['sold their car', 'Say you’re “really into walking lately.”'],
-        ['joined a bowling league', 'Mention your new “team shirt.”'],
-        ['started a side business', 'Hand the Peddler an imaginary business card.'],
-        ['won a cooking contest', 'Say “some people call me a champion” and laugh it off.'],
-        ['auditioned for a reality show', 'Glance at an imaginary camera before you answer.'],
-        ['bought a drum set', 'Say your neighbors are “not speaking to you.”'],
-        ['got bangs', 'Keep fixing your hair across your forehead.']] },
-    { id: 'pretends', lead: 'Pretends to ',
-      act: ['Claim you’re great at it, but get vague when asked for details.', 'Answer follow-up questions with confident nonsense.'],
-      fill: [
-        ["like their in-laws' cooking", 'Call holiday dinners at the in-laws “an experience.”'],
-        ['know how to cook', 'Say your specialty is “a family recipe” and refuse to say what.'],
-        ['understand wine', 'Call something “oaky” that has nothing to do with wine.'],
-        ['enjoy jogging', 'Say you jog “most days, spiritually.”'],
-        ['be a morning person', 'Yawn every time anyone mentions mornings.'],
-        ['speak French', 'Say “oui oui” a lot, and nothing else.'],
-        ['like jazz', 'Say jazz is about “the notes they don’t play.”'],
-        ['read the news every day', 'Say “oh, I saw that” about everything.'],
-        ['know how to swim', 'Say you mostly do “the floating stroke.”'],
-        ['love their job', 'Say “living the dream” in a flat voice.'],
-        ['be good with kids', 'Say kids “love you,” then shudder.'],
-        ['enjoy yoga', 'Call your favorite pose “the bendy one.”'],
-        ['understand football', 'Say “great kick!” about the wrong sport.'],
-        ['be handy around the house', 'Say you “have a guy for that.”'],
-        ['like spicy food', 'Fan your mouth whenever anyone says “pepper.”'],
-        ['be a vegetarian', 'Mention a great burger place, then backpedal.'],
-        ['have read all the classics', 'Mix up two famous book titles.'],
-        ['follow the stock market', 'Say “buy low” a lot, with no context.']] },
-    { id: 'still', lead: 'Still ',
-      act: ['Let a childhood habit slip out when you talk about your daily routine.', 'If they ask, act a little embarrassed and laugh it off.'],
-      fill: [
-        ['sleeps with a stuffed animal', 'Say you can’t travel without “Mr. Snuggles,” then correct it to “my pillow.”'],
-        ['calls their mom every single day', 'Check the time and say “oh, I have a call at seven.”'],
-        ['eats cereal for dinner', 'Say dinner is “whatever’s in the pantry.”'],
-        ['sleeps with a nightlight', 'Mention hotel rooms are “way too dark.”'],
-        ['collects trading cards', 'Say “ooh, that’s a rare one” about anything.'],
-        ['watches Saturday morning cartoons', 'Say your Saturdays are “booked until noon.”'],
-        ['keeps every birthday card they ever got', 'Say you have “a lot of boxes” and won’t explain.'],
-        ['has their baby blanket', 'Mention a “very old, very soft” thing you never go anywhere without.'],
-        ['gets their parents to do their taxes', 'Say April is “a family time.”'],
-        ['writes in a diary', 'Say “I’ll have to write that down later.”'],
-        ['plays with action figures', 'Say “I have the whole set” about something.'],
-        ['carries a lucky charm everywhere', 'Pat your pocket before you answer anything important.'],
-        ['counts on their fingers', 'Count on your fingers whenever a number comes up.'],
-        ["has a curfew at their parents' house", 'Say you need to be home “by ten. For reasons.”'],
-        ["can't whistle", 'Try to whistle once. Nothing comes out.'],
-        ['takes naps every afternoon', 'Say you’re unavailable “between two and four.”']] },
-    { id: 'owns', lead: 'Secretly owns ',
-      act: ['Mention your place is “a little full” or that you need more storage.', 'Get oddly specific when the Peddler asks about your home.'],
-      fill: [
-        ['40 pairs of sneakers', 'Say you have “a few” pairs of shoes. Wink.'],
-        ['a closet full of costumes', 'Say you’re “always ready for a theme party.”'],
-        ['six cats', 'Pick some fur off your sleeve while you talk.'],
-        ['a pet snake', 'Ask if the product works for “cold-blooded” customers.'],
-        ['300 coffee mugs', 'Say your cabinets have no room for “one more anything.”'],
-        ['a jukebox', 'Ask the Peddler to “pick a song, any song.”'],
-        ['a karaoke machine', 'Say your parties are “loud, in a good way.”'],
-        ['a hot sauce collection', 'Rate everything on a spiciness scale.'],
-        ['a suit of armor', 'Say your hallway is “well guarded.”'],
-        ['a pet tarantula', 'Say your roommate has “eight legs.”'],
-        ['a vintage pinball machine', 'Say “tilt!” when something goes wrong.'],
-        ['a drawer full of hotel soaps', 'Say you “never, ever buy soap.”'],
-        ["a motorcycle they can't ride", 'Mention the “decoration” in your garage.'],
-        ['nine bicycles', 'Say you need “a bike for every mood.”'],
-        ['a mannequin named Steve', 'Mention Steve. Never explain Steve.'],
-        ['a popcorn machine', 'Say your movie nights are “the real deal.”'],
-        ['a cotton candy maker', 'Say your kitchen is “permanently sticky.”'],
-        ['a llama', 'Say your lawn “takes care of itself.”']] },
-    { id: 'money', lead: 'Secretly ',
-      act: ['Answer dodgily every time money comes up.', 'Get a little nervous if anyone mentions banks, savings or prices.'],
-      fill: [
-        ['hides cash under their mattress', 'Mention at some point that you’ve never had a bank account.'],
-        ['buries money in the backyard', 'Say you’re “really into gardening. Digging, mostly.”'],
-        ['plays the lottery every single day', 'Ask the Peddler for their lucky numbers.'],
-        ['is a millionaire', 'Say price “doesn’t really matter,” then quickly take it back.'],
-        ['has never paid full price for anything', 'Ask about a discount before asking what the product does.'],
-        ['still has the first dollar they ever earned', 'Say you “never spend the first one” of anything.'],
-        ['keeps a coin jar for every month of the year', 'Mention your shelves are “very heavy.”'],
-        ['owes their little brother fifty bucks', 'Change the subject fast whenever family comes up.']] }
-  ];
-  // Each secret comes with ways to act it out: the topic's `act` lines ({x} is the secret's detail)
-  // plus the one specific line to drop that goes with it.
+  C.backgrounds = C.funFacts.map((f) => f.fact);
   C.secrets = [];
-  C.secretTopics.forEach((t) => t.fill.forEach(([f, say]) => {
-    const x = f.replace(/^their /, 'your ');
-    C.secrets.push({ text: t.lead + f + (t.tail || '') + '.', topic: t.id, hints: t.act.map((a) => a.replace('{x}', x)).concat('Try this: ' + say) });
+  C.funFacts.forEach((f, i) => f.secrets.forEach(([text, act, say]) => {
+    C.secrets.push({ text, topic: 'ff' + i, fact: f.fact, hints: act.concat('Try this: ' + say) });
   }));
-  // Shown to the Peddler during Fact-Finding: the kinds of questions that uncover secrets.
-  C.peddlerQuestionTips = ['hobbies and weekends', 'fears', 'plans for next year', 'what they are saving for', 'hidden talents',
-    'things they have never done', 'what they are into lately', 'their daily routine'];
 
   // SCREW! cards: each Prospect gets three and may play one during the pitch.
   // The Peddler gets 15 seconds to respond. Keep them playful, never personal.
@@ -1452,7 +1273,7 @@ window.PITCH.config = {
     }
 
     // ---------- round lifecycle ----------
-    /** One everyday secret, never repeating a topic already used by another Prospect this round,
+    /** One fun fact + secret, never repeating a fun fact already used by another Prospect this round,
      *  and avoiding secrets used earlier in the session until the pool runs low. */
     drawSecret(takenTopics) {
       const used = this.s.used.secrets;
@@ -1480,7 +1301,7 @@ window.PITCH.config = {
         marital,
         kids: Math.floor(this.rand() * this.rand() * 6),
         job: this.pick(C.occupations),
-        background: this.pick(C.backgrounds),
+        background: sec.fact,
         secret: sec.text,
         secretTopic: sec.topic,
         secretHints: sec.hints
@@ -1564,10 +1385,10 @@ window.PITCH.config = {
       const options = {}, answer = {};
       targets.forEach((id) => {
         const real = r.profiles[id].secret;
-        // one decoy from the same topic (rewards listening to the details) + the rest from other topics
+        // two decoys from the same fun fact (rewards listening to the details) + one from another fun fact
         const topic = r.profiles[id].secretTopic;
         const free = C.secrets.filter((x) => roundSecrets.indexOf(x.text) < 0 && x.text !== real);
-        const same = this.shuffle(free.filter((x) => x.topic === topic)).slice(0, 1);
+        const same = this.shuffle(free.filter((x) => x.topic === topic)).slice(0, 2);
         const other = this.shuffle(free.filter((x) => x.topic !== topic && same.indexOf(x) < 0));
         const decoys = same.concat(other).slice(0, E.SLEUTH_OPTIONS - 1).map((x) => x.text);
         options[id] = this.shuffle([real].concat(decoys));
@@ -3090,7 +2911,7 @@ window.PITCH.config = {
     }
     function profileFacts(pr) {
       return '<ul class="facts"><li><b>Age</b> ' + esc(pr.age) + '</li><li><b>Status</b> ' + esc(pr.marital) + '</li><li><b>Kids</b> ' + esc(pr.kids) +
-        '</li><li><b>Job</b> ' + esc(pr.job) + '</li></ul><p class="bg">' + esc(pr.background) + '</p>';
+        '</li><li><b>Job</b> ' + esc(pr.job) + '</li></ul><p class="bg"><b>Fun fact:</b> ' + esc(pr.background) + '</p>';
     }
     function secretChip(r, id) {
       const st = r.secrets[id];
@@ -3546,7 +3367,7 @@ window.PITCH.config = {
     }
     function profileCard(pr, withSecret) {
       return '<div class="profile"><div class="eyebrow">Your character</div><h3>' + esc(pr.name) + '</h3><ul class="facts"><li><b>Age</b> ' + esc(pr.age) + '</li><li><b>Status</b> ' + esc(pr.marital) +
-        '</li><li><b>Kids</b> ' + esc(pr.kids) + '</li><li><b>Job</b> ' + esc(pr.job) + '</li></ul><p class="bg">' + esc(pr.background) + '</p>' +
+        '</li><li><b>Kids</b> ' + esc(pr.kids) + '</li><li><b>Job</b> ' + esc(pr.job) + '</li></ul><p class="bg"><b>Fun fact:</b> ' + esc(pr.background) + '</p>' +
         (withSecret ? '<div class="top-secret"><span class="lbl">Top secret: only you can see this</span>' + esc(pr.secret) + '</div>' +
           (pr.secretHints && pr.secretHints.length ? '<div class="secret-tip"><b>How to play it</b><ul class="hint-list">' + pr.secretHints.map((h) => '<li>' + esc(h) + '</li>').join('') + '</ul></div>' : '') +
           '<p class="hint">Stay in character and leave clues, but don’t just say it. Tap “They found my secret!” only when the Peddler figures it out.</p>' : '') + '</div>';
@@ -3667,10 +3488,10 @@ window.PITCH.config = {
     function peddlerFact() {
       const v = st.pub, r = v.round, p = st.priv;
       return '<section><h2>Fact-Finding</h2><p class="muted">Ask every Prospect at least one meaningful question. Uncover a secret for <b>$25</b>. Just say your guess out loud: the Prospect confirms it on their phone. Eyes up, phone down!</p>' +
-        '<p class="hint"><b>Secrets hide in everyday topics.</b> Try asking about ' + esc(C.peddlerQuestionTips.join(', ')) + '.</p></section>' +
+        '<p class="hint"><b>Every secret grows out of the Prospect’s fun fact.</b> Dig into it with follow-up questions.</p></section>' +
         r.prospects.map((id) => {
           const pr = r.profiles[id], s = r.secrets[id];
-          return '<section class="pros-card" data-key="pf-' + esc(id) + '"><h3>' + esc(pr.name) + '</h3><ul class="facts"><li><b>Age</b> ' + esc(pr.age) + '</li><li><b>Status</b> ' + esc(pr.marital) + '</li><li><b>Kids</b> ' + esc(pr.kids) + '</li><li><b>Job</b> ' + esc(pr.job) + '</li></ul><p class="bg">' + esc(pr.background) + '</p>' +
+          return '<section class="pros-card" data-key="pf-' + esc(id) + '"><h3>' + esc(pr.name) + '</h3><ul class="facts"><li><b>Age</b> ' + esc(pr.age) + '</li><li><b>Status</b> ' + esc(pr.marital) + '</li><li><b>Kids</b> ' + esc(pr.kids) + '</li><li><b>Job</b> ' + esc(pr.job) + '</li></ul><p class="bg"><b>Fun fact:</b> ' + esc(pr.background) + '</p>' +
             (s === 'confirmed' ? '<div class="secret unlocked"><span class="lbl">Secret unlocked +$25</span>' + esc(pr.secret || '') + '</div>'
               : '<p class="muted">Secret still hidden. Say your guess out loud; they’ll tap it in if you’re right.</p>') +
             '</section>';

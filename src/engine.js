@@ -378,7 +378,7 @@
     }
 
     // ---------- round lifecycle ----------
-    /** One everyday secret, never repeating a topic already used by another Prospect this round,
+    /** One fun fact + secret, never repeating a fun fact already used by another Prospect this round,
      *  and avoiding secrets used earlier in the session until the pool runs low. */
     drawSecret(takenTopics) {
       const used = this.s.used.secrets;
@@ -406,7 +406,7 @@
         marital,
         kids: Math.floor(this.rand() * this.rand() * 6),
         job: this.pick(C.occupations),
-        background: this.pick(C.backgrounds),
+        background: sec.fact,
         secret: sec.text,
         secretTopic: sec.topic,
         secretHints: sec.hints
@@ -490,10 +490,10 @@
       const options = {}, answer = {};
       targets.forEach((id) => {
         const real = r.profiles[id].secret;
-        // one decoy from the same topic (rewards listening to the details) + the rest from other topics
+        // two decoys from the same fun fact (rewards listening to the details) + one from another fun fact
         const topic = r.profiles[id].secretTopic;
         const free = C.secrets.filter((x) => roundSecrets.indexOf(x.text) < 0 && x.text !== real);
-        const same = this.shuffle(free.filter((x) => x.topic === topic)).slice(0, 1);
+        const same = this.shuffle(free.filter((x) => x.topic === topic)).slice(0, 2);
         const other = this.shuffle(free.filter((x) => x.topic !== topic && same.indexOf(x) < 0));
         const decoys = same.concat(other).slice(0, E.SLEUTH_OPTIONS - 1).map((x) => x.text);
         options[id] = this.shuffle([real].concat(decoys));

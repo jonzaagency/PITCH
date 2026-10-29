@@ -52,7 +52,7 @@
     }
     function profileFacts(pr) {
       return '<ul class="facts"><li><b>Age</b> ' + esc(pr.age) + '</li><li><b>Status</b> ' + esc(pr.marital) + '</li><li><b>Kids</b> ' + esc(pr.kids) +
-        '</li><li><b>Job</b> ' + esc(pr.job) + '</li></ul><p class="bg">' + esc(pr.background) + '</p>';
+        '</li><li><b>Job</b> ' + esc(pr.job) + '</li></ul><p class="bg"><b>Fun fact:</b> ' + esc(pr.background) + '</p>';
     }
     function secretChip(r, id) {
       const st = r.secrets[id];
