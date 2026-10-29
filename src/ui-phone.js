@@ -38,7 +38,7 @@
     function header() {
       const p = st.priv, v = st.pub;
       const t = v && v.timer ? (v.timer.screw || v.timer.main) : null;
-      return '<header class="ph-top">' + (p ? U.avatar(p) + '<span class="ph-name">' + esc(p.name) + '</span>' + roleBadge(p.role) : '<span class="ph-name">P!TCH</span>') +
+      return '<header class="ph-top">' + (p ? U.avatar(p) + '<span class="ph-name">' + esc(p.name) + '</span>' + roleBadge(p.role) : U.wordmark()) +
         '<span class="grow"></span>' + (t ? U.timerHTML(t, st.recvAt, 'ph-timer') : '') +
         (p ? '<span class="cash" title="Available cash">' + U.money(p.wallet.cash) + '</span>' : '') + '</header>';
     }

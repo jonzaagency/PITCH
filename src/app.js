@@ -83,7 +83,7 @@
 
   function statusScreen(title, text, retry) {
     reset('home-mode');
-    root.innerHTML = '<div class="home status"><h1 class="logo">P<span>!</span>TCH</h1><h2>' + esc(title) + '</h2><p>' + esc(text || '') + '</p>' +
+    root.innerHTML = '<div class="home status"><h1 class="hero-logo">' + U.wordmark() + '</h1><h2>' + esc(title) + '</h2><p>' + esc(text || '') + '</p>' +
       (retry ? '<div class="actions"><button class="btn gold" data-go="retry">Try again</button><button class="btn ghost" data-go="home">Back</button></div>' : '<div class="spinner" aria-hidden="true"></div>') + '</div>';
     root.onclick = (e) => { const b = e.target.closest('[data-go]'); if (!b) return; if (b.dataset.go === 'retry') retry(); else home(); };
   }
@@ -139,7 +139,7 @@
   function joinScreen(code, err) {
     reset('phone-mode');
     const prof = U.profile.load();
-    root.innerHTML = '<div class="phone join"><header class="ph-top"><span class="logo">P<span>!</span>TCH</span></header><main class="ph-body"><section>' +
+    root.innerHTML = '<div class="phone join"><header class="ph-top">' + U.wordmark() + '</header><main class="ph-body"><section>' +
       '<h2>Join a game</h2><form id="joinForm" novalidate>' +
       '<label class="field"><span>Room code</span><input id="j-code" class="code-input" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" value="' + esc(code || '') + '"></label>' +
       '<label class="field"><span>Your name</span><input id="j-name" maxlength="16" autocomplete="nickname" placeholder="Name" value="' + esc(prof.name) + '"></label>' +

@@ -271,6 +271,8 @@ input[type=range] { width: 100%; accent-color: var(--gold); height: 34px; }
 .tv-top { display: flex; align-items: center; gap: 1.2em; padding: 0.8em 0; border-bottom: 2px solid var(--panel-2); }
 .tv-top .logo { font-size: 2.1em; }
 .wordmark { display: block; height: auto; flex: none; }
+.ph-top .wordmark { width: 104px; }
+.status .wordmark { width: min(260px, 70%); margin: 0 auto; }
 .tv-top .wordmark { width: 10em; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4)); }
 .tv-phase { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.25em; min-width: 0; }
 .ph-name { }
@@ -3377,7 +3379,7 @@ window.PITCH.config = {
     function header() {
       const p = st.priv, v = st.pub;
       const t = v && v.timer ? (v.timer.screw || v.timer.main) : null;
-      return '<header class="ph-top">' + (p ? U.avatar(p) + '<span class="ph-name">' + esc(p.name) + '</span>' + roleBadge(p.role) : '<span class="ph-name">P!TCH</span>') +
+      return '<header class="ph-top">' + (p ? U.avatar(p) + '<span class="ph-name">' + esc(p.name) + '</span>' + roleBadge(p.role) : U.wordmark()) +
         '<span class="grow"></span>' + (t ? U.timerHTML(t, st.recvAt, 'ph-timer') : '') +
         (p ? '<span class="cash" title="Available cash">' + U.money(p.wallet.cash) + '</span>' : '') + '</header>';
     }
@@ -3929,7 +3931,7 @@ window.PITCH.config = {
 
   function statusScreen(title, text, retry) {
     reset('home-mode');
-    root.innerHTML = '<div class="home status"><h1 class="logo">P<span>!</span>TCH</h1><h2>' + esc(title) + '</h2><p>' + esc(text || '') + '</p>' +
+    root.innerHTML = '<div class="home status"><h1 class="hero-logo">' + U.wordmark() + '</h1><h2>' + esc(title) + '</h2><p>' + esc(text || '') + '</p>' +
       (retry ? '<div class="actions"><button class="btn gold" data-go="retry">Try again</button><button class="btn ghost" data-go="home">Back</button></div>' : '<div class="spinner" aria-hidden="true"></div>') + '</div>';
     root.onclick = (e) => { const b = e.target.closest('[data-go]'); if (!b) return; if (b.dataset.go === 'retry') retry(); else home(); };
   }
@@ -3985,7 +3987,7 @@ window.PITCH.config = {
   function joinScreen(code, err) {
     reset('phone-mode');
     const prof = U.profile.load();
-    root.innerHTML = '<div class="phone join"><header class="ph-top"><span class="logo">P<span>!</span>TCH</span></header><main class="ph-body"><section>' +
+    root.innerHTML = '<div class="phone join"><header class="ph-top">' + U.wordmark() + '</header><main class="ph-body"><section>' +
       '<h2>Join a game</h2><form id="joinForm" novalidate>' +
       '<label class="field"><span>Room code</span><input id="j-code" class="code-input" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" value="' + esc(code || '') + '"></label>' +
       '<label class="field"><span>Your name</span><input id="j-name" maxlength="16" autocomplete="nickname" placeholder="Name" value="' + esc(prof.name) + '"></label>' +
