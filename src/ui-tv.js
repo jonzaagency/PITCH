@@ -287,7 +287,7 @@
       const r = v.round;
       if (!r || !r.activeScrew) return '';
       const a = r.activeScrew;
-      return '<div class="overlay screw-ov" role="alert"><div class="screw-card">' + U.drill() + '<div class="screw-word">SCREW!</div><p class="by">' + esc(r.profiles[a.by].name) + ' plays</p>' +
+      return '<div class="overlay screw-ov" role="alert"><div class="screw-card">' + U.screwIcon() + '<div class="screw-word">SCREW!</div><p class="by">' + esc(r.profiles[a.by].name) + ' plays</p>' +
         '<h2>' + esc(a.card.t) + '</h2><p class="desc">' + esc(a.card.d) + '</p>' + U.timerHTML(v.timer.screw, recvAt, 'screw-timer', true) +
         '<p class="muted">Pitch clock paused. ' + esc(player(r.peddler).name) + ' has ' + v.settings.timers.screw + ' seconds. Then the table votes on their phones: nailed it or missed it?</p>' +
         '<button class="btn ghost" data-act="screwEnd">Response done ›</button></div></div>';

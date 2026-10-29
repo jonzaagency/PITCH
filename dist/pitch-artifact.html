@@ -508,13 +508,13 @@ input[type=range] { width: 100%; accent-color: var(--gold); height: 34px; }
 .screw-timer .t-num { color: #fff !important; }
 .screw-card .btn.mint { box-shadow: 0 4px 0 #2a7a35; }
 .screw-card .btn.ghost { border-color: rgba(255, 255, 255, 0.7); }
-/* SCREW! drill logo + phone vote pop-up */
-.drill { display: block; width: 7em; height: auto; margin: 0 auto; filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.25)); animation: drill-buzz 0.18s linear 6; }
-@keyframes drill-buzz { 50% { transform: translateX(2px) rotate(-2deg); } }
-.screw-live .drill, .screw-card .drill, .screw-pop .drill { background: #fffaf0; border-radius: 22px; padding: 0.5em 0.7em; box-sizing: content-box; box-shadow: 0 5px 0 #8f2017; filter: none; }
-.screw-live .drill { width: 5em; }
-.screw-card .drill { width: 8em; }
-.screw-pop .drill { width: 6em; }
+/* SCREW! screw logo + phone vote pop-up */
+.screw-icon { display: block; width: 7em; height: auto; margin: 0 auto; filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.25)); animation: screw-spin 0.18s linear 6; }
+@keyframes screw-spin { 50% { transform: translateX(2px) rotate(-2deg); } }
+.screw-live .screw-icon, .screw-card .screw-icon, .screw-pop .screw-icon { background: #fffaf0; border-radius: 22px; padding: 0.5em 0.7em; box-sizing: content-box; box-shadow: 0 5px 0 #8f2017; filter: none; }
+.screw-live .screw-icon { width: 5em; }
+.screw-card .screw-icon { width: 8em; }
+.screw-pop .screw-icon { width: 6em; }
 .pr-phone { position: relative; }
 .pr-phone .overlay { position: absolute; place-items: start center; padding-top: 70px; border-radius: 26px; } /* practice: pop-ups stay inside each phone */
 .screw-pop { background: var(--red); color: #fff; border-radius: 26px; padding: 20px 18px; width: min(420px, 100%); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.12), 0 24px 60px rgba(0, 0, 0, 0.5); animation: shake 0.6s ease 1 both; }
@@ -2583,18 +2583,11 @@ window.PITCH.config = {
   U.avatar = (p, size) => '<span class="av' + (size ? ' av-' + size : '') + '" style="--c:' + U.esc(p.color) + '">' + U.esc(U.initials(p.name)) + '</span>';
   U.fmtTime = (ms) => { const s = Math.ceil(Math.max(0, ms) / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
   U.roleName = (r) => P.engine.ROLE_NAMES[r] || '';
-  /** The SCREW! logo: a red power drill with a spinning bit. */
-  U.drill = (cls) => '<svg class="drill' + (cls ? ' ' + cls : '') + '" viewBox="0 0 128 96" role="img" aria-label="Red power drill">' +
-    '<path d="M86 39 L118 44 L126 48 L118 52 L86 57 Z" fill="#d9dde8"/>' +
-    '<path d="M93 40 L97 56 M101 41 L105 55 M109 43 L112 53" stroke="#7b839f" stroke-width="2.5" stroke-linecap="round"/>' +
-    '<path d="M120 30 L126 26 M122 66 L128 70 M110 28 L113 22" stroke="#f2b544" stroke-width="3" stroke-linecap="round"/>' +
-    '<rect x="72" y="34" width="16" height="28" rx="4" fill="#3b4160"/><path d="M76 38 V58 M81 38 V58" stroke="#242c4a" stroke-width="2"/>' +
-    '<path d="M38 56 H62 L56 86 Q55 90 50 90 H36 Q31 90 32 85 Z" fill="#9b2219"/>' +
-    '<rect x="58" y="58" width="9" height="14" rx="4" fill="#1b2138"/>' +
-    '<rect x="8" y="24" width="68" height="40" rx="16" fill="#ef4b3f"/>' +
-    '<rect x="16" y="29" width="46" height="9" rx="4.5" fill="#ff7a6b"/>' +
-    '<circle cx="22" cy="52" r="5" fill="#9b2219"/><circle cx="36" cy="52" r="5" fill="#9b2219"/>' +
-    '<rect x="26" y="84" width="38" height="10" rx="4" fill="#1b2138"/></svg>';
+  /** The SCREW! logo: a red screw on the diagonal, threads and all. */
+  U.screwIcon = (cls) => '<svg class="screw-icon' + (cls ? ' ' + cls : '') + '" viewBox="-4 -2 128 130" role="img" aria-label="Red screw">' +
+    '<defs><linearGradient id="screwShank" x1="0" x2="1"><stop offset="0" stop-color="#9b2219"/><stop offset="0.55" stop-color="#ef4b3f"/><stop offset="1" stop-color="#b8271d"/></linearGradient><linearGradient id="screwHead" x1="0" x2="1"><stop offset="0" stop-color="#b8271d"/><stop offset="0.5" stop-color="#ff5a4c"/><stop offset="1" stop-color="#9b2219"/></linearGradient></defs>' +
+    '<g transform="rotate(40 60 62)"><path d="M52 36 H68 V98 L60 120 L52 98 Z" fill="url(#screwShank)" stroke="#3a0805" stroke-width="2.5" stroke-linejoin="round"/><path d="M45 45 Q60 39 75 35 L75 39 Q60 43 45 49 Z" fill="#ff7a6b" stroke="#3a0805" stroke-width="2" stroke-linejoin="round"/><path d="M45 53 Q60 47 75 43 L75 47 Q60 51 45 57 Z" fill="#ff7a6b" stroke="#3a0805" stroke-width="2" stroke-linejoin="round"/><path d="M45 61 Q60 55 75 51 L75 55 Q60 59 45 65 Z" fill="#ff7a6b" stroke="#3a0805" stroke-width="2" stroke-linejoin="round"/><path d="M45 69 Q60 63 75 59 L75 63 Q60 67 45 73 Z" fill="#ff7a6b" stroke="#3a0805" stroke-width="2" stroke-linejoin="round"/><path d="M45 77 Q60 71 75 67 L75 71 Q60 75 45 81 Z" fill="#ff7a6b" stroke="#3a0805" stroke-width="2" stroke-linejoin="round"/><path d="M45 85 Q60 79 75 75 L75 79 Q60 83 45 89 Z" fill="#ff7a6b" stroke="#3a0805" stroke-width="2" stroke-linejoin="round"/><path d="M45 93 Q60 87 75 83 L75 87 Q60 91 45 97 Z" fill="#ff7a6b" stroke="#3a0805" stroke-width="2" stroke-linejoin="round"/><path d="M53 100 Q60 97 67 95 L66 99 Q60 101 54 104 Z M55 108 Q60 106 64 104 L63 108 Q60 109 57 112 Z" fill="#ff7a6b" stroke="#3a0805" stroke-width="1.6" stroke-linejoin="round"/><path d="M31 16 Q60 26 89 16 L68 38 Q60 41 52 38 Z" fill="url(#screwHead)" stroke="#3a0805" stroke-width="2.5" stroke-linejoin="round"/><ellipse cx="60" cy="15" rx="29" ry="8.5" fill="#ff8f84" stroke="#3a0805" stroke-width="2.5"/><path d="M47 15 H73 M60 9.5 V20.5" stroke="#3a0805" stroke-width="4.5" stroke-linecap="round"/></g>' +
+    '<path d="M14 98 L6 104 M22 110 L18 118 M8 86 L1 86" stroke="#f2b544" stroke-width="3.5" stroke-linecap="round"/>' + '</svg>';
 
   // ---------- safe storage ----------
   U.store = {
@@ -3120,7 +3113,7 @@ window.PITCH.config = {
       const r = v.round;
       if (!r || !r.activeScrew) return '';
       const a = r.activeScrew;
-      return '<div class="overlay screw-ov" role="alert"><div class="screw-card">' + U.drill() + '<div class="screw-word">SCREW!</div><p class="by">' + esc(r.profiles[a.by].name) + ' plays</p>' +
+      return '<div class="overlay screw-ov" role="alert"><div class="screw-card">' + U.screwIcon() + '<div class="screw-word">SCREW!</div><p class="by">' + esc(r.profiles[a.by].name) + ' plays</p>' +
         '<h2>' + esc(a.card.t) + '</h2><p class="desc">' + esc(a.card.d) + '</p>' + U.timerHTML(v.timer.screw, recvAt, 'screw-timer', true) +
         '<p class="muted">Pitch clock paused. ' + esc(player(r.peddler).name) + ' has ' + v.settings.timers.screw + ' seconds. Then the table votes on their phones: nailed it or missed it?</p>' +
         '<button class="btn ghost" data-act="screwEnd">Response done ›</button></div></div>';
@@ -3510,7 +3503,7 @@ window.PITCH.config = {
       const v = st.pub, r = v.round, p = st.priv, inv = r.invention;
       let screw = '';
       if (r.activeScrew) {
-        screw = '<section class="screw-live">' + U.drill() + '<div class="screw-word">SCREW!</div><h3>' + esc(r.activeScrew.card.t) + '</h3><p>' + esc(r.activeScrew.card.d) + '</p><p class="muted">You have 15 seconds. The pitch clock is paused. The table votes on how you did.</p>' +
+        screw = '<section class="screw-live">' + U.screwIcon() + '<div class="screw-word">SCREW!</div><h3>' + esc(r.activeScrew.card.t) + '</h3><p>' + esc(r.activeScrew.card.d) + '</p><p class="muted">You have 15 seconds. The pitch clock is paused. The table votes on how you did.</p>' +
           '<div class="btn-row"><button class="btn gold" data-act="screwDone">I’m done responding</button>' +
           (p.wallet.inventory.notToday > 0 && !r.nepoUsed ? '<button class="btn violet big" data-act="notToday">Play NOT TODAY!</button>' : '') + '</div></section>';
       }
@@ -3526,7 +3519,7 @@ window.PITCH.config = {
       const remaining = t ? (t.running ? t.remaining - (Date.now() - st.recvAt) : t.remaining) : 0;
       if (p.screwPlayed) {
         const sv = (r.screwVotes || {})[p.pid], t = p.screwPlayed.tally;
-        return '<section class="screw-live">' + U.drill() + '<div class="screw-word">SCREW!</div><h3>You played ' + esc(p.screwPlayed.card.t) + '</h3><p>' + esc(p.screwPlayed.card.d) + '</p>' +
+        return '<section class="screw-live">' + U.screwIcon() + '<div class="screw-word">SCREW!</div><h3>You played ' + esc(p.screwPlayed.card.t) + '</h3><p>' + esc(p.screwPlayed.card.d) + '</p>' +
           (p.screwPlayed.result ? '<p class="muted">The table says: ' + esc({ done: 'they nailed it', missed: 'they missed it', split: 'split decision', cancelled: 'cancelled with NOT TODAY!' }[p.screwPlayed.result]) + (t ? ' (' + t.done + '–' + t.missed + ')' : '') + '</p>'
             : sv && sv.open ? '<p class="muted">The table is voting… ' + sv.n + ' of ' + sv.of + ' in</p>' : '') + '</section>' + profileCard(p.profile, true);
       }
@@ -3661,7 +3654,7 @@ window.PITCH.config = {
       if (!list.length) return '';
       const sv = list[0], live = v.round.activeScrew && v.round.activeScrew.by === sv.by;
       const ped = playerName(v.round.peddler);
-      return '<div class="overlay screw-ov screw-pop-wrap" role="alertdialog" aria-label="SCREW! vote"><div class="screw-pop">' + U.drill() +
+      return '<div class="overlay screw-ov screw-pop-wrap" role="alertdialog" aria-label="SCREW! vote"><div class="screw-pop">' + U.screwIcon() +
         '<div class="screw-word">SCREW!</div><p class="by">' + esc(sv.name) + ' plays</p><h3>' + esc(sv.card.t) + '</h3><p>' + esc(sv.card.d) + '</p>' +
         (live ? '<p class="pop-q">Watch ' + esc(ped) + ' respond…</p>' + U.timerHTML(v.timer.screw, st.recvAt, 'screw-timer') : '<p class="pop-q">Did ' + esc(ped) + ' nail it?</p>') +
         '<div class="btn-row pop-btns"><button class="btn mint big" data-act="screwVote" data-by="' + esc(sv.by) + '" data-result="done"' + (live ? ' disabled' : '') + '>Nailed it</button>' +

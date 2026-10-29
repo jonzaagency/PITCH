@@ -223,7 +223,7 @@
       const v = st.pub, r = v.round, p = st.priv, inv = r.invention;
       let screw = '';
       if (r.activeScrew) {
-        screw = '<section class="screw-live">' + U.drill() + '<div class="screw-word">SCREW!</div><h3>' + esc(r.activeScrew.card.t) + '</h3><p>' + esc(r.activeScrew.card.d) + '</p><p class="muted">You have 15 seconds. The pitch clock is paused. The table votes on how you did.</p>' +
+        screw = '<section class="screw-live">' + U.screwIcon() + '<div class="screw-word">SCREW!</div><h3>' + esc(r.activeScrew.card.t) + '</h3><p>' + esc(r.activeScrew.card.d) + '</p><p class="muted">You have 15 seconds. The pitch clock is paused. The table votes on how you did.</p>' +
           '<div class="btn-row"><button class="btn gold" data-act="screwDone">I’m done responding</button>' +
           (p.wallet.inventory.notToday > 0 && !r.nepoUsed ? '<button class="btn violet big" data-act="notToday">Play NOT TODAY!</button>' : '') + '</div></section>';
       }
@@ -239,7 +239,7 @@
       const remaining = t ? (t.running ? t.remaining - (Date.now() - st.recvAt) : t.remaining) : 0;
       if (p.screwPlayed) {
         const sv = (r.screwVotes || {})[p.pid], t = p.screwPlayed.tally;
-        return '<section class="screw-live">' + U.drill() + '<div class="screw-word">SCREW!</div><h3>You played ' + esc(p.screwPlayed.card.t) + '</h3><p>' + esc(p.screwPlayed.card.d) + '</p>' +
+        return '<section class="screw-live">' + U.screwIcon() + '<div class="screw-word">SCREW!</div><h3>You played ' + esc(p.screwPlayed.card.t) + '</h3><p>' + esc(p.screwPlayed.card.d) + '</p>' +
           (p.screwPlayed.result ? '<p class="muted">The table says: ' + esc({ done: 'they nailed it', missed: 'they missed it', split: 'split decision', cancelled: 'cancelled with NOT TODAY!' }[p.screwPlayed.result]) + (t ? ' (' + t.done + '–' + t.missed + ')' : '') + '</p>'
             : sv && sv.open ? '<p class="muted">The table is voting… ' + sv.n + ' of ' + sv.of + ' in</p>' : '') + '</section>' + profileCard(p.profile, true);
       }
@@ -374,7 +374,7 @@
       if (!list.length) return '';
       const sv = list[0], live = v.round.activeScrew && v.round.activeScrew.by === sv.by;
       const ped = playerName(v.round.peddler);
-      return '<div class="overlay screw-ov screw-pop-wrap" role="alertdialog" aria-label="SCREW! vote"><div class="screw-pop">' + U.drill() +
+      return '<div class="overlay screw-ov screw-pop-wrap" role="alertdialog" aria-label="SCREW! vote"><div class="screw-pop">' + U.screwIcon() +
         '<div class="screw-word">SCREW!</div><p class="by">' + esc(sv.name) + ' plays</p><h3>' + esc(sv.card.t) + '</h3><p>' + esc(sv.card.d) + '</p>' +
         (live ? '<p class="pop-q">Watch ' + esc(ped) + ' respond…</p>' + U.timerHTML(v.timer.screw, st.recvAt, 'screw-timer') : '<p class="pop-q">Did ' + esc(ped) + ' nail it?</p>') +
         '<div class="btn-row pop-btns"><button class="btn mint big" data-act="screwVote" data-by="' + esc(sv.by) + '" data-result="done"' + (live ? ' disabled' : '') + '>Nailed it</button>' +

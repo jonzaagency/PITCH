@@ -9,18 +9,11 @@
   U.avatar = (p, size) => '<span class="av' + (size ? ' av-' + size : '') + '" style="--c:' + U.esc(p.color) + '">' + U.esc(U.initials(p.name)) + '</span>';
   U.fmtTime = (ms) => { const s = Math.ceil(Math.max(0, ms) / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
   U.roleName = (r) => P.engine.ROLE_NAMES[r] || '';
-  /** The SCREW! logo: a red power drill with a spinning bit. */
-  U.drill = (cls) => '<svg class="drill' + (cls ? ' ' + cls : '') + '" viewBox="0 0 128 96" role="img" aria-label="Red power drill">' +
-    '<path d="M86 39 L118 44 L126 48 L118 52 L86 57 Z" fill="#d9dde8"/>' +
-    '<path d="M93 40 L97 56 M101 41 L105 55 M109 43 L112 53" stroke="#7b839f" stroke-width="2.5" stroke-linecap="round"/>' +
-    '<path d="M120 30 L126 26 M122 66 L128 70 M110 28 L113 22" stroke="#f2b544" stroke-width="3" stroke-linecap="round"/>' +
-    '<rect x="72" y="34" width="16" height="28" rx="4" fill="#3b4160"/><path d="M76 38 V58 M81 38 V58" stroke="#242c4a" stroke-width="2"/>' +
-    '<path d="M38 56 H62 L56 86 Q55 90 50 90 H36 Q31 90 32 85 Z" fill="#9b2219"/>' +
-    '<rect x="58" y="58" width="9" height="14" rx="4" fill="#1b2138"/>' +
-    '<rect x="8" y="24" width="68" height="40" rx="16" fill="#ef4b3f"/>' +
-    '<rect x="16" y="29" width="46" height="9" rx="4.5" fill="#ff7a6b"/>' +
-    '<circle cx="22" cy="52" r="5" fill="#9b2219"/><circle cx="36" cy="52" r="5" fill="#9b2219"/>' +
-    '<rect x="26" y="84" width="38" height="10" rx="4" fill="#1b2138"/></svg>';
+  /** The SCREW! logo: a red screw on the diagonal, threads and all. */
+  U.screwIcon = (cls) => '<svg class="screw-icon' + (cls ? ' ' + cls : '') + '" viewBox="-4 -2 128 130" role="img" aria-label="Red screw">' +
+    '<defs><linearGradient id="screwShank" x1="0" x2="1"><stop offset="0" stop-color="#9b2219"/><stop offset="0.55" stop-color="#ef4b3f"/><stop offset="1" stop-color="#b8271d"/></linearGradient><linearGradient id="screwHead" x1="0" x2="1"><stop offset="0" stop-color="#b8271d"/><stop offset="0.5" stop-color="#ff5a4c"/><stop offset="1" stop-color="#9b2219"/></linearGradient></defs>' +
+    '<g transform="rotate(40 60 62)"><path d="M52 36 H68 V98 L60 120 L52 98 Z" fill="url(#screwShank)" stroke="#3a0805" stroke-width="2.5" stroke-linejoin="round"/><path d="M45 45 Q60 39 75 35 L75 39 Q60 43 45 49 Z" fill="#ff7a6b" stroke="#3a0805" stroke-width="2" stroke-linejoin="round"/><path d="M45 53 Q60 47 75 43 L75 47 Q60 51 45 57 Z" fill="#ff7a6b" stroke="#3a0805" stroke-width="2" stroke-linejoin="round"/><path d="M45 61 Q60 55 75 51 L75 55 Q60 59 45 65 Z" fill="#ff7a6b" stroke="#3a0805" stroke-width="2" stroke-linejoin="round"/><path d="M45 69 Q60 63 75 59 L75 63 Q60 67 45 73 Z" fill="#ff7a6b" stroke="#3a0805" stroke-width="2" stroke-linejoin="round"/><path d="M45 77 Q60 71 75 67 L75 71 Q60 75 45 81 Z" fill="#ff7a6b" stroke="#3a0805" stroke-width="2" stroke-linejoin="round"/><path d="M45 85 Q60 79 75 75 L75 79 Q60 83 45 89 Z" fill="#ff7a6b" stroke="#3a0805" stroke-width="2" stroke-linejoin="round"/><path d="M45 93 Q60 87 75 83 L75 87 Q60 91 45 97 Z" fill="#ff7a6b" stroke="#3a0805" stroke-width="2" stroke-linejoin="round"/><path d="M53 100 Q60 97 67 95 L66 99 Q60 101 54 104 Z M55 108 Q60 106 64 104 L63 108 Q60 109 57 112 Z" fill="#ff7a6b" stroke="#3a0805" stroke-width="1.6" stroke-linejoin="round"/><path d="M31 16 Q60 26 89 16 L68 38 Q60 41 52 38 Z" fill="url(#screwHead)" stroke="#3a0805" stroke-width="2.5" stroke-linejoin="round"/><ellipse cx="60" cy="15" rx="29" ry="8.5" fill="#ff8f84" stroke="#3a0805" stroke-width="2.5"/><path d="M47 15 H73 M60 9.5 V20.5" stroke="#3a0805" stroke-width="4.5" stroke-linecap="round"/></g>' +
+    '<path d="M14 98 L6 104 M22 110 L18 118 M8 86 L1 86" stroke="#f2b544" stroke-width="3.5" stroke-linecap="round"/>' + '</svg>';
 
   // ---------- safe storage ----------
   U.store = {
