@@ -223,7 +223,7 @@
     const game = new E.Game({ code: 'PRAC' });
     const hostLink = new N.HostLink(game, broker.client());
     const tvEl = document.getElementById('prTv');
-    const tv = P.tv.create(tvEl, { game, practice: true, onExit: () => home() });
+    const tv = P.tv.create(tvEl, { game, practice: true, me: 'seat0', onExit: () => home() });
     let raf = 0;
     hostLink.onUpdate(() => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; tv.render(); }); });
     hostLink.start();
@@ -236,7 +236,7 @@
       const prof = { id: 'bot' + i, name: PRACTICE_NAMES[i], prefs: { peddler: true, prospect: true, phil: true }, wallet: { career: 0, cash: 0, inventory: { notToday: 0, knowPeople: 0, daddy: 0 } }, inventions: [] };
       const ident = { pid: 'seat' + i, token: 'seat' + i + N.randomId(6), seq: 0 };
       let link;
-      const phone = P.phone.create(el, { send: (a) => link.send(a), profile: prof, onProfile: () => {}, onLeave: () => {}, practice: true });
+      const phone = P.phone.create(el, { send: (a) => link.send(a), profile: prof, onProfile: () => {}, onLeave: () => {}, practice: true, me: 'seat0' });
       link = new N.PlayerLink(broker.client(), 'PRAC', ident, { public: phone.public, private: phone.private, asset: phone.asset });
       link.start({ type: 'join', name: PRACTICE_NAMES[i], prefs: prof.prefs, wallet: prof.wallet });
       seats.push({ el, phone, link, memo: {}, name: PRACTICE_NAMES[i] });

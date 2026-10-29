@@ -2592,7 +2592,7 @@ window.PITCH.config = {
 
     function lab(v) {
       const r = v.round;
-      return '<section class="lab"><div class="lab-ped">' + U.avatar(player(r.peddler), 'xl') + '<div><div class="eyebrow">Peddler</div><h2>' + esc(player(r.peddler).name) + ' is inventing</h2>' +
+      return '<section class="lab"><div class="lab-ped">' + U.avatar(player(r.peddler), 'xl') + '<div><div class="eyebrow">Peddler</div><h2>' + (r.peddler === opts.me ? 'You are inventing' : esc(player(r.peddler).name) + ' is inventing') + '</h2>' +
         '<p>' + (r.labDone[r.peddler] ? '<span class="ok">Ready ✓</span>' : 'Choosing an Item, a Function and a Spokesperson, then sketching it.') + '</p></div></div>' +
         '<div class="lab-pros"><h3>Prospects are drawing their characters</h3><div class="lab-grid">' + r.prospects.map((id) =>
           '<div class="lab-p" data-key="lp-' + esc(id) + '">' + U.avatar(player(id), 'lg') + '<span>' + esc(player(id).name) + '</span>' + (r.labDone[id] ? '<span class="ok">Ready ✓</span>' : '<span class="muted">Drawing…</span>') + '</div>').join('') + '</div></div>' +
@@ -3116,7 +3116,7 @@ window.PITCH.config = {
       if (ph === 'reveal') return revealScreen();
       if (ph === 'final') return finalScreen();
       if (role === 'sitout' || !role) return '<section class="hello"><h2>Sitting out this round</h2><p>Enjoy the show. You’ll be in the next one.</p></section>';
-      if (ph === 'lab') return role === 'peddler' ? peddlerLab() : role === 'prospect' ? prospectLab() : philWait('The Peddler is inventing…');
+      if (ph === 'lab') return role === 'peddler' ? peddlerLab() : role === 'prospect' ? prospectLab() : philWait(st.pub.round.peddler === opts.me ? 'You are inventing…' : esc((st.pub.players.find((x) => x.id === st.pub.round.peddler) || { name: 'The Peddler' }).name) + ' is inventing…');
       if (ph === 'fact') return role === 'peddler' ? peddlerFact() : role === 'prospect' ? prospectFact() : philWait('Fact-Finding');
       if (ph === 'pitch') return role === 'peddler' ? peddlerPitch() : role === 'prospect' ? prospectPitch() : philWait('PITCH!');
       if (ph === 'close') return role === 'peddler' ? '<section class="hello"><h2>Objections + Close</h2><p>Answer every objection directly, then clearly <b>ask for the sale</b>.</p></section>' + notes()
@@ -3474,7 +3474,7 @@ window.PITCH.config = {
     const game = new E.Game({ code: 'PRAC' });
     const hostLink = new N.HostLink(game, broker.client());
     const tvEl = document.getElementById('prTv');
-    const tv = P.tv.create(tvEl, { game, practice: true, onExit: () => home() });
+    const tv = P.tv.create(tvEl, { game, practice: true, me: 'seat0', onExit: () => home() });
     let raf = 0;
     hostLink.onUpdate(() => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; tv.render(); }); });
     hostLink.start();
@@ -3487,7 +3487,7 @@ window.PITCH.config = {
       const prof = { id: 'bot' + i, name: PRACTICE_NAMES[i], prefs: { peddler: true, prospect: true, phil: true }, wallet: { career: 0, cash: 0, inventory: { notToday: 0, knowPeople: 0, daddy: 0 } }, inventions: [] };
       const ident = { pid: 'seat' + i, token: 'seat' + i + N.randomId(6), seq: 0 };
       let link;
-      const phone = P.phone.create(el, { send: (a) => link.send(a), profile: prof, onProfile: () => {}, onLeave: () => {}, practice: true });
+      const phone = P.phone.create(el, { send: (a) => link.send(a), profile: prof, onProfile: () => {}, onLeave: () => {}, practice: true, me: 'seat0' });
       link = new N.PlayerLink(broker.client(), 'PRAC', ident, { public: phone.public, private: phone.private, asset: phone.asset });
       link.start({ type: 'join', name: PRACTICE_NAMES[i], prefs: prof.prefs, wallet: prof.wallet });
       seats.push({ el, phone, link, memo: {}, name: PRACTICE_NAMES[i] });

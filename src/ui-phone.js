@@ -260,7 +260,7 @@
       if (ph === 'reveal') return revealScreen();
       if (ph === 'final') return finalScreen();
       if (role === 'sitout' || !role) return '<section class="hello"><h2>Sitting out this round</h2><p>Enjoy the show. You’ll be in the next one.</p></section>';
-      if (ph === 'lab') return role === 'peddler' ? peddlerLab() : role === 'prospect' ? prospectLab() : philWait('The Peddler is inventing…');
+      if (ph === 'lab') return role === 'peddler' ? peddlerLab() : role === 'prospect' ? prospectLab() : philWait(st.pub.round.peddler === opts.me ? 'You are inventing…' : esc((st.pub.players.find((x) => x.id === st.pub.round.peddler) || { name: 'The Peddler' }).name) + ' is inventing…');
       if (ph === 'fact') return role === 'peddler' ? peddlerFact() : role === 'prospect' ? prospectFact() : philWait('Fact-Finding');
       if (ph === 'pitch') return role === 'peddler' ? peddlerPitch() : role === 'prospect' ? prospectPitch() : philWait('PITCH!');
       if (ph === 'close') return role === 'peddler' ? '<section class="hello"><h2>Objections + Close</h2><p>Answer every objection directly, then clearly <b>ask for the sale</b>.</p></section>' + notes()
