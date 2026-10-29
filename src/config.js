@@ -3,7 +3,7 @@ window.PITCH = window.PITCH || {};
 window.PITCH.config = {
   version: '1.0.0',
   // Where the online game lives (GitHub Pages). Phones join here.
-  pagesUrl: 'https://jonzaagency.github.io/pitch/',
+  pagesUrl: 'https://jonzaagency.github.io/PITCH/',
   // Free public MQTT brokers (secure WebSockets). The Host uses the first one that answers;
   // phones try them all and find the room. Add or reorder freely.
   brokers: [

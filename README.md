@@ -2,7 +2,7 @@
 
 A Jackbox-style party game for 3 to 20+ players, in the same room or online. One browser (TV or laptop) is the Host and runs the game; everyone else plays on their phone.
 
-**Play online:** https://jonzaagency.github.io/pitch/ (after GitHub Pages is turned on, see below)
+**Play online:** https://jonzaagency.github.io/PITCH/ (after GitHub Pages is turned on, see below)
 
 ## How it's built
 
@@ -30,7 +30,7 @@ This writes `docs/index.html` (the online game) and `dist/pitch-artifact.html` (
 
 ## Turn on the online game
 
-GitHub repo > Settings > Pages > Source: **Deploy from a branch**, Branch: **main**, Folder: **/docs**. The game appears at https://jonzaagency.github.io/pitch/ a minute later.
+GitHub repo > Settings > Pages > Source: **Deploy from a branch**, Branch: **main**, Folder: **/docs**. The game appears at https://jonzaagency.github.io/PITCH/ a minute later.
 
 ## Try it locally
 
