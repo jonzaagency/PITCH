@@ -25,7 +25,7 @@
         id: p.id || 'p' + P.net.randomId(10),
         name: p.name || '',
         prefs: p.prefs || { peddler: true, prospect: true, phil: true },
-        wallet: p.wallet || { career: 0, cash: 0, inventory: { notToday: 0, knowPeople: 0, daddy: 0 } },
+        wallet: p.wallet || { career: 0, cash: 0, inventory: { notToday: 0, knowPeople: 0, daddy: 0, insider: 0 } },
         inventions: p.inventions || []
       };
     },

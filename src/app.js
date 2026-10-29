@@ -67,7 +67,7 @@
       '<div><h4>Each round</h4><ol><li>Creation Lab · 2:00</li><li>Fact-Finding · 2:30 · $25 per secret uncovered</li><li>PITCH! · 1:30 · each Prospect may SCREW! once (15 s, clock pauses)</li><li>Objections + Close · 0:45</li><li>Money Reveal</li></ol></div>' +
       '<div><h4>Money</h4><p>Each Philanthropist awards $0–$50 in six categories: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close. ' +
       'The Peddler earns the average scorecard plus $25 per secret (with 4+ Philanthropists, a scorecard more than $100 away from the rest of the room is set aside). Prospects earn the average of up to $25 each for role-play. ' +
-      '<b>Secret Sleuth:</b> after the close, Philanthropists pick each secret the Peddler missed from 4 options, $10 per correct pick. Most money tonight wins.</p>' +
+      '<b>Secret Sleuth:</b> during Fact-Finding, Philanthropists guess each Prospect’s secret from 4 options, $10 per correct guess. The Peddler can buy <b>INSIDE TRADING</b> to peek at a guess. Most money tonight wins.</p>' +
       '<p>Spend cash between rounds on NEPO BABY! Power Cards: NOT TODAY! ($75), I KNOW PEOPLE ($100), DADDY MADE A CALL ($125).</p></div></div>';
   }
 
@@ -238,7 +238,7 @@
       const el = document.createElement('div');
       el.className = 'pr-phone'; el.hidden = i !== 0;
       phonesEl.appendChild(el);
-      const prof = { id: 'bot' + i, name: PRACTICE_NAMES[i], prefs: { peddler: true, prospect: true, phil: true }, wallet: { career: 0, cash: 0, inventory: { notToday: 0, knowPeople: 0, daddy: 0 } }, inventions: [] };
+      const prof = { id: 'bot' + i, name: PRACTICE_NAMES[i], prefs: { peddler: true, prospect: true, phil: true }, wallet: { career: 0, cash: 0, inventory: { notToday: 0, knowPeople: 0, daddy: 0, insider: 0 } }, inventions: [] };
       const ident = { pid: 'seat' + i, token: 'seat' + i + N.randomId(6), seq: 0 };
       let link;
       const phone = P.phone.create(el, { send: (a) => link.send(a), profile: prof, onProfile: () => {}, onLeave: () => {}, practice: true });
@@ -306,6 +306,8 @@
     } else if (v.phase === 'fact' && p.role === 'peddler') {
       const hidden = r.prospects.filter((id) => r.secrets[id] === 'hidden');
       if (hidden.length && chance(0.07)) send({ type: 'secretClaim', target: hidden[rnd(hidden.length)], guess: ['They are afraid of something', 'They secretly sing', 'They have a hidden pet', 'They won money'][rnd(4)] });
+    } else if (v.phase === 'fact' && p.role === 'phil') {
+      (p.sleuth || []).forEach((t) => { if (!t.locked && (p.sleuthPicks || {})[t.pid] === undefined) once('sleuth-' + t.pid, () => setTimeout(() => send({ type: 'sleuthPick', target: t.pid, idx: rnd(t.options.length) }), 1500 + rnd(6000))); });
     } else if (v.phase === 'pitch' && p.role === 'prospect') {
       const t = v.timer.main;
       const left = t ? t.remaining - (t.running ? Date.now() - st.recvAt : 0) : 0;
@@ -317,8 +319,7 @@
       once('score', () => {
         const cats = {}; C.categories.forEach((c) => { cats[c.id] = 15 + rnd(8) * 5; });
         const pros = {}; r.prospects.forEach((id) => { pros[id] = rnd(6) * 5; });
-        const sleuth = {}; (p.sleuth || []).forEach((t) => { if (chance(0.85)) sleuth[t.pid] = rnd(t.options.length); });
-        setTimeout(() => send({ type: 'scorecard', cats, prospects: pros, sleuth }), 1000 + rnd(3000));
+        setTimeout(() => send({ type: 'scorecard', cats, prospects: pros }), 1000 + rnd(3000));
       });
     } else if (v.phase === 'scoring' && p.role === 'prospect') {
       if (!p.verdict) send({ type: 'verdict', buy: chance(0.5) });

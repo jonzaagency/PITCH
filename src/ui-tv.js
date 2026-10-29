@@ -105,7 +105,7 @@
         '<div class="set-row"><span>Prospects per round (max)</span><div class="seg">' + [1, 2, 3].map((n) => '<button data-act="setProspects" data-n="' + n + '" class="' + (st.maxProspects === n ? 'on' : '') + '">' + n + '</button>').join('') + '</div></div>' +
         '<div class="set-row"><span>Rounds</span><div class="seg">' + [0, 3, 5, 8].map((n) => '<button data-act="setRounds" data-n="' + n + '" class="' + (st.rounds === n ? 'on' : '') + '">' + (n ? n : 'Everyone pitches once') + '</button>').join('') + '</div></div>' +
         '<label class="set-row toggle"><span>Move on automatically when time runs out or everyone is done</span><input type="checkbox" id="set-auto" data-set="autoAdvance"' + (st.autoAdvance ? ' checked' : '') + '></label>' +
-        '<label class="set-row toggle"><span>Secret Sleuth: Philanthropists earn ' + U.money(E.SLEUTH_BONUS) + ' for each hidden secret they pick</span><input type="checkbox" id="set-sleuth" data-set="sleuth"' + (st.sleuth ? ' checked' : '') + '></label>' +
+        '<label class="set-row toggle"><span>Secret Sleuth: during Fact-Finding, Philanthropists earn ' + U.money(E.SLEUTH_BONUS) + ' for each secret they guess right</span><input type="checkbox" id="set-sleuth" data-set="sleuth"' + (st.sleuth ? ' checked' : '') + '></label>' +
         '<label class="set-row toggle"><span>Set aside a scorecard that is way out of line (more than ' + U.money(E.OUTLIER_GAP) + ' from the middle, with 4+ Philanthropists)</span><input type="checkbox" id="set-trim" data-set="trimOutliers"' + (st.trimOutliers ? ' checked' : '') + '></label>' +
         '<label class="set-row toggle"><span>Role briefing at the start of each round (turn off for veteran players)</span><input type="checkbox" id="set-brief" data-set="briefing"' + (st.briefing ? ' checked' : '') + '></label>' +
         '<label class="set-row toggle"><span>End-of-night awards vote before the final results</span><input type="checkbox" id="set-awards" data-set="awards"' + (st.awards ? ' checked' : '') + '></label>' +
@@ -141,10 +141,10 @@
       return '<section class="brief"><div class="round-title"><h2>Check your phone for your role</h2><p class="muted">Read it, then tap “Got it.”</p></div>' +
         '<div class="rcols">' + who([r.peddler], 'peddler') + who(r.prospects, 'prospect') + who(r.phils, 'phil') + '</div>' +
         '<ol class="brief-steps"><li><b>Creation Lab</b> ' + mm(st.lab) + '<span>The Peddler invents; Prospects draw their characters.</span></li>' +
-        '<li><b>Fact-Finding</b> ' + mm(st.fact) + '<span>The Peddler interviews every Prospect. +$25 per secret uncovered.</span></li>' +
+        '<li><b>Fact-Finding</b> ' + mm(st.fact) + '<span>The Peddler interviews every Prospect. +$25 per secret uncovered.' + (v.settings.sleuth ? ' Philanthropists play Secret Sleuth.' : '') + '</span></li>' +
         '<li><b>PITCH!</b> ' + mm(st.pitch) + '<span>Each Prospect may SCREW! the Peddler once.</span></li>' +
         '<li><b>Objections + Close</b> ' + mm(st.close) + '<span>Final objections, then ask for the sale.</span></li>' +
-        '<li><b>Money Reveal</b><span>Philanthropists score six categories, $0–$50 each' + (v.settings.sleuth ? ', and play Secret Sleuth' : '') + '.</span></li></ol></section>';
+        '<li><b>Money Reveal</b><span>Philanthropists score six categories, $0–$50 each.</span></li></ol></section>';
     }
 
     function lab(v) {
@@ -159,6 +159,7 @@
     function fact(v) {
       const r = v.round;
       return '<section class="fact"><p class="lead">' + esc(player(r.peddler).name) + ', ask every Prospect at least one real question. Each secret you uncover earns <b>$25</b>.</p>' +
+        (v.settings.sleuth ? '<p class="sleuth-call center"><b>Philanthropists:</b> play Secret Sleuth on your phone. Guess each secret before the Peddler finds it for <b>+' + U.money(E.SLEUTH_BONUS) + '</b> apiece.</p>' : '') +
         '<div class="pros">' + r.prospects.map((id) => '<article class="pro" data-key="pro-' + esc(id) + '">' + portrait(game.s.round, id) +
           '<div class="pro-body"><h3>' + esc(r.profiles[id].name) + '</h3><p class="played-by">played by ' + esc(player(id).name) + '</p>' + profileFacts(r.profiles[id]) +
           '<div class="pro-tags">' + (r.asked[id] ? '<span class="tag ok">Questioned ✓</span>' : '<span class="tag">Not questioned yet</span>') + '</div>' + secretChip(r, id) + '</div></article>').join('') + '</div>' +
@@ -210,7 +211,7 @@
       const r = v.round;
       const confirmed = r.prospects.filter((id) => r.secrets[id] === 'confirmed').length;
       return '<section class="scoring"><div class="round-title"><div class="eyebrow">Philanthropists</div><h2>Score the pitch on your phone</h2><p class="muted">Six categories, $0 to $50 each. Score what you saw, not who you like.</p>' +
-        (r.prospects.some((id) => r.secrets[id] !== 'confirmed') && v.settings.sleuth ? '<p class="sleuth-call"><b>Secret Sleuth:</b> pick each hidden secret on your phone for <b>+' + U.money(E.SLEUTH_BONUS) + '</b> apiece.</p>' : '') + '</div>' +
+        '</div>' +
         '<div class="phil-grid">' + r.phils.map((id) => '<div class="phil' + (r.scorecardsIn.indexOf(id) >= 0 ? ' in' : '') + '" data-key="ph-' + esc(id) + '">' + U.avatar(player(id), 'lg') + '<span>' + esc(player(id).name) + '</span>' +
           (r.scorecardsIn.indexOf(id) >= 0 ? '<span class="ok">Scored ✓</span>' : '<span class="muted">Scoring…</span>') + '</div>').join('') + '</div>' +
         '<p class="center">Secrets discovered: <b>' + confirmed + ' of ' + r.prospects.length + '</b> (+' + U.money(confirmed * 25) + ' bonus)</p>' +
@@ -232,7 +233,7 @@
           '<p class="rv-secret">' + (r.secrets[id] === 'confirmed' ? '<span class="ok">Found:</span> ' : '<span class="muted">Hidden:</span> ') + esc(gr.profiles[id].secret) + '</p>' +
           '<span class="stamp ' + (r.verdicts[id] === 'buy' ? 'buy' : 'pass') + '">' + (r.verdicts[id] === 'buy' ? 'Would buy' : r.verdicts[id] === 'pass' ? 'Pass' : 'Undecided') + '</span>' +
           '<span class="award">Role-play award ' + U.money2(res.prospectAwards[id]) + '</span>' +
-          (res.sleuth && res.sleuth.byTarget[id] && res.sleuth.byTarget[id].of ? '<span class="sleuth-tally">Sleuths: ' + res.sleuth.byTarget[id].right + ' of ' + res.sleuth.byTarget[id].of + ' picked it</span>' : '') + '</div></div>').join('') +
+          (res.sleuth && res.sleuth.byTarget[id] && res.sleuth.byTarget[id].of ? '<span class="sleuth-tally">Sleuths: ' + res.sleuth.byTarget[id].right + ' of ' + res.sleuth.byTarget[id].of + ' guessed it</span>' : '') + '</div></div>').join('') +
         sleuthBoard(res) +
         '<h3>Session money</h3>' + leaderboard(v, 8) + '</div></section>';
     }
@@ -242,7 +243,7 @@
       if (!sl || !sl.targets.length) return '';
       const winners = Object.keys(sl.byPhil).filter((id) => sl.byPhil[id].amount > 0).sort((a, b) => sl.byPhil[b].amount - sl.byPhil[a].amount);
       return '<h3>Secret Sleuths</h3>' + (winners.length ? '<div class="sleuth-board">' + winners.map((id) => '<span class="chip" data-key="sb-' + esc(id) + '">' + U.avatar(player(id)) + '<span class="chip-name">' + esc(player(id).name) + '</span><b class="sleuth-amt">+' + U.money(sl.byPhil[id].amount) + '</b></span>').join('') + '</div>'
-        : '<p class="muted">No Philanthropist picked a hidden secret this time.</p>');
+        : '<p class="muted">No Philanthropist guessed a secret right this time.</p>');
     }
 
     function nomineeImg(c) {

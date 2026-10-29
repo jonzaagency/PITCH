@@ -96,7 +96,7 @@
   /** Default Prospect count from the rulebook table: 3 players -> 1, 4 -> 2, 5+ -> 3. */
   E.defaultProspects = (n) => (n <= 3 ? 1 : n === 4 ? 2 : 3);
 
-  function emptyWallet() { return { career: 0, cash: 0, inventory: { notToday: 0, knowPeople: 0, daddy: 0 } }; }
+  function emptyWallet() { return { career: 0, cash: 0, inventory: { notToday: 0, knowPeople: 0, daddy: 0, insider: 0 } }; }
   function cleanWallet(w) {
     const out = emptyWallet();
     if (!w || typeof w !== 'object') return out;
@@ -471,20 +471,20 @@
       s.timer.screw = null;
       if (s.round) { s.round.activeScrew = null; if (phase !== 'fact' && phase !== 'pitch' && phase !== 'close') s.round.daddy = null; }
       s.timer.main = TIMED_PHASES[phase] ? this.newTimer(s.settings.timers[TIMED_PHASES[phase]]) : null;
-      if (phase === 'fact') this.finalizeInvention();
-      if (phase === 'scoring') { this.setupSleuth(); this.checkAllDone(); }
+      if (phase === 'fact') { this.finalizeInvention(); this.setupSleuth(); }
+      if (phase === 'scoring') this.checkAllDone();
     }
 
-    /** Secret Sleuth (house rule): once the Objections + Close are over, each Philanthropist sees
-     *  4 possible secrets for every Prospect the Peddler did NOT uncover, and picks one.
-     *  Opening only now means nobody can hint the options to the Peddler. */
+    /** Secret Sleuth (house rule): during Fact-Finding, each Philanthropist sees 4 possible secrets
+     *  for every Prospect and picks one while listening. A pick locks once that secret is uncovered. */
     setupSleuth() {
       const s = this.s, r = s.round;
       if (!r) return;
       r.sleuth = null;
+      r.sleuthPicks = {};
+      r.insider = null;
       if (!s.settings.sleuth) return;
-      const targets = r.prospects.filter((id) => r.secrets[id] !== 'confirmed');
-      if (!targets.length) { r.sleuth = { targets: [], options: {}, answer: {} }; return; }
+      const targets = r.prospects.slice();
       const roundSecrets = r.prospects.map((id) => r.profiles[id].secret);
       const options = {}, answer = {};
       targets.forEach((id) => {
@@ -550,17 +550,17 @@
       };
       pay(r.peddler, res.total);
       r.prospects.forEach((id) => pay(id, res.prospectAwards[id]));
-      // Secret Sleuth payouts. A secret the Host awarded to the Peddler during scoring no longer counts.
+      // Secret Sleuth payouts: every pick made during Fact-Finding counts, even if the Peddler found that secret later.
       if (r.sleuth) {
-        const targets = r.sleuth.targets.filter((id) => r.secrets[id] !== 'confirmed');
+        const targets = r.sleuth.targets;
         const byPhil = {}, byTarget = {};
         targets.forEach((id) => { byTarget[id] = { right: 0, of: 0 }; });
         r.phils.forEach((pid) => {
-          const sc = r.scorecards[pid];
-          if (!sc) return;
+          const picks = (r.sleuthPicks || {})[pid];
+          if (!picks) return;
           let correct = 0;
           targets.forEach((id) => {
-            const pick = (sc.sleuth || {})[id];
+            const pick = picks[id];
             if (pick === undefined) return;
             byTarget[id].of += 1;
             if (pick === r.sleuth.answer[id]) { correct += 1; byTarget[id].right += 1; }
@@ -821,13 +821,18 @@
       const cats = {}, pros = {};
       C.categories.forEach((c) => { cats[c.id] = clampInt((a.cats || {})[c.id], 0, E.CATEGORY_MAX); });
       r.prospects.forEach((id) => { pros[id] = clampInt((a.prospects || {})[id], 0, E.PROSPECT_AWARD_MAX); });
-      const sleuth = {};
-      if (r.sleuth) r.sleuth.targets.forEach((id) => {
-        const v = (a.sleuth || {})[id];
-        if (v !== undefined && v !== null && v !== '') sleuth[id] = clampInt(v, 0, E.SLEUTH_OPTIONS - 1);
-      });
-      r.scorecards[p.id] = { cats, prospects: pros, sleuth };
+      r.scorecards[p.id] = { cats, prospects: pros };
       this.checkAllDone();
+      return { ok: true };
+    }
+
+    a_sleuthPick(p, a) {
+      const s = this.s, r = s.round;
+      if (!r || r.phils.indexOf(p.id) < 0) return { ok: false, error: 'Only Philanthropists play Secret Sleuth.' };
+      if (!r.sleuth || s.phase !== 'fact') return { ok: false, error: 'Secret Sleuth guesses close when Fact-Finding ends.' };
+      if (r.sleuth.targets.indexOf(a.target) < 0) return { ok: false, error: 'Pick a Prospect.' };
+      if (r.secrets[a.target] === 'confirmed') return { ok: false, error: 'That secret is already out.' };
+      (r.sleuthPicks[p.id] = r.sleuthPicks[p.id] || {})[a.target] = clampInt(a.idx, 0, E.SLEUTH_OPTIONS - 1);
       return { ok: true };
     }
 
@@ -874,6 +879,15 @@
         r.daddy = { target: a.target, text: this.pick(C.daddyChallenges), at: this.now() };
         r.nepoUsed = { card: card.id, target: a.target };
         this.log('nepo', 'DADDY MADE A CALL! ' + r.profiles[a.target].name + ': ' + r.daddy.text, { big: true });
+      } else if (card.id === 'insider') {
+        if (s.phase !== 'fact') return { ok: false, error: 'Use INSIDE TRADING during Fact-Finding.' };
+        if (!r.sleuth) return { ok: false, error: 'Secret Sleuth is turned off this game.' };
+        if (r.phils.indexOf(a.phil) < 0 || r.prospects.indexOf(a.target) < 0) return { ok: false, error: 'Pick a Philanthropist and a Prospect.' };
+        const pick = (r.sleuthPicks[a.phil] || {})[a.target];
+        if (pick === undefined) return { ok: false, error: s.players[a.phil].name + ' has not guessed ' + r.profiles[a.target].name + '’s secret yet. Try again soon.' };
+        r.insider = { phil: a.phil, target: a.target, text: r.sleuth.options[a.target][pick] };
+        r.nepoUsed = { card: card.id, target: a.phil };
+        this.log('nepo', 'INSIDE TRADING! ' + p.name + ' peeks at ' + s.players[a.phil].name + '’s Secret Sleuth notes.', { big: true });
       }
       p.wallet.inventory[card.id] -= 1;
       return { ok: true };
@@ -1163,6 +1177,7 @@
         out.invention = r.invention;
         out.labDone = !!r.labDone[pid];
         out.claims = r.claims;
+        out.insider = r.insider || null;
       }
       if (r && role === 'prospect') {
         out.profile = r.profiles[pid];
@@ -1176,8 +1191,9 @@
       }
       if (r && role === 'phil') {
         out.scorecard = r.scorecards[pid] || null;
-        if (r.sleuth && (s.phase === 'scoring' || s.phase === 'reveal')) {
-          out.sleuth = r.sleuth.targets.map((id) => ({ pid: id, name: r.profiles[id].name, options: r.sleuth.options[id] }));
+        if (r.sleuth && ['fact', 'pitch', 'close', 'scoring', 'reveal'].indexOf(s.phase) >= 0) {
+          out.sleuth = r.sleuth.targets.map((id) => ({ pid: id, name: r.profiles[id].name, options: r.sleuth.options[id], locked: s.phase !== 'fact' || r.secrets[id] === 'confirmed' }));
+          out.sleuthPicks = r.sleuthPicks[pid] || {};
           if (s.phase === 'reveal') {
             out.sleuthAnswers = r.sleuth.answer;
             out.sleuthResult = (r.results.sleuth && r.results.sleuth.byPhil[pid]) || null;

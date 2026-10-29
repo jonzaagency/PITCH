@@ -109,7 +109,7 @@
         phil: ['<b>Watch closely:</b> the Peddler invents, questions the Prospects, and pitches.',
           '<b>Then score</b> six categories, $0–$50 each: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close.',
           '<b>Reward the Prospects</b> up to $25 each for role-play.'].concat(
-          v.settings.sleuth ? ['<b>Secret Sleuth:</b> afterward, guess the secrets the Peddler missed for <b>$10</b> each. Listen for hints!'] : [],
+          v.settings.sleuth ? ['<b>Secret Sleuth:</b> during Fact-Finding, guess each Prospect’s secret on your phone for <b>$10</b> each. Listen for hints, and lock in before the Peddler finds it!'] : [],
           v.settings.trimOutliers && r.phils.length >= E.OUTLIER_MIN_CARDS ? ['Score fairly: a scorecard way out of line with the room gets set aside.'] : [])
       }[p.role];
       if (!items) return '<section class="hello"><h2>Sitting out this round</h2><p>Enjoy the show. You’ll be in the next one.</p></section>';
@@ -168,7 +168,7 @@
     }
 
     function philWait(text) {
-      return '<section class="hello"><h2>' + text + '</h2><p>Watch the big screen. You’ll score the Peddler in six categories, $0–$50 each, and can reward each Prospect’s role-play up to $25.</p></section>' + scorecard(false);
+      return '<section class="hello"><h2>' + text + '</h2><p>Watch the big screen. You’ll score the Peddler in six categories, $0–$50 each, and can reward each Prospect’s role-play up to $25.</p></section>' + sleuthBlock() + scorecard(false);
     }
 
     function peddlerFact() {
@@ -182,11 +182,22 @@
               : s === 'claimed' ? '<p class="muted">Waiting for them to confirm…</p>'
                 : '<label class="field"><span>' + (s === 'denied' ? 'They said no. The Host may settle it, or try again:' : 'I think their secret is…') + '</span><input id="guess-' + esc(id) + '" maxlength="100" data-draft="guess-' + esc(id) + '" value="' + esc(draft('guess-' + id, '')) + '" autocomplete="off"></label><button class="btn mint" data-act="claim" data-target="' + esc(id) + '">I found their secret</button>') +
             '</section>';
-        }).join('') + daddyUse() + notes();
+        }).join('') + insiderUse() + daddyUse() + notes();
     }
     function notes() {
       return '<section><h3>My notes</h3><textarea id="notes" rows="4" data-draft="notes" placeholder="Things you learned. Only you can see this.">' + esc(draft('notes', '')) + '</textarea></section>';
     }
+    function insiderUse() {
+      const r = st.pub.round, p = st.priv;
+      const peek = p.insider ? '<section class="nepo-use"><h3>INSIDE TRADING</h3><p>' + esc(playerName(p.insider.phil)) + ' thinks <b>' + esc(r.profiles[p.insider.target].name) + '</b>’s secret is:</p><p class="guess">“' + esc(p.insider.text) + '”</p><p class="muted">Only you can see this. Still confirm it with good questions!</p></section>' : '';
+      if (!(p.wallet.inventory.insider > 0) || r.nepoUsed || !st.pub.settings.sleuth) return peek;
+      if (st.chooser !== 'insider') return '<section class="nepo-use"><h3>INSIDE TRADING</h3><p class="muted">Peek at one Philanthropist’s Secret Sleuth guess.</p><button class="btn violet" data-act="chooser" data-c="insider">Use it</button></section>';
+      return '<section class="nepo-use"><h3>INSIDE TRADING</h3>' +
+        '<label class="field"><span>Whose notes?</span><select id="it-phil" data-draft="it-phil">' + r.phils.map((id) => '<option value="' + esc(id) + '"' + (draft('it-phil', r.phils[0]) === id ? ' selected' : '') + '>' + esc(playerName(id)) + '</option>').join('') + '</select></label>' +
+        '<label class="field"><span>Which Prospect?</span><select id="it-target" data-draft="it-target">' + r.prospects.map((id) => '<option value="' + esc(id) + '"' + (draft('it-target', r.prospects[0]) === id ? ' selected' : '') + '>' + esc(r.profiles[id].name) + '</option>').join('') + '</select></label>' +
+        '<button class="btn violet" data-act="insiderGo">Peek</button> <button class="btn ghost" data-act="chooser" data-c="">Cancel</button></section>';
+    }
+    function playerName(id) { const x = st.pub.players.find((pl) => pl.id === id); return x ? x.name : 'Someone'; }
     function daddyUse() {
       const r = st.pub.round, p = st.priv;
       if (!(p.wallet.inventory.daddy > 0) || r.nepoUsed) return '';
@@ -252,9 +263,8 @@
       const v = st.pub, r = v.round, p = st.priv;
       if (!r) return '';
       const k = 'sc-r' + r.n;
-      const base = p.scorecard || { cats: {}, prospects: {}, sleuth: {} };
-      const sc = st.drafts[k] || (st.drafts[k] = { cats: Object.assign(C.categories.reduce((o, c) => { o[c.id] = 25; return o; }, {}), base.cats), prospects: Object.assign({}, base.prospects), sleuth: Object.assign({}, base.sleuth) });
-      if (!sc.sleuth) sc.sleuth = {};
+      const base = p.scorecard || { cats: {}, prospects: {} };
+      const sc = st.drafts[k] || (st.drafts[k] = { cats: Object.assign(C.categories.reduce((o, c) => { o[c.id] = 25; return o; }, {}), base.cats), prospects: Object.assign({}, base.prospects) });
       const total = C.categories.reduce((s, c) => s + Number(sc.cats[c.id] || 0), 0);
       return '<section class="scorecard"><div class="sec-head"><h3>' + (canSubmit ? 'Your scorecard' : 'Scorecard (submit opens after the close)') + '</h3><span class="sc-total">' + U.money(total) + '<em>/ $300</em></span></div>' +
         C.categories.map((c) => '<label class="slider" data-key="sl-' + c.id + '"><span class="sl-top"><b>' + esc(c.name) + '</b><span class="sl-val">' + U.money(sc.cats[c.id]) + '</span></span><span class="muted sl-hint">' + esc(c.hint) + '</span>' +
@@ -262,26 +272,25 @@
         '<h4>Prospect role-play awards (optional)</h4>' + r.prospects.map((id) => '<label class="slider" data-key="slp-' + esc(id) + '"><span class="sl-top"><b>' + esc(r.profiles[id].name) + '</b><span class="sl-val">' + U.money(sc.prospects[id] || 0) + '</span></span><span class="muted sl-hint">Stayed in character, believable, answered fairly, added fun.</span>' +
           '<input type="range" min="0" max="25" step="5" id="scp-' + esc(id) + '" data-score="prospects.' + esc(id) + '" value="' + Number(sc.prospects[id] || 0) + '"></label>').join('') +
         (canSubmit && v.settings.trimOutliers && r.phils.length >= E.OUTLIER_MIN_CARDS ? '<p class="hint">Score fairly: a scorecard more than ' + U.money(E.OUTLIER_GAP) + ' away from the rest of the room gets set aside.</p>' : '') +
-        (canSubmit ? sleuthBlock(sc) : '') +
         (canSubmit ? '<button class="btn gold big" data-act="submitScore">' + (p.scorecard ? 'Update my scorecard' : 'Submit scorecard') + '</button>' + (p.scorecard ? '<p class="ok center">Submitted ✓ You can change it until the reveal.</p>' : '') : '') + '</section>';
     }
 
-    /** Secret Sleuth: pick each hidden secret from 4 options for +$10. Opens only in Scoring. */
-    function sleuthBlock(sc) {
-      const list = st.priv.sleuth;
-      if (!list) return '';
-      const bonus = U.money(E.SLEUTH_BONUS);
-      if (!list.length) return '<div class="sleuth"><div class="sleuth-head"><span class="eyebrow">Secret Sleuth</span></div><p class="muted">The Peddler uncovered every secret, so there is nothing to sleuth this round.</p></div>';
-      return '<div class="sleuth"><div class="sleuth-head"><span class="eyebrow">Secret Sleuth</span><b>' + bonus + ' for each secret you pick right</b></div>' +
-        '<p class="muted">The Peddler didn’t uncover these. Which secret is the real one?</p>' +
-        list.map((t) => '<fieldset class="sleuth-q" data-key="sq-' + esc(t.pid) + '"><legend>' + esc(t.name) + '</legend>' + t.options.map((o, i) =>
-          '<button type="button" class="sleuth-opt' + (sc.sleuth[t.pid] === i ? ' on' : '') + '" data-act="sleuthPick" data-pid="' + esc(t.pid) + '" data-idx="' + i + '" aria-pressed="' + (sc.sleuth[t.pid] === i) + '">' + esc(o) + '</button>').join('') + '</fieldset>').join('') + '</div>';
+    /** Secret Sleuth: during Fact-Finding, pick each Prospect's secret from 4 options for +$10.
+     *  A pick locks once that secret is uncovered, and all picks lock when Fact-Finding ends. */
+    function sleuthBlock() {
+      const list = st.priv.sleuth, picks = st.priv.sleuthPicks || {};
+      if (!list || !list.length || st.pub.phase === 'reveal') return '';
+      const open = st.pub.phase === 'fact';
+      return '<section class="sleuth"><div class="sleuth-head"><span class="eyebrow">Secret Sleuth</span><b>' + U.money(E.SLEUTH_BONUS) + ' for each secret you guess right</b></div>' +
+        '<p class="muted">' + (open ? 'Listen to the interviews. You can change a guess until that secret is uncovered.' : 'Guesses are locked. Results at the Money Reveal.') + '</p>' +
+        list.map((t) => '<fieldset class="sleuth-q" data-key="sq-' + esc(t.pid) + '"><legend>' + esc(t.name) + (t.locked && open ? ' · locked' : '') + '</legend>' + t.options.map((o, i) =>
+          '<button type="button" class="sleuth-opt' + (picks[t.pid] === i ? ' on' : '') + '" data-act="sleuthPick" data-pid="' + esc(t.pid) + '" data-idx="' + i + '" aria-pressed="' + (picks[t.pid] === i) + '"' + (t.locked ? ' disabled' : '') + '>' + esc(o) + '</button>').join('') + '</fieldset>').join('') + '</section>';
     }
 
     function sleuthResults() {
       const p = st.priv;
       if (!p.sleuth || !p.sleuth.length || !p.sleuthAnswers) return '';
-      const mine = (p.scorecard && p.scorecard.sleuth) || {};
+      const mine = p.sleuthPicks || {};
       const res = p.sleuthResult || { correct: 0, of: p.sleuth.length, amount: 0 };
       return '<section class="sleuth"><div class="sleuth-head"><span class="eyebrow">Secret Sleuth</span><b>' + res.correct + ' of ' + res.of + ' right · +' + U.money2(res.amount) + '</b></div>' +
         p.sleuth.map((t) => {
@@ -456,8 +465,9 @@
       else if (a === 'pitchDone') { send({ type: 'pitchDone' }); st.confirm = null; }
       else if (a === 'objection') send({ type: 'objection' });
       else if (a === 'verdict') { st.priv.verdict = d.buy === '1' ? 'buy' : 'pass'; send({ type: 'verdict', buy: d.buy === '1' }); }
-      else if (a === 'submitScore') { const k = 'sc-r' + r.n; send({ type: 'scorecard', cats: st.drafts[k].cats, prospects: st.drafts[k].prospects, sleuth: st.drafts[k].sleuth || {} }); U.toast('Scorecard sent'); }
-      else if (a === 'sleuthPick') { const k = 'sc-r' + r.n; if (st.drafts[k]) { st.drafts[k].sleuth = st.drafts[k].sleuth || {}; st.drafts[k].sleuth[d.pid] = Number(d.idx); } }
+      else if (a === 'submitScore') { const k = 'sc-r' + r.n; send({ type: 'scorecard', cats: st.drafts[k].cats, prospects: st.drafts[k].prospects }); U.toast('Scorecard sent'); }
+      else if (a === 'sleuthPick') { st.priv.sleuthPicks = Object.assign({}, st.priv.sleuthPicks, { [d.pid]: Number(d.idx) }); send({ type: 'sleuthPick', target: d.pid, idx: Number(d.idx) }); }
+      else if (a === 'insiderGo') { send({ type: 'nepo', card: 'insider', phil: draft('it-phil', r.phils[0]), target: draft('it-target', r.prospects[0]) }); st.chooser = null; }
       else if (a === 'hof') send({ type: 'hof', yes: d.yes === '1' });
       else if (a === 'volunteer') send({ type: 'volunteer', role: d.role });
       else if (a === 'buy') { send({ type: 'buy', card: d.card }); st.confirm = null; }
