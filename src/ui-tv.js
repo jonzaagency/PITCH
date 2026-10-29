@@ -162,7 +162,7 @@
         (v.settings.sleuth ? '<p class="sleuth-call center"><b>Philanthropists:</b> play Secret Sleuth on your phone. Guess each secret before the Peddler finds it for <b>+' + U.money(E.SLEUTH_BONUS) + '</b> apiece.</p>' : '') +
         '<div class="pros">' + r.prospects.map((id) => '<article class="pro" data-key="pro-' + esc(id) + '">' + portrait(game.s.round, id) +
           '<div class="pro-body"><h3>' + esc(r.profiles[id].name) + '</h3><p class="played-by">played by ' + esc(player(id).name) + '</p>' + profileFacts(r.profiles[id]) +
-          '<div class="pro-tags">' + (r.asked[id] ? '<span class="tag ok">Questioned ✓</span>' : '<span class="tag">Not questioned yet</span>') + '</div>' + secretChip(r, id) + '</div></article>').join('') + '</div>' +
+          secretChip(r, id) + '</div></article>').join('') + '</div>' +
         disputes(v) + '</section>';
     }
 

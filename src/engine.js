@@ -443,7 +443,6 @@
         portraits: {},
         labDone: {},
         briefed: {},
-        asked: {},
         screwPlayed: {},
         screwVotes: {},
         activeScrew: null,
@@ -757,14 +756,6 @@
       if (this.roleOf(p.id) === 'sitout') return { ok: true };
       r.briefed[p.id] = true;
       this.checkAllDone();
-      return { ok: true };
-    }
-
-    a_asked(p) {
-      const r = this.s.round;
-      if (!r || r.prospects.indexOf(p.id) < 0) return { ok: false, error: 'Only Prospects can confirm this.' };
-      if (['fact', 'pitch', 'close'].indexOf(this.s.phase) < 0) return { ok: false, error: 'Fact-finding has not started.' };
-      r.asked[p.id] = true;
       return { ok: true };
     }
 
@@ -1166,7 +1157,7 @@
         const inv = r.invention;
         round = {
           n: r.n, peddler: r.peddler, prospects: r.prospects, phils: r.phils, sitOut: r.sitOut,
-          profiles, portraits: r.portraits, labDone: r.labDone, briefed: r.briefed || {}, asked: r.asked, secrets: r.secrets,
+          profiles, portraits: r.portraits, labDone: r.labDone, briefed: r.briefed || {}, secrets: r.secrets,
           disputes: Object.keys(r.secrets).filter((id) => r.secrets[id] === 'denied').map((id) => ({ pid: id, guess: r.claims[id] || '' })),
           invention: showInvention ? {
             name: inv.name, slogan: inv.slogan, sketch: inv.sketch,
@@ -1228,7 +1219,6 @@
         out.claimGuess = r.secrets[pid] === 'claimed' ? r.claims[pid] || '' : null;
         out.labDone = !!r.labDone[pid];
         out.verdict = r.verdicts[pid] || null;
-        out.asked = !!r.asked[pid];
       }
       if (r && (role === 'phil' || role === 'prospect')) {
         out.screwVotes = Object.keys(r.screwVotes || {}).filter((by) => r.screwVotes[by].open && r.screwVotes[by].voters.indexOf(pid) >= 0)

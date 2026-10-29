@@ -1517,7 +1517,6 @@ window.PITCH.config = {
         portraits: {},
         labDone: {},
         briefed: {},
-        asked: {},
         screwPlayed: {},
         screwVotes: {},
         activeScrew: null,
@@ -1831,14 +1830,6 @@ window.PITCH.config = {
       if (this.roleOf(p.id) === 'sitout') return { ok: true };
       r.briefed[p.id] = true;
       this.checkAllDone();
-      return { ok: true };
-    }
-
-    a_asked(p) {
-      const r = this.s.round;
-      if (!r || r.prospects.indexOf(p.id) < 0) return { ok: false, error: 'Only Prospects can confirm this.' };
-      if (['fact', 'pitch', 'close'].indexOf(this.s.phase) < 0) return { ok: false, error: 'Fact-finding has not started.' };
-      r.asked[p.id] = true;
       return { ok: true };
     }
 
@@ -2240,7 +2231,7 @@ window.PITCH.config = {
         const inv = r.invention;
         round = {
           n: r.n, peddler: r.peddler, prospects: r.prospects, phils: r.phils, sitOut: r.sitOut,
-          profiles, portraits: r.portraits, labDone: r.labDone, briefed: r.briefed || {}, asked: r.asked, secrets: r.secrets,
+          profiles, portraits: r.portraits, labDone: r.labDone, briefed: r.briefed || {}, secrets: r.secrets,
           disputes: Object.keys(r.secrets).filter((id) => r.secrets[id] === 'denied').map((id) => ({ pid: id, guess: r.claims[id] || '' })),
           invention: showInvention ? {
             name: inv.name, slogan: inv.slogan, sketch: inv.sketch,
@@ -2302,7 +2293,6 @@ window.PITCH.config = {
         out.claimGuess = r.secrets[pid] === 'claimed' ? r.claims[pid] || '' : null;
         out.labDone = !!r.labDone[pid];
         out.verdict = r.verdicts[pid] || null;
-        out.asked = !!r.asked[pid];
       }
       if (r && (role === 'phil' || role === 'prospect')) {
         out.screwVotes = Object.keys(r.screwVotes || {}).filter((by) => r.screwVotes[by].open && r.screwVotes[by].voters.indexOf(pid) >= 0)
@@ -3210,7 +3200,7 @@ window.PITCH.config = {
         (v.settings.sleuth ? '<p class="sleuth-call center"><b>Philanthropists:</b> play Secret Sleuth on your phone. Guess each secret before the Peddler finds it for <b>+' + U.money(E.SLEUTH_BONUS) + '</b> apiece.</p>' : '') +
         '<div class="pros">' + r.prospects.map((id) => '<article class="pro" data-key="pro-' + esc(id) + '">' + portrait(game.s.round, id) +
           '<div class="pro-body"><h3>' + esc(r.profiles[id].name) + '</h3><p class="played-by">played by ' + esc(player(id).name) + '</p>' + profileFacts(r.profiles[id]) +
-          '<div class="pro-tags">' + (r.asked[id] ? '<span class="tag ok">Questioned ✓</span>' : '<span class="tag">Not questioned yet</span>') + '</div>' + secretChip(r, id) + '</div></article>').join('') + '</div>' +
+          secretChip(r, id) + '</div></article>').join('') + '</div>' +
         disputes(v) + '</section>';
     }
 
@@ -3713,8 +3703,7 @@ window.PITCH.config = {
       return '<section class="found-sec">' + (found ? '<p class="ok center">Your secret is out. The Peddler earns $25.</p>'
         : st.confirm === 'reveal' ? '<p class="center"><b>Did they really figure it out?</b></p><div class="confirm"><button class="btn mint big" data-act="selfReveal">Yes, award them $25</button><button class="btn ghost" data-act="cancel">Not yet</button></div>'
           : '<button class="btn mint big found-btn" data-act="ask" data-ck="reveal">They found my secret!</button><p class="hint center">Tap this the moment the Peddler says it out loud.</p>') + '</section>' +
-        profileCard(p.profile, true) +
-        '<section class="btn-col">' + (p.asked ? '<p class="ok">You confirmed you were questioned ✓</p>' : '<button class="btn ghost" data-act="asked">The Peddler asked me a real question</button>') + '</section>';
+        profileCard(p.profile, true);
     }
 
     function peddlerPitch() {
@@ -3978,7 +3967,6 @@ window.PITCH.config = {
       else if (a === 'screwVote') { (st.priv.screwVotes || []).forEach((x) => { if (x.by === d.by) x.mine = d.result; }); send({ type: 'screwVote', by: d.by, result: d.result }); U.toast('Vote in ✓'); }
       else if (a === 'answer') send({ type: 'secretAnswer', yes: d.yes === '1' });
       else if (a === 'selfReveal') { send({ type: 'secretAnswer', yes: true }); st.confirm = null; }
-      else if (a === 'asked') send({ type: 'asked' });
       else if (a === 'vote') { st.priv.votes = Object.assign({}, st.priv.votes, { [d.cat]: d.key2 }); send({ type: 'vote', cat: d.cat, key: d.key2 }); }
       else if (a === 'briefed') { if (st.pub.round) { st.pub.round.briefed = Object.assign({}, st.pub.round.briefed, { [st.priv.pid]: true }); } send({ type: 'briefed' }); }
       else if (a === 'screw') { send({ type: 'screw', idx: Number(d.idx) }); st.confirm = null; U.vibrate(100); }
@@ -4312,7 +4300,6 @@ window.PITCH.config = {
       once('draw', () => { const pad = new U.DrawPad(); pad.scribble(); send({ type: 'drawing', data: pad.export() }); });
       if (!p.labDone && chance(0.3)) send({ type: 'labDone' });
     } else if (v.phase === 'fact' && p.role === 'prospect') {
-      if (!p.asked && chance(0.25)) send({ type: 'asked' });
       if (p.secretStatus !== 'confirmed' && chance(0.004)) send({ type: 'secretAnswer', yes: true });
     } else if (v.phase === 'fact' && p.role === 'phil') {
       (p.sleuth || []).forEach((t) => { if (!t.locked && (p.sleuthPicks || {})[t.pid] === undefined) once('sleuth-' + t.pid, () => setTimeout(() => send({ type: 'sleuthPick', target: t.pid, idx: rnd(t.options.length) }), 1500 + rnd(6000))); });

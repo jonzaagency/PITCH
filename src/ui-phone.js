@@ -211,8 +211,7 @@
       return '<section class="found-sec">' + (found ? '<p class="ok center">Your secret is out. The Peddler earns $25.</p>'
         : st.confirm === 'reveal' ? '<p class="center"><b>Did they really figure it out?</b></p><div class="confirm"><button class="btn mint big" data-act="selfReveal">Yes, award them $25</button><button class="btn ghost" data-act="cancel">Not yet</button></div>'
           : '<button class="btn mint big found-btn" data-act="ask" data-ck="reveal">They found my secret!</button><p class="hint center">Tap this the moment the Peddler says it out loud.</p>') + '</section>' +
-        profileCard(p.profile, true) +
-        '<section class="btn-col">' + (p.asked ? '<p class="ok">You confirmed you were questioned ✓</p>' : '<button class="btn ghost" data-act="asked">The Peddler asked me a real question</button>') + '</section>';
+        profileCard(p.profile, true);
     }
 
     function peddlerPitch() {
@@ -476,7 +475,6 @@
       else if (a === 'screwVote') { (st.priv.screwVotes || []).forEach((x) => { if (x.by === d.by) x.mine = d.result; }); send({ type: 'screwVote', by: d.by, result: d.result }); U.toast('Vote in ✓'); }
       else if (a === 'answer') send({ type: 'secretAnswer', yes: d.yes === '1' });
       else if (a === 'selfReveal') { send({ type: 'secretAnswer', yes: true }); st.confirm = null; }
-      else if (a === 'asked') send({ type: 'asked' });
       else if (a === 'vote') { st.priv.votes = Object.assign({}, st.priv.votes, { [d.cat]: d.key2 }); send({ type: 'vote', cat: d.cat, key: d.key2 }); }
       else if (a === 'briefed') { if (st.pub.round) { st.pub.round.briefed = Object.assign({}, st.pub.round.briefed, { [st.priv.pid]: true }); } send({ type: 'briefed' }); }
       else if (a === 'screw') { send({ type: 'screw', idx: Number(d.idx) }); st.confirm = null; U.vibrate(100); }

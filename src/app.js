@@ -301,7 +301,6 @@
       once('draw', () => { const pad = new U.DrawPad(); pad.scribble(); send({ type: 'drawing', data: pad.export() }); });
       if (!p.labDone && chance(0.3)) send({ type: 'labDone' });
     } else if (v.phase === 'fact' && p.role === 'prospect') {
-      if (!p.asked && chance(0.25)) send({ type: 'asked' });
       if (p.secretStatus !== 'confirmed' && chance(0.004)) send({ type: 'secretAnswer', yes: true });
     } else if (v.phase === 'fact' && p.role === 'phil') {
       (p.sleuth || []).forEach((t) => { if (!t.locked && (p.sleuthPicks || {})[t.pid] === undefined) once('sleuth-' + t.pid, () => setTimeout(() => send({ type: 'sleuthPick', target: t.pid, idx: rnd(t.options.length) }), 1500 + rnd(6000))); });
