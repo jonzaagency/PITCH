@@ -9,6 +9,18 @@
   U.avatar = (p, size) => '<span class="av' + (size ? ' av-' + size : '') + '" style="--c:' + U.esc(p.color) + '">' + U.esc(U.initials(p.name)) + '</span>';
   U.fmtTime = (ms) => { const s = Math.ceil(Math.max(0, ms) / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
   U.roleName = (r) => P.engine.ROLE_NAMES[r] || '';
+  /** The SCREW! logo: a red power drill with a spinning bit. */
+  U.drill = (cls) => '<svg class="drill' + (cls ? ' ' + cls : '') + '" viewBox="0 0 128 96" role="img" aria-label="Red power drill">' +
+    '<path d="M86 39 L118 44 L126 48 L118 52 L86 57 Z" fill="#d9dde8"/>' +
+    '<path d="M93 40 L97 56 M101 41 L105 55 M109 43 L112 53" stroke="#7b839f" stroke-width="2.5" stroke-linecap="round"/>' +
+    '<path d="M120 30 L126 26 M122 66 L128 70 M110 28 L113 22" stroke="#f2b544" stroke-width="3" stroke-linecap="round"/>' +
+    '<rect x="72" y="34" width="16" height="28" rx="4" fill="#3b4160"/><path d="M76 38 V58 M81 38 V58" stroke="#242c4a" stroke-width="2"/>' +
+    '<path d="M38 56 H62 L56 86 Q55 90 50 90 H36 Q31 90 32 85 Z" fill="#9b2219"/>' +
+    '<rect x="58" y="58" width="9" height="14" rx="4" fill="#1b2138"/>' +
+    '<rect x="8" y="24" width="68" height="40" rx="16" fill="#ef4b3f"/>' +
+    '<rect x="16" y="29" width="46" height="9" rx="4.5" fill="#ff7a6b"/>' +
+    '<circle cx="22" cy="52" r="5" fill="#9b2219"/><circle cx="36" cy="52" r="5" fill="#9b2219"/>' +
+    '<rect x="26" y="84" width="38" height="10" rx="4" fill="#1b2138"/></svg>';
 
   // ---------- safe storage ----------
   U.store = {

@@ -64,7 +64,7 @@
     return '<div class="howto-body"><div><h4>Roles</h4><ul><li><b>Peddler</b> invents a product from three cards, interviews the Prospects, pitches, and closes.</li>' +
       '<li><b>Prospects</b> (1–3) play fictional characters with a secret, draw a portrait, and each play one SCREW! card.</li>' +
       '<li><b>Philanthropists</b> (everyone else) score the Peddler with game money.</li></ul></div>' +
-      '<div><h4>Each round</h4><ol><li>Creation Lab · 2:00</li><li>Fact-Finding · 2:30 · $25 per secret uncovered</li><li>PITCH! · 1:30 · each Prospect may SCREW! once (15 s, clock pauses)</li><li>Objections + Close · 0:45</li><li>Money Reveal</li></ol></div>' +
+      '<div><h4>Each round</h4><ol><li>Creation Lab · 2:00</li><li>Fact-Finding · 2:30 · $25 per secret uncovered</li><li>PITCH! · 1:30 · each Prospect may SCREW! once (15 s, clock pauses, then the table votes)</li><li>Objections + Close · 0:45</li><li>Money Reveal</li></ol></div>' +
       '<div><h4>Money</h4><p>Each Philanthropist awards $0–$50 in six categories: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close. ' +
       'The Peddler earns the average scorecard plus $25 per secret (with 4+ Philanthropists, a scorecard more than $100 away from the rest of the room is set aside). Prospects earn the average of up to $25 each for role-play. ' +
       '<b>Secret Sleuth:</b> during Fact-Finding, Philanthropists guess each Prospect’s secret from 4 options, $10 per correct guess. The Peddler can buy <b>INSIDE TRADING</b> to peek at a guess. Most money tonight wins.</p>' +
@@ -308,6 +308,8 @@
       if (hidden.length && chance(0.07)) send({ type: 'secretClaim', target: hidden[rnd(hidden.length)], guess: ['They are afraid of something', 'They secretly sing', 'They have a hidden pet', 'They won money'][rnd(4)] });
     } else if (v.phase === 'fact' && p.role === 'phil') {
       (p.sleuth || []).forEach((t) => { if (!t.locked && (p.sleuthPicks || {})[t.pid] === undefined) once('sleuth-' + t.pid, () => setTimeout(() => send({ type: 'sleuthPick', target: t.pid, idx: rnd(t.options.length) }), 1500 + rnd(6000))); });
+    } else if (v.phase === 'pitch' && (p.screwVotes || []).some((x) => !x.mine && !(r.activeScrew && r.activeScrew.by === x.by))) {
+      p.screwVotes.forEach((x) => { if (!x.mine && !(r.activeScrew && r.activeScrew.by === x.by)) once('vote-screw-' + x.by, () => setTimeout(() => send({ type: 'screwVote', by: x.by, result: chance(0.6) ? 'done' : 'missed' }), 800 + rnd(3000))); });
     } else if (v.phase === 'pitch' && p.role === 'prospect') {
       const t = v.timer.main;
       const left = t ? t.remaining - (t.running ? Date.now() - st.recvAt : 0) : 0;

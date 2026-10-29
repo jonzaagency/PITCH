@@ -98,15 +98,16 @@
       const items = {
         peddler: ['<b>Creation Lab (' + mm(t.lab) + '):</b> pick one Item and one Function card, name your invention, and sketch how it works.',
           '<b>Fact-Finding (' + mm(t.fact) + '):</b> ask every Prospect real questions. Each secret you uncover earns <b>$25</b>.',
-          '<b>PITCH! (' + mm(t.pitch) + '):</b> sell it using what you learned. Each Prospect can SCREW! you once; you get ' + t.screw + ' seconds to respond.',
+          '<b>PITCH! (' + mm(t.pitch) + '):</b> sell it using what you learned. Each Prospect can SCREW! you once; you get ' + t.screw + ' seconds to respond, then the table votes on how you did.',
           '<b>Objections + Close (' + mm(t.close) + '):</b> answer every objection, then clearly ask for the sale.',
           'Philanthropists score you in six categories, $0–$50 each.'],
         prospect: ['<b>Draw</b> a portrait of your character during the Creation Lab.',
           '<b>Answer in character</b> when the Peddler questions you. Drop hints about your secret, but only confirm it if they genuinely uncover it.',
-          '<b>During the pitch,</b> play one of your three SCREW! cards to throw the Peddler off.',
+          '<b>During the pitch,</b> play one of your three SCREW! cards to throw the Peddler off. When another Prospect plays one, vote on your phone: did the Peddler nail it?',
           '<b>After the pitch,</b> raise one objection and decide whether your character would buy.',
           'Philanthropists can award you up to <b>$25</b> for great role-play.'],
         phil: ['<b>Watch closely:</b> the Peddler invents, questions the Prospects, and pitches.',
+          '<b>Vote on every SCREW!</b> when it pops up on your phone: did the Peddler nail it or miss it?',
           '<b>Then score</b> six categories, $0–$50 each: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close.',
           '<b>Reward the Prospects</b> up to $25 each for role-play.'].concat(
           v.settings.sleuth ? ['<b>Secret Sleuth:</b> during Fact-Finding, guess each Prospect’s secret on your phone for <b>$10</b> each. Listen for hints, and lock in before the Peddler finds it!'] : [],
@@ -222,8 +223,9 @@
       const v = st.pub, r = v.round, p = st.priv, inv = r.invention;
       let screw = '';
       if (r.activeScrew) {
-        screw = '<section class="screw-live"><div class="screw-word">SCREW!</div><h3>' + esc(r.activeScrew.card.t) + '</h3><p>' + esc(r.activeScrew.card.d) + '</p><p class="muted">You have 15 seconds. The pitch clock is paused.</p>' +
-          (p.wallet.inventory.notToday > 0 && !r.nepoUsed ? '<button class="btn violet big" data-act="notToday">Play NOT TODAY!</button>' : '') + '</section>';
+        screw = '<section class="screw-live">' + U.drill() + '<div class="screw-word">SCREW!</div><h3>' + esc(r.activeScrew.card.t) + '</h3><p>' + esc(r.activeScrew.card.d) + '</p><p class="muted">You have 15 seconds. The pitch clock is paused. The table votes on how you did.</p>' +
+          '<div class="btn-row"><button class="btn gold" data-act="screwDone">I’m done responding</button>' +
+          (p.wallet.inventory.notToday > 0 && !r.nepoUsed ? '<button class="btn violet big" data-act="notToday">Play NOT TODAY!</button>' : '') + '</div></section>';
       }
       return screw + '<section><h2>' + esc(inv.name) + '</h2>' + (inv.slogan ? '<p class="slogan">“' + esc(inv.slogan) + '”</p>' : '') +
         '<div class="hand">' + '<div class="deck deck-item"><span class="deck-k">Item</span><span class="deck-t">' + esc(inv.item) + '</span></div><div class="deck deck-func"><span class="deck-k">Function</span><span class="deck-t">' + esc(inv.func) + '</span></div></div>' +
@@ -236,8 +238,10 @@
       const t = v.timer.main;
       const remaining = t ? (t.running ? t.remaining - (Date.now() - st.recvAt) : t.remaining) : 0;
       if (p.screwPlayed) {
-        return '<section class="screw-live"><div class="screw-word">SCREW!</div><h3>You played ' + esc(p.screwPlayed.card.t) + '</h3><p>' + esc(p.screwPlayed.card.d) + '</p>' +
-          (p.screwPlayed.result ? '<p class="muted">Result: ' + esc({ done: 'nailed it', missed: 'missed it', cancelled: 'cancelled with NOT TODAY!' }[p.screwPlayed.result]) + '</p>' : '') + '</section>' + profileCard(p.profile, true);
+        const sv = (r.screwVotes || {})[p.pid], t = p.screwPlayed.tally;
+        return '<section class="screw-live">' + U.drill() + '<div class="screw-word">SCREW!</div><h3>You played ' + esc(p.screwPlayed.card.t) + '</h3><p>' + esc(p.screwPlayed.card.d) + '</p>' +
+          (p.screwPlayed.result ? '<p class="muted">The table says: ' + esc({ done: 'they nailed it', missed: 'they missed it', split: 'split decision', cancelled: 'cancelled with NOT TODAY!' }[p.screwPlayed.result]) + (t ? ' (' + t.done + '–' + t.missed + ')' : '') + '</p>'
+            : sv && sv.open ? '<p class="muted">The table is voting… ' + sv.n + ' of ' + sv.of + ' in</p>' : '') + '</section>' + profileCard(p.profile, true);
       }
       let why = '';
       if (r.activeScrew) why = 'Another SCREW! is in progress.';
@@ -362,8 +366,23 @@
       return '';
     }
 
+    /** SCREW! vote pop-up for Philanthropists and the other Prospects. Buttons open once the Peddler's response time ends. */
+    function screwPop() {
+      const v = st.pub, p = st.priv;
+      if (!v || !p || !v.round || v.phase !== 'pitch') return '';
+      const list = (p.screwVotes || []).filter((x) => !x.mine);
+      if (!list.length) return '';
+      const sv = list[0], live = v.round.activeScrew && v.round.activeScrew.by === sv.by;
+      const ped = playerName(v.round.peddler);
+      return '<div class="overlay screw-ov screw-pop-wrap" role="alertdialog" aria-label="SCREW! vote"><div class="screw-pop">' + U.drill() +
+        '<div class="screw-word">SCREW!</div><p class="by">' + esc(sv.name) + ' plays</p><h3>' + esc(sv.card.t) + '</h3><p>' + esc(sv.card.d) + '</p>' +
+        (live ? '<p class="pop-q">Watch ' + esc(ped) + ' respond…</p>' + U.timerHTML(v.timer.screw, st.recvAt, 'screw-timer') : '<p class="pop-q">Did ' + esc(ped) + ' nail it?</p>') +
+        '<div class="btn-row pop-btns"><button class="btn mint big" data-act="screwVote" data-by="' + esc(sv.by) + '" data-result="done"' + (live ? ' disabled' : '') + '>Nailed it</button>' +
+        '<button class="btn ghost big" data-act="screwVote" data-by="' + esc(sv.by) + '" data-result="missed"' + (live ? ' disabled' : '') + '>Missed it</button></div></div></div>';
+    }
+
     function render() {
-      U.morph(root, '<div class="phone">' + header() + banners() + '<main class="ph-body" data-key="pb-' + (st.pub ? st.pub.phase + '-' + (st.priv && st.priv.role) : 'x') + '">' + body() + '</main></div>');
+      U.morph(root, '<div class="phone">' + header() + banners() + '<main class="ph-body" data-key="pb-' + (st.pub ? st.pub.phase + '-' + (st.priv && st.priv.role) : 'x') + '">' + body() + '</main>' + screwPop() + '</div>');
       mountPads();
     }
 
@@ -384,6 +403,8 @@
     function onPrivate(p) {
       const prev = st.priv;
       st.priv = p;
+      const fresh = (p.screwVotes || []).some((x) => !(prev && prev.screwVotes || []).some((y) => y.by === x.by));
+      if (fresh) U.vibrate([120, 60, 120]);
       if (p.lastError && p.lastError.at !== st.lastErr) {
         if (st.lastErr) U.toast(p.lastError.error, 'warn');
         st.lastErr = p.lastError.at;
@@ -455,6 +476,8 @@
       else if (a === 'knowGo') { send({ type: 'nepo', card: 'knowPeople', target: draft('kp-out', r.prospects[0]), replacement: draft('kp-in', (root.querySelector('#kp-in') || {}).value) }); st.chooser = null; }
       else if (a === 'daddy') { send({ type: 'nepo', card: 'daddy', target: d.target }); st.chooser = null; }
       else if (a === 'notToday') send({ type: 'nepo', card: 'notToday' });
+      else if (a === 'screwDone') send({ type: 'screwDone' });
+      else if (a === 'screwVote') { (st.priv.screwVotes || []).forEach((x) => { if (x.by === d.by) x.mine = d.result; }); send({ type: 'screwVote', by: d.by, result: d.result }); U.toast('Vote in ✓'); }
       else if (a === 'claim') send({ type: 'secretClaim', target: d.target, guess: draft('guess-' + d.target, '') });
       else if (a === 'answer') send({ type: 'secretAnswer', yes: d.yes === '1' });
       else if (a === 'selfReveal') { send({ type: 'secretAnswer', yes: true }); st.confirm = null; }

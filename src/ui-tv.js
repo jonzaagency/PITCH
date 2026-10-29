@@ -142,7 +142,7 @@
         '<div class="rcols">' + who([r.peddler], 'peddler') + who(r.prospects, 'prospect') + who(r.phils, 'phil') + '</div>' +
         '<ol class="brief-steps"><li><b>Creation Lab</b> ' + mm(st.lab) + '<span>The Peddler invents; Prospects draw their characters.</span></li>' +
         '<li><b>Fact-Finding</b> ' + mm(st.fact) + '<span>The Peddler interviews every Prospect. +$25 per secret uncovered.' + (v.settings.sleuth ? ' Philanthropists play Secret Sleuth.' : '') + '</span></li>' +
-        '<li><b>PITCH!</b> ' + mm(st.pitch) + '<span>Each Prospect may SCREW! the Peddler once.</span></li>' +
+        '<li><b>PITCH!</b> ' + mm(st.pitch) + '<span>Each Prospect may SCREW! the Peddler once. Everyone else votes: nailed it or missed it?</span></li>' +
         '<li><b>Objections + Close</b> ' + mm(st.close) + '<span>Final objections, then ask for the sale.</span></li>' +
         '<li><b>Money Reveal</b><span>Philanthropists score six categories, $0–$50 each.</span></li></ol></section>';
     }
@@ -182,12 +182,11 @@
       return '<div class="screw-row">' + r.prospects.map((id) => {
         const pl = r.screwPlayed[id];
         let st = '<span class="tag">SCREW! in hand</span>';
-        if (pl) st = '<span class="tag red">' + esc(pl.card.t) + (pl.result === 'done' ? ' · nailed it' : pl.result === 'missed' ? ' · missed' : pl.result === 'cancelled' ? ' · NOT TODAY!' : '') + '</span>';
-        return '<div class="mini-pro" data-key="mp-' + esc(id) + '">' + portrait(game.s.round, id, 'sm') + '<div><b>' + esc(r.profiles[id].name) + '</b>' + st + (pl && !pl.result && !(r.activeScrew && r.activeScrew.by === id) ? judgeBtns(id, true) : '') + '</div></div>';
+        const sv = (r.screwVotes || {})[id], t = pl && pl.tally;
+        if (pl) st = '<span class="tag red">' + esc(pl.card.t) + ({ done: ' · nailed it', missed: ' · missed it', split: ' · split decision', cancelled: ' · NOT TODAY!' }[pl.result] || '') + (t ? ' (' + t.done + '–' + t.missed + ')' : '') + '</span>' +
+          (sv && sv.open && !(r.activeScrew && r.activeScrew.by === id) ? '<span class="tag">Table voting · ' + sv.n + ' of ' + sv.of + '</span>' : '');
+        return '<div class="mini-pro" data-key="mp-' + esc(id) + '">' + portrait(game.s.round, id, 'sm') + '<div><b>' + esc(r.profiles[id].name) + '</b>' + st + '</div></div>';
       }).join('') + '</div>';
-    }
-    function judgeBtns(pid, small) {
-      return '<span class="judge"><button class="btn mint' + (small ? ' sm' : ' big') + '" data-act="judge" data-pid="' + esc(pid) + '" data-result="done">Nailed it</button><button class="btn ghost' + (small ? ' sm' : ' big') + '" data-act="judge" data-pid="' + esc(pid) + '" data-result="missed">Missed it</button></span>';
     }
 
     function pitch(v) {
@@ -288,9 +287,10 @@
       const r = v.round;
       if (!r || !r.activeScrew) return '';
       const a = r.activeScrew;
-      return '<div class="overlay screw-ov" role="alert"><div class="screw-card"><div class="screw-word">SCREW!</div><p class="by">' + esc(r.profiles[a.by].name) + ' plays</p>' +
+      return '<div class="overlay screw-ov" role="alert"><div class="screw-card">' + U.drill() + '<div class="screw-word">SCREW!</div><p class="by">' + esc(r.profiles[a.by].name) + ' plays</p>' +
         '<h2>' + esc(a.card.t) + '</h2><p class="desc">' + esc(a.card.d) + '</p>' + U.timerHTML(v.timer.screw, recvAt, 'screw-timer', true) +
-        '<p class="muted">Pitch clock paused. ' + esc(player(r.peddler).name) + ' has 15 seconds.</p>' + judgeBtns(a.by) + '</div></div>';
+        '<p class="muted">Pitch clock paused. ' + esc(player(r.peddler).name) + ' has ' + v.settings.timers.screw + ' seconds. Then the table votes on their phones: nailed it or missed it?</p>' +
+        '<button class="btn ghost" data-act="screwEnd">Response done ›</button></div></div>';
     }
     function daddyOverlay(v) {
       const r = v.round;
@@ -408,10 +408,9 @@
       if (el.tagName === 'INPUT') return; // handled on change
       U.unlockAudio();
       const d = el.dataset, a = d.act;
-      const simple = ['start', 'shuffle', 'begin', 'next', 'pause', 'resume', 'reveal', 'nextRound', 'end', 'newGame', 'daddyDone', 'finishAwards'];
+      const simple = ['start', 'shuffle', 'begin', 'next', 'pause', 'resume', 'reveal', 'nextRound', 'end', 'newGame', 'daddyDone', 'finishAwards', 'screwEnd'];
       if (simple.indexOf(a) >= 0) { host(a); if (a === 'end' || a === 'newGame') ui.menu = false; }
       else if (a === 'addTime') host('addTime', { sec: 30 });
-      else if (a === 'judge') host('screwJudge', { pid: d.pid, result: d.result });
       else if (a === 'secret') host('secret', { pid: d.pid, status: d.status });
       else if (a === 'setRole') { host('setRole', { pid: d.pid, role: d.role }); ui.manage = null; }
       else if (a === 'kick') { host('kick', { pid: d.pid }); ui.manage = null; ui.confirm = null; }

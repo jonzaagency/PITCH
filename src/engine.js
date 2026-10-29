@@ -445,6 +445,7 @@
         briefed: {},
         asked: {},
         screwPlayed: {},
+        screwVotes: {},
         activeScrew: null,
         objections: {},
         verdicts: {},
@@ -470,6 +471,7 @@
       s.expired = false;
       s.timer.screw = null;
       if (s.round) { s.round.activeScrew = null; if (phase !== 'fact' && phase !== 'pitch' && phase !== 'close') s.round.daddy = null; }
+      if (s.round && phase !== 'pitch') this.closeScrewVotes();
       s.timer.main = TIMED_PHASES[phase] ? this.newTimer(s.settings.timers[TIMED_PHASES[phase]]) : null;
       if (phase === 'fact') { this.finalizeInvention(); this.setupSleuth(); }
       if (phase === 'scoring') this.checkAllDone();
@@ -624,9 +626,36 @@
       if (!r || !r.activeScrew) { s.timer.screw = null; return; }
       const by = r.activeScrew.by;
       if (result && r.screwPlayed[by] && !r.screwPlayed[by].result) r.screwPlayed[by].result = result;
+      if (result === 'cancelled') delete r.screwVotes[by]; // NOT TODAY! means nothing to vote on
       r.activeScrew = null;
       s.timer.screw = null;
       if (!s.hostPaused) this.startT(s.timer.main);
+      this.tallyScrew(by);
+    }
+
+    /** Everyone at the table except the Peddler and the Prospect who played it votes on each SCREW!. */
+    screwVoters(by) {
+      const r = this.s.round;
+      return r.phils.concat(r.prospects).filter((id) => id !== by && this.s.players[id] && this.s.players[id].connected);
+    }
+    /** Settles a SCREW! vote once everyone has voted (or, with force, when the pitch ends). Majority wins. */
+    tallyScrew(by, force) {
+      const r = this.s.round, sv = r && r.screwVotes[by];
+      if (!sv || !sv.open || (r.activeScrew && r.activeScrew.by === by)) return;
+      const cast = Object.keys(sv.votes).filter((id) => sv.voters.indexOf(id) >= 0);
+      if (!force && cast.length < sv.voters.length) return;
+      const done = cast.filter((id) => sv.votes[id] === 'done').length, missed = cast.length - done;
+      sv.open = false;
+      sv.tally = { done, missed };
+      if (!cast.length) return;
+      const result = done > missed ? 'done' : missed > done ? 'missed' : 'split';
+      r.screwPlayed[by].result = result;
+      r.screwPlayed[by].tally = sv.tally;
+      this.log('screw', 'The table voted: ' + this.s.players[r.peddler].name + ' ' + { done: 'NAILED IT', missed: 'MISSED IT', split: 'split the room' }[result] + ' (' + done + '–' + missed + ').', { big: true });
+    }
+    closeScrewVotes() {
+      const r = this.s.round;
+      Object.keys(r.screwVotes || {}).forEach((by) => this.tallyScrew(by, true));
     }
 
     // ---------- player actions ----------
@@ -780,10 +809,29 @@
       const idx = clampInt(a.idx, 0, 2);
       const card = r.screwHands[p.id][idx];
       r.screwPlayed[p.id] = { idx, card, result: null, at: this.now() };
+      r.screwVotes[p.id] = { open: true, voters: this.screwVoters(p.id), votes: {} };
       r.activeScrew = { by: p.id, card };
       this.pauseT(s.timer.main);
       s.timer.screw = this.newTimer(s.settings.timers.screw);
       this.log('screw', 'SCREW! ' + r.profiles[p.id].name + ' plays ' + card.t, { big: true });
+      return { ok: true };
+    }
+
+    a_screwVote(p, a) {
+      const r = this.s.round;
+      const sv = r && r.screwVotes[a.by];
+      if (!sv || !sv.open) return { ok: false, error: 'That vote is closed.' };
+      if (sv.voters.indexOf(p.id) < 0) return { ok: false, error: 'You don’t vote on this SCREW!.' };
+      if (r.activeScrew && r.activeScrew.by === a.by) return { ok: false, error: 'Wait until the Peddler finishes responding.' };
+      sv.votes[p.id] = a.result === 'done' ? 'done' : 'missed';
+      this.tallyScrew(a.by);
+      return { ok: true };
+    }
+
+    a_screwDone(p) {
+      const r = this.s.round;
+      if (!r || r.peddler !== p.id || !r.activeScrew) return { ok: false, error: 'No SCREW! to finish.' };
+      this.endScrew(null);
       return { ok: true };
     }
 
@@ -1063,14 +1111,6 @@
       if (!t.endsAt && !this.s.hostPaused && !this.s.timer.screw) this.startT(t);
       return { ok: true };
     }
-    h_screwJudge(a) {
-      const r = this.s.round;
-      if (!r || !r.screwPlayed[a.pid]) return { ok: false };
-      const result = a.result === 'done' ? 'done' : 'missed';
-      if (r.activeScrew && r.activeScrew.by === a.pid) this.endScrew(result);
-      else if (r.screwPlayed[a.pid].result !== 'cancelled') r.screwPlayed[a.pid].result = result;
-      return { ok: true };
-    }
     h_screwEnd() { this.endScrew(null); return { ok: true }; }
     h_secret(a) {
       const r = this.s.round;
@@ -1133,6 +1173,7 @@
             item: r.hand.items[inv.item], func: r.hand.functions[inv.func]
           } : { started: !!inv.name, sketch: inv.sketch ? { id: inv.sketch.id, v: inv.sketch.v, hidden: true } : null },
           screwPlayed: r.screwPlayed, activeScrew: r.activeScrew,
+          screwVotes: Object.keys(r.screwVotes || {}).reduce((o, by) => { const sv = r.screwVotes[by]; o[by] = { open: sv.open, n: Object.keys(sv.votes).length, of: sv.voters.length }; return o; }, {}),
           objections: r.objections,
           verdicts: s.phase === 'reveal' ? r.verdicts : Object.keys(r.verdicts).reduce((o, k) => { o[k] = 'decided'; return o; }, {}),
           nepoUsed: r.nepoUsed, daddy: r.daddy,
@@ -1188,6 +1229,10 @@
         out.labDone = !!r.labDone[pid];
         out.verdict = r.verdicts[pid] || null;
         out.asked = !!r.asked[pid];
+      }
+      if (r && (role === 'phil' || role === 'prospect')) {
+        out.screwVotes = Object.keys(r.screwVotes || {}).filter((by) => r.screwVotes[by].open && r.screwVotes[by].voters.indexOf(pid) >= 0)
+          .map((by) => ({ by, name: r.profiles[by].name, card: r.screwPlayed[by].card, mine: r.screwVotes[by].votes[pid] || null }));
       }
       if (r && role === 'phil') {
         out.scorecard = r.scorecards[pid] || null;

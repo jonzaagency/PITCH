@@ -508,6 +508,25 @@ input[type=range] { width: 100%; accent-color: var(--gold); height: 34px; }
 .screw-timer .t-num { color: #fff !important; }
 .screw-card .btn.mint { box-shadow: 0 4px 0 #2a7a35; }
 .screw-card .btn.ghost { border-color: rgba(255, 255, 255, 0.7); }
+/* SCREW! drill logo + phone vote pop-up */
+.drill { display: block; width: 7em; height: auto; margin: 0 auto; filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.25)); animation: drill-buzz 0.18s linear 6; }
+@keyframes drill-buzz { 50% { transform: translateX(2px) rotate(-2deg); } }
+.screw-live .drill, .screw-card .drill, .screw-pop .drill { background: #fffaf0; border-radius: 22px; padding: 0.5em 0.7em; box-sizing: content-box; box-shadow: 0 5px 0 #8f2017; filter: none; }
+.screw-live .drill { width: 5em; }
+.screw-card .drill { width: 8em; }
+.screw-pop .drill { width: 6em; }
+.pr-phone { position: relative; }
+.pr-phone .overlay { position: absolute; place-items: start center; padding-top: 70px; border-radius: 26px; } /* practice: pop-ups stay inside each phone */
+.screw-pop { background: var(--red); color: #fff; border-radius: 26px; padding: 20px 18px; width: min(420px, 100%); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.12), 0 24px 60px rgba(0, 0, 0, 0.5); animation: shake 0.6s ease 1 both; }
+.screw-pop .screw-word { font-size: 2.8rem; }
+.screw-pop .by { opacity: 0.9; font-weight: 600; }
+.screw-pop h3 { font-family: var(--display); font-weight: 400; font-size: 1.3rem; }
+.screw-pop .pop-q { font-weight: 800; font-size: 1.15rem; margin-top: 4px; }
+.screw-pop .pop-btns { justify-content: center; margin-top: 6px; }
+.screw-pop .btn.mint { box-shadow: 0 4px 0 #2a7a35; }
+.screw-pop .btn.ghost { border-color: rgba(255, 255, 255, 0.75); color: #fff; }
+.screw-pop .t-ring { background: conic-gradient(#fff calc(var(--p) * 360deg), rgba(255, 255, 255, 0.25) 0) !important; }
+.screw-pop .t-num { color: #fff !important; }
 @keyframes shake { 10%, 90% { transform: translateX(-4px); } 20%, 80% { transform: translateX(6px); } 30%, 50%, 70% { transform: translateX(-10px); } 40%, 60% { transform: translateX(10px); } }
 .daddy-card { background: var(--violet); color: #24103f; border-radius: 30px; padding: 1.6em 2.4em; text-align: center; display: flex; flex-direction: column; gap: 0.6em; align-items: center; width: min(40em, 100%); font-size: 1.3em; }
 .daddy-card .eyebrow { color: #24103f; }
@@ -1278,6 +1297,7 @@ window.PITCH.config = {
         briefed: {},
         asked: {},
         screwPlayed: {},
+        screwVotes: {},
         activeScrew: null,
         objections: {},
         verdicts: {},
@@ -1303,6 +1323,7 @@ window.PITCH.config = {
       s.expired = false;
       s.timer.screw = null;
       if (s.round) { s.round.activeScrew = null; if (phase !== 'fact' && phase !== 'pitch' && phase !== 'close') s.round.daddy = null; }
+      if (s.round && phase !== 'pitch') this.closeScrewVotes();
       s.timer.main = TIMED_PHASES[phase] ? this.newTimer(s.settings.timers[TIMED_PHASES[phase]]) : null;
       if (phase === 'fact') { this.finalizeInvention(); this.setupSleuth(); }
       if (phase === 'scoring') this.checkAllDone();
@@ -1457,9 +1478,36 @@ window.PITCH.config = {
       if (!r || !r.activeScrew) { s.timer.screw = null; return; }
       const by = r.activeScrew.by;
       if (result && r.screwPlayed[by] && !r.screwPlayed[by].result) r.screwPlayed[by].result = result;
+      if (result === 'cancelled') delete r.screwVotes[by]; // NOT TODAY! means nothing to vote on
       r.activeScrew = null;
       s.timer.screw = null;
       if (!s.hostPaused) this.startT(s.timer.main);
+      this.tallyScrew(by);
+    }
+
+    /** Everyone at the table except the Peddler and the Prospect who played it votes on each SCREW!. */
+    screwVoters(by) {
+      const r = this.s.round;
+      return r.phils.concat(r.prospects).filter((id) => id !== by && this.s.players[id] && this.s.players[id].connected);
+    }
+    /** Settles a SCREW! vote once everyone has voted (or, with force, when the pitch ends). Majority wins. */
+    tallyScrew(by, force) {
+      const r = this.s.round, sv = r && r.screwVotes[by];
+      if (!sv || !sv.open || (r.activeScrew && r.activeScrew.by === by)) return;
+      const cast = Object.keys(sv.votes).filter((id) => sv.voters.indexOf(id) >= 0);
+      if (!force && cast.length < sv.voters.length) return;
+      const done = cast.filter((id) => sv.votes[id] === 'done').length, missed = cast.length - done;
+      sv.open = false;
+      sv.tally = { done, missed };
+      if (!cast.length) return;
+      const result = done > missed ? 'done' : missed > done ? 'missed' : 'split';
+      r.screwPlayed[by].result = result;
+      r.screwPlayed[by].tally = sv.tally;
+      this.log('screw', 'The table voted: ' + this.s.players[r.peddler].name + ' ' + { done: 'NAILED IT', missed: 'MISSED IT', split: 'split the room' }[result] + ' (' + done + '–' + missed + ').', { big: true });
+    }
+    closeScrewVotes() {
+      const r = this.s.round;
+      Object.keys(r.screwVotes || {}).forEach((by) => this.tallyScrew(by, true));
     }
 
     // ---------- player actions ----------
@@ -1613,10 +1661,29 @@ window.PITCH.config = {
       const idx = clampInt(a.idx, 0, 2);
       const card = r.screwHands[p.id][idx];
       r.screwPlayed[p.id] = { idx, card, result: null, at: this.now() };
+      r.screwVotes[p.id] = { open: true, voters: this.screwVoters(p.id), votes: {} };
       r.activeScrew = { by: p.id, card };
       this.pauseT(s.timer.main);
       s.timer.screw = this.newTimer(s.settings.timers.screw);
       this.log('screw', 'SCREW! ' + r.profiles[p.id].name + ' plays ' + card.t, { big: true });
+      return { ok: true };
+    }
+
+    a_screwVote(p, a) {
+      const r = this.s.round;
+      const sv = r && r.screwVotes[a.by];
+      if (!sv || !sv.open) return { ok: false, error: 'That vote is closed.' };
+      if (sv.voters.indexOf(p.id) < 0) return { ok: false, error: 'You don’t vote on this SCREW!.' };
+      if (r.activeScrew && r.activeScrew.by === a.by) return { ok: false, error: 'Wait until the Peddler finishes responding.' };
+      sv.votes[p.id] = a.result === 'done' ? 'done' : 'missed';
+      this.tallyScrew(a.by);
+      return { ok: true };
+    }
+
+    a_screwDone(p) {
+      const r = this.s.round;
+      if (!r || r.peddler !== p.id || !r.activeScrew) return { ok: false, error: 'No SCREW! to finish.' };
+      this.endScrew(null);
       return { ok: true };
     }
 
@@ -1896,14 +1963,6 @@ window.PITCH.config = {
       if (!t.endsAt && !this.s.hostPaused && !this.s.timer.screw) this.startT(t);
       return { ok: true };
     }
-    h_screwJudge(a) {
-      const r = this.s.round;
-      if (!r || !r.screwPlayed[a.pid]) return { ok: false };
-      const result = a.result === 'done' ? 'done' : 'missed';
-      if (r.activeScrew && r.activeScrew.by === a.pid) this.endScrew(result);
-      else if (r.screwPlayed[a.pid].result !== 'cancelled') r.screwPlayed[a.pid].result = result;
-      return { ok: true };
-    }
     h_screwEnd() { this.endScrew(null); return { ok: true }; }
     h_secret(a) {
       const r = this.s.round;
@@ -1966,6 +2025,7 @@ window.PITCH.config = {
             item: r.hand.items[inv.item], func: r.hand.functions[inv.func]
           } : { started: !!inv.name, sketch: inv.sketch ? { id: inv.sketch.id, v: inv.sketch.v, hidden: true } : null },
           screwPlayed: r.screwPlayed, activeScrew: r.activeScrew,
+          screwVotes: Object.keys(r.screwVotes || {}).reduce((o, by) => { const sv = r.screwVotes[by]; o[by] = { open: sv.open, n: Object.keys(sv.votes).length, of: sv.voters.length }; return o; }, {}),
           objections: r.objections,
           verdicts: s.phase === 'reveal' ? r.verdicts : Object.keys(r.verdicts).reduce((o, k) => { o[k] = 'decided'; return o; }, {}),
           nepoUsed: r.nepoUsed, daddy: r.daddy,
@@ -2021,6 +2081,10 @@ window.PITCH.config = {
         out.labDone = !!r.labDone[pid];
         out.verdict = r.verdicts[pid] || null;
         out.asked = !!r.asked[pid];
+      }
+      if (r && (role === 'phil' || role === 'prospect')) {
+        out.screwVotes = Object.keys(r.screwVotes || {}).filter((by) => r.screwVotes[by].open && r.screwVotes[by].voters.indexOf(pid) >= 0)
+          .map((by) => ({ by, name: r.profiles[by].name, card: r.screwPlayed[by].card, mine: r.screwVotes[by].votes[pid] || null }));
       }
       if (r && role === 'phil') {
         out.scorecard = r.scorecards[pid] || null;
@@ -2519,6 +2583,18 @@ window.PITCH.config = {
   U.avatar = (p, size) => '<span class="av' + (size ? ' av-' + size : '') + '" style="--c:' + U.esc(p.color) + '">' + U.esc(U.initials(p.name)) + '</span>';
   U.fmtTime = (ms) => { const s = Math.ceil(Math.max(0, ms) / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
   U.roleName = (r) => P.engine.ROLE_NAMES[r] || '';
+  /** The SCREW! logo: a red power drill with a spinning bit. */
+  U.drill = (cls) => '<svg class="drill' + (cls ? ' ' + cls : '') + '" viewBox="0 0 128 96" role="img" aria-label="Red power drill">' +
+    '<path d="M86 39 L118 44 L126 48 L118 52 L86 57 Z" fill="#d9dde8"/>' +
+    '<path d="M93 40 L97 56 M101 41 L105 55 M109 43 L112 53" stroke="#7b839f" stroke-width="2.5" stroke-linecap="round"/>' +
+    '<path d="M120 30 L126 26 M122 66 L128 70 M110 28 L113 22" stroke="#f2b544" stroke-width="3" stroke-linecap="round"/>' +
+    '<rect x="72" y="34" width="16" height="28" rx="4" fill="#3b4160"/><path d="M76 38 V58 M81 38 V58" stroke="#242c4a" stroke-width="2"/>' +
+    '<path d="M38 56 H62 L56 86 Q55 90 50 90 H36 Q31 90 32 85 Z" fill="#9b2219"/>' +
+    '<rect x="58" y="58" width="9" height="14" rx="4" fill="#1b2138"/>' +
+    '<rect x="8" y="24" width="68" height="40" rx="16" fill="#ef4b3f"/>' +
+    '<rect x="16" y="29" width="46" height="9" rx="4.5" fill="#ff7a6b"/>' +
+    '<circle cx="22" cy="52" r="5" fill="#9b2219"/><circle cx="36" cy="52" r="5" fill="#9b2219"/>' +
+    '<rect x="26" y="84" width="38" height="10" rx="4" fill="#1b2138"/></svg>';
 
   // ---------- safe storage ----------
   U.store = {
@@ -2899,7 +2975,7 @@ window.PITCH.config = {
         '<div class="rcols">' + who([r.peddler], 'peddler') + who(r.prospects, 'prospect') + who(r.phils, 'phil') + '</div>' +
         '<ol class="brief-steps"><li><b>Creation Lab</b> ' + mm(st.lab) + '<span>The Peddler invents; Prospects draw their characters.</span></li>' +
         '<li><b>Fact-Finding</b> ' + mm(st.fact) + '<span>The Peddler interviews every Prospect. +$25 per secret uncovered.' + (v.settings.sleuth ? ' Philanthropists play Secret Sleuth.' : '') + '</span></li>' +
-        '<li><b>PITCH!</b> ' + mm(st.pitch) + '<span>Each Prospect may SCREW! the Peddler once.</span></li>' +
+        '<li><b>PITCH!</b> ' + mm(st.pitch) + '<span>Each Prospect may SCREW! the Peddler once. Everyone else votes: nailed it or missed it?</span></li>' +
         '<li><b>Objections + Close</b> ' + mm(st.close) + '<span>Final objections, then ask for the sale.</span></li>' +
         '<li><b>Money Reveal</b><span>Philanthropists score six categories, $0–$50 each.</span></li></ol></section>';
     }
@@ -2939,12 +3015,11 @@ window.PITCH.config = {
       return '<div class="screw-row">' + r.prospects.map((id) => {
         const pl = r.screwPlayed[id];
         let st = '<span class="tag">SCREW! in hand</span>';
-        if (pl) st = '<span class="tag red">' + esc(pl.card.t) + (pl.result === 'done' ? ' · nailed it' : pl.result === 'missed' ? ' · missed' : pl.result === 'cancelled' ? ' · NOT TODAY!' : '') + '</span>';
-        return '<div class="mini-pro" data-key="mp-' + esc(id) + '">' + portrait(game.s.round, id, 'sm') + '<div><b>' + esc(r.profiles[id].name) + '</b>' + st + (pl && !pl.result && !(r.activeScrew && r.activeScrew.by === id) ? judgeBtns(id, true) : '') + '</div></div>';
+        const sv = (r.screwVotes || {})[id], t = pl && pl.tally;
+        if (pl) st = '<span class="tag red">' + esc(pl.card.t) + ({ done: ' · nailed it', missed: ' · missed it', split: ' · split decision', cancelled: ' · NOT TODAY!' }[pl.result] || '') + (t ? ' (' + t.done + '–' + t.missed + ')' : '') + '</span>' +
+          (sv && sv.open && !(r.activeScrew && r.activeScrew.by === id) ? '<span class="tag">Table voting · ' + sv.n + ' of ' + sv.of + '</span>' : '');
+        return '<div class="mini-pro" data-key="mp-' + esc(id) + '">' + portrait(game.s.round, id, 'sm') + '<div><b>' + esc(r.profiles[id].name) + '</b>' + st + '</div></div>';
       }).join('') + '</div>';
-    }
-    function judgeBtns(pid, small) {
-      return '<span class="judge"><button class="btn mint' + (small ? ' sm' : ' big') + '" data-act="judge" data-pid="' + esc(pid) + '" data-result="done">Nailed it</button><button class="btn ghost' + (small ? ' sm' : ' big') + '" data-act="judge" data-pid="' + esc(pid) + '" data-result="missed">Missed it</button></span>';
     }
 
     function pitch(v) {
@@ -3045,9 +3120,10 @@ window.PITCH.config = {
       const r = v.round;
       if (!r || !r.activeScrew) return '';
       const a = r.activeScrew;
-      return '<div class="overlay screw-ov" role="alert"><div class="screw-card"><div class="screw-word">SCREW!</div><p class="by">' + esc(r.profiles[a.by].name) + ' plays</p>' +
+      return '<div class="overlay screw-ov" role="alert"><div class="screw-card">' + U.drill() + '<div class="screw-word">SCREW!</div><p class="by">' + esc(r.profiles[a.by].name) + ' plays</p>' +
         '<h2>' + esc(a.card.t) + '</h2><p class="desc">' + esc(a.card.d) + '</p>' + U.timerHTML(v.timer.screw, recvAt, 'screw-timer', true) +
-        '<p class="muted">Pitch clock paused. ' + esc(player(r.peddler).name) + ' has 15 seconds.</p>' + judgeBtns(a.by) + '</div></div>';
+        '<p class="muted">Pitch clock paused. ' + esc(player(r.peddler).name) + ' has ' + v.settings.timers.screw + ' seconds. Then the table votes on their phones: nailed it or missed it?</p>' +
+        '<button class="btn ghost" data-act="screwEnd">Response done ›</button></div></div>';
     }
     function daddyOverlay(v) {
       const r = v.round;
@@ -3165,10 +3241,9 @@ window.PITCH.config = {
       if (el.tagName === 'INPUT') return; // handled on change
       U.unlockAudio();
       const d = el.dataset, a = d.act;
-      const simple = ['start', 'shuffle', 'begin', 'next', 'pause', 'resume', 'reveal', 'nextRound', 'end', 'newGame', 'daddyDone', 'finishAwards'];
+      const simple = ['start', 'shuffle', 'begin', 'next', 'pause', 'resume', 'reveal', 'nextRound', 'end', 'newGame', 'daddyDone', 'finishAwards', 'screwEnd'];
       if (simple.indexOf(a) >= 0) { host(a); if (a === 'end' || a === 'newGame') ui.menu = false; }
       else if (a === 'addTime') host('addTime', { sec: 30 });
-      else if (a === 'judge') host('screwJudge', { pid: d.pid, result: d.result });
       else if (a === 'secret') host('secret', { pid: d.pid, status: d.status });
       else if (a === 'setRole') { host('setRole', { pid: d.pid, role: d.role }); ui.manage = null; }
       else if (a === 'kick') { host('kick', { pid: d.pid }); ui.manage = null; ui.confirm = null; }
@@ -3310,15 +3385,16 @@ window.PITCH.config = {
       const items = {
         peddler: ['<b>Creation Lab (' + mm(t.lab) + '):</b> pick one Item and one Function card, name your invention, and sketch how it works.',
           '<b>Fact-Finding (' + mm(t.fact) + '):</b> ask every Prospect real questions. Each secret you uncover earns <b>$25</b>.',
-          '<b>PITCH! (' + mm(t.pitch) + '):</b> sell it using what you learned. Each Prospect can SCREW! you once; you get ' + t.screw + ' seconds to respond.',
+          '<b>PITCH! (' + mm(t.pitch) + '):</b> sell it using what you learned. Each Prospect can SCREW! you once; you get ' + t.screw + ' seconds to respond, then the table votes on how you did.',
           '<b>Objections + Close (' + mm(t.close) + '):</b> answer every objection, then clearly ask for the sale.',
           'Philanthropists score you in six categories, $0–$50 each.'],
         prospect: ['<b>Draw</b> a portrait of your character during the Creation Lab.',
           '<b>Answer in character</b> when the Peddler questions you. Drop hints about your secret, but only confirm it if they genuinely uncover it.',
-          '<b>During the pitch,</b> play one of your three SCREW! cards to throw the Peddler off.',
+          '<b>During the pitch,</b> play one of your three SCREW! cards to throw the Peddler off. When another Prospect plays one, vote on your phone: did the Peddler nail it?',
           '<b>After the pitch,</b> raise one objection and decide whether your character would buy.',
           'Philanthropists can award you up to <b>$25</b> for great role-play.'],
         phil: ['<b>Watch closely:</b> the Peddler invents, questions the Prospects, and pitches.',
+          '<b>Vote on every SCREW!</b> when it pops up on your phone: did the Peddler nail it or miss it?',
           '<b>Then score</b> six categories, $0–$50 each: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close.',
           '<b>Reward the Prospects</b> up to $25 each for role-play.'].concat(
           v.settings.sleuth ? ['<b>Secret Sleuth:</b> during Fact-Finding, guess each Prospect’s secret on your phone for <b>$10</b> each. Listen for hints, and lock in before the Peddler finds it!'] : [],
@@ -3434,8 +3510,9 @@ window.PITCH.config = {
       const v = st.pub, r = v.round, p = st.priv, inv = r.invention;
       let screw = '';
       if (r.activeScrew) {
-        screw = '<section class="screw-live"><div class="screw-word">SCREW!</div><h3>' + esc(r.activeScrew.card.t) + '</h3><p>' + esc(r.activeScrew.card.d) + '</p><p class="muted">You have 15 seconds. The pitch clock is paused.</p>' +
-          (p.wallet.inventory.notToday > 0 && !r.nepoUsed ? '<button class="btn violet big" data-act="notToday">Play NOT TODAY!</button>' : '') + '</section>';
+        screw = '<section class="screw-live">' + U.drill() + '<div class="screw-word">SCREW!</div><h3>' + esc(r.activeScrew.card.t) + '</h3><p>' + esc(r.activeScrew.card.d) + '</p><p class="muted">You have 15 seconds. The pitch clock is paused. The table votes on how you did.</p>' +
+          '<div class="btn-row"><button class="btn gold" data-act="screwDone">I’m done responding</button>' +
+          (p.wallet.inventory.notToday > 0 && !r.nepoUsed ? '<button class="btn violet big" data-act="notToday">Play NOT TODAY!</button>' : '') + '</div></section>';
       }
       return screw + '<section><h2>' + esc(inv.name) + '</h2>' + (inv.slogan ? '<p class="slogan">“' + esc(inv.slogan) + '”</p>' : '') +
         '<div class="hand">' + '<div class="deck deck-item"><span class="deck-k">Item</span><span class="deck-t">' + esc(inv.item) + '</span></div><div class="deck deck-func"><span class="deck-k">Function</span><span class="deck-t">' + esc(inv.func) + '</span></div></div>' +
@@ -3448,8 +3525,10 @@ window.PITCH.config = {
       const t = v.timer.main;
       const remaining = t ? (t.running ? t.remaining - (Date.now() - st.recvAt) : t.remaining) : 0;
       if (p.screwPlayed) {
-        return '<section class="screw-live"><div class="screw-word">SCREW!</div><h3>You played ' + esc(p.screwPlayed.card.t) + '</h3><p>' + esc(p.screwPlayed.card.d) + '</p>' +
-          (p.screwPlayed.result ? '<p class="muted">Result: ' + esc({ done: 'nailed it', missed: 'missed it', cancelled: 'cancelled with NOT TODAY!' }[p.screwPlayed.result]) + '</p>' : '') + '</section>' + profileCard(p.profile, true);
+        const sv = (r.screwVotes || {})[p.pid], t = p.screwPlayed.tally;
+        return '<section class="screw-live">' + U.drill() + '<div class="screw-word">SCREW!</div><h3>You played ' + esc(p.screwPlayed.card.t) + '</h3><p>' + esc(p.screwPlayed.card.d) + '</p>' +
+          (p.screwPlayed.result ? '<p class="muted">The table says: ' + esc({ done: 'they nailed it', missed: 'they missed it', split: 'split decision', cancelled: 'cancelled with NOT TODAY!' }[p.screwPlayed.result]) + (t ? ' (' + t.done + '–' + t.missed + ')' : '') + '</p>'
+            : sv && sv.open ? '<p class="muted">The table is voting… ' + sv.n + ' of ' + sv.of + ' in</p>' : '') + '</section>' + profileCard(p.profile, true);
       }
       let why = '';
       if (r.activeScrew) why = 'Another SCREW! is in progress.';
@@ -3574,8 +3653,23 @@ window.PITCH.config = {
       return '';
     }
 
+    /** SCREW! vote pop-up for Philanthropists and the other Prospects. Buttons open once the Peddler's response time ends. */
+    function screwPop() {
+      const v = st.pub, p = st.priv;
+      if (!v || !p || !v.round || v.phase !== 'pitch') return '';
+      const list = (p.screwVotes || []).filter((x) => !x.mine);
+      if (!list.length) return '';
+      const sv = list[0], live = v.round.activeScrew && v.round.activeScrew.by === sv.by;
+      const ped = playerName(v.round.peddler);
+      return '<div class="overlay screw-ov screw-pop-wrap" role="alertdialog" aria-label="SCREW! vote"><div class="screw-pop">' + U.drill() +
+        '<div class="screw-word">SCREW!</div><p class="by">' + esc(sv.name) + ' plays</p><h3>' + esc(sv.card.t) + '</h3><p>' + esc(sv.card.d) + '</p>' +
+        (live ? '<p class="pop-q">Watch ' + esc(ped) + ' respond…</p>' + U.timerHTML(v.timer.screw, st.recvAt, 'screw-timer') : '<p class="pop-q">Did ' + esc(ped) + ' nail it?</p>') +
+        '<div class="btn-row pop-btns"><button class="btn mint big" data-act="screwVote" data-by="' + esc(sv.by) + '" data-result="done"' + (live ? ' disabled' : '') + '>Nailed it</button>' +
+        '<button class="btn ghost big" data-act="screwVote" data-by="' + esc(sv.by) + '" data-result="missed"' + (live ? ' disabled' : '') + '>Missed it</button></div></div></div>';
+    }
+
     function render() {
-      U.morph(root, '<div class="phone">' + header() + banners() + '<main class="ph-body" data-key="pb-' + (st.pub ? st.pub.phase + '-' + (st.priv && st.priv.role) : 'x') + '">' + body() + '</main></div>');
+      U.morph(root, '<div class="phone">' + header() + banners() + '<main class="ph-body" data-key="pb-' + (st.pub ? st.pub.phase + '-' + (st.priv && st.priv.role) : 'x') + '">' + body() + '</main>' + screwPop() + '</div>');
       mountPads();
     }
 
@@ -3596,6 +3690,8 @@ window.PITCH.config = {
     function onPrivate(p) {
       const prev = st.priv;
       st.priv = p;
+      const fresh = (p.screwVotes || []).some((x) => !(prev && prev.screwVotes || []).some((y) => y.by === x.by));
+      if (fresh) U.vibrate([120, 60, 120]);
       if (p.lastError && p.lastError.at !== st.lastErr) {
         if (st.lastErr) U.toast(p.lastError.error, 'warn');
         st.lastErr = p.lastError.at;
@@ -3667,6 +3763,8 @@ window.PITCH.config = {
       else if (a === 'knowGo') { send({ type: 'nepo', card: 'knowPeople', target: draft('kp-out', r.prospects[0]), replacement: draft('kp-in', (root.querySelector('#kp-in') || {}).value) }); st.chooser = null; }
       else if (a === 'daddy') { send({ type: 'nepo', card: 'daddy', target: d.target }); st.chooser = null; }
       else if (a === 'notToday') send({ type: 'nepo', card: 'notToday' });
+      else if (a === 'screwDone') send({ type: 'screwDone' });
+      else if (a === 'screwVote') { (st.priv.screwVotes || []).forEach((x) => { if (x.by === d.by) x.mine = d.result; }); send({ type: 'screwVote', by: d.by, result: d.result }); U.toast('Vote in ✓'); }
       else if (a === 'claim') send({ type: 'secretClaim', target: d.target, guess: draft('guess-' + d.target, '') });
       else if (a === 'answer') send({ type: 'secretAnswer', yes: d.yes === '1' });
       else if (a === 'selfReveal') { send({ type: 'secretAnswer', yes: true }); st.confirm = null; }
@@ -3767,7 +3865,7 @@ window.PITCH.config = {
     return '<div class="howto-body"><div><h4>Roles</h4><ul><li><b>Peddler</b> invents a product from three cards, interviews the Prospects, pitches, and closes.</li>' +
       '<li><b>Prospects</b> (1–3) play fictional characters with a secret, draw a portrait, and each play one SCREW! card.</li>' +
       '<li><b>Philanthropists</b> (everyone else) score the Peddler with game money.</li></ul></div>' +
-      '<div><h4>Each round</h4><ol><li>Creation Lab · 2:00</li><li>Fact-Finding · 2:30 · $25 per secret uncovered</li><li>PITCH! · 1:30 · each Prospect may SCREW! once (15 s, clock pauses)</li><li>Objections + Close · 0:45</li><li>Money Reveal</li></ol></div>' +
+      '<div><h4>Each round</h4><ol><li>Creation Lab · 2:00</li><li>Fact-Finding · 2:30 · $25 per secret uncovered</li><li>PITCH! · 1:30 · each Prospect may SCREW! once (15 s, clock pauses, then the table votes)</li><li>Objections + Close · 0:45</li><li>Money Reveal</li></ol></div>' +
       '<div><h4>Money</h4><p>Each Philanthropist awards $0–$50 in six categories: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close. ' +
       'The Peddler earns the average scorecard plus $25 per secret (with 4+ Philanthropists, a scorecard more than $100 away from the rest of the room is set aside). Prospects earn the average of up to $25 each for role-play. ' +
       '<b>Secret Sleuth:</b> during Fact-Finding, Philanthropists guess each Prospect’s secret from 4 options, $10 per correct guess. The Peddler can buy <b>INSIDE TRADING</b> to peek at a guess. Most money tonight wins.</p>' +
@@ -4011,6 +4109,8 @@ window.PITCH.config = {
       if (hidden.length && chance(0.07)) send({ type: 'secretClaim', target: hidden[rnd(hidden.length)], guess: ['They are afraid of something', 'They secretly sing', 'They have a hidden pet', 'They won money'][rnd(4)] });
     } else if (v.phase === 'fact' && p.role === 'phil') {
       (p.sleuth || []).forEach((t) => { if (!t.locked && (p.sleuthPicks || {})[t.pid] === undefined) once('sleuth-' + t.pid, () => setTimeout(() => send({ type: 'sleuthPick', target: t.pid, idx: rnd(t.options.length) }), 1500 + rnd(6000))); });
+    } else if (v.phase === 'pitch' && (p.screwVotes || []).some((x) => !x.mine && !(r.activeScrew && r.activeScrew.by === x.by))) {
+      p.screwVotes.forEach((x) => { if (!x.mine && !(r.activeScrew && r.activeScrew.by === x.by)) once('vote-screw-' + x.by, () => setTimeout(() => send({ type: 'screwVote', by: x.by, result: chance(0.6) ? 'done' : 'missed' }), 800 + rnd(3000))); });
     } else if (v.phase === 'pitch' && p.role === 'prospect') {
       const t = v.timer.main;
       const left = t ? t.remaining - (t.running ? Date.now() - st.recvAt : 0) : 0;
