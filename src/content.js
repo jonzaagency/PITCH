@@ -1,4 +1,4 @@
-/* PITCH! card decks and prospect profile pieces.
+/* P!TCH card decks and prospect profile pieces.
  * Edit these lists freely: add a line, save, rebuild. Every deck is shuffled each round.
  * The Peddler builds an invention from two decks: Items and Functions. */
 (function (P) {

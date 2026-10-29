@@ -1,4 +1,4 @@
-/* PITCH! networking.
+/* P!TCH networking.
  * Online play uses a free public MQTT broker over secure WebSockets (no accounts, no server to run).
  * The Host's browser is the game server: phones publish actions, the Host publishes views.
  * Practice mode swaps in an in-page broker with the exact same API, so both paths share code.

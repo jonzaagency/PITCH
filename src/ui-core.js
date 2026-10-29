@@ -1,4 +1,4 @@
-/* PITCH! shared UI helpers: HTML escaping, DOM morphing, timers, drawing pad, sounds, storage. */
+/* P!TCH shared UI helpers: HTML escaping, DOM morphing, timers, drawing pad, sounds, storage. */
 (function (P) {
   const U = (P.ui = {});
 

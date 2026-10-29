@@ -1,4 +1,4 @@
-/* PITCH! the phone controller. One per player. Sends actions, renders the private view. */
+/* P!TCH the phone controller. One per player. Sends actions, renders the private view. */
 (function (P) {
   const U = P.ui, E = P.engine, C = P.content;
   const esc = U.esc;
@@ -38,7 +38,7 @@
     function header() {
       const p = st.priv, v = st.pub;
       const t = v && v.timer ? (v.timer.screw || v.timer.main) : null;
-      return '<header class="ph-top">' + (p ? U.avatar(p) + '<span class="ph-name">' + esc(p.name) + '</span>' + roleBadge(p.role) : '<span class="ph-name">PITCH!</span>') +
+      return '<header class="ph-top">' + (p ? U.avatar(p) + '<span class="ph-name">' + esc(p.name) + '</span>' + roleBadge(p.role) : '<span class="ph-name">P!TCH</span>') +
         '<span class="grow"></span>' + (t ? U.timerHTML(t, st.recvAt, 'ph-timer') : '') +
         (p ? '<span class="cash" title="Available cash">' + U.money(p.wallet.cash) + '</span>' : '') + '</header>';
     }

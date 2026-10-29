@@ -1,4 +1,4 @@
-/* PITCH! game engine.
+/* P!TCH game engine.
  * Runs only on the Host (TV) device. Phones send actions; the engine applies the
  * rulebook, then publishes a public view (everyone) and a private view (one player).
  * Nothing in here touches the DOM, so it can be tested in Node. */

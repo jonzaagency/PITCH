@@ -1,4 +1,4 @@
-// PITCH! build: stitches src/ into one self-contained HTML file per target.
+// P!TCH build: stitches src/ into one self-contained HTML file per target.
 //   node build.js
 // Outputs:
 //   docs/index.html          -> the online game (GitHub Pages: main branch, /docs folder)
@@ -17,7 +17,7 @@ function bundle(artifact) {
     return `/* ===== ${f} ===== */\n${code}`;
   }).join('\n');
   const head = [
-    '<title>PITCH! Party Game</title>',
+    '<title>P!TCH Party Game</title>',
     '<meta name="claude:viewport-fit-sides" content="cover">',
     '<link rel="preconnect" href="https://fonts.googleapis.com">',
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
@@ -26,7 +26,7 @@ function bundle(artifact) {
   ].join('\n');
   const body = [
     '<div id="app"></div>',
-    '<noscript>PITCH! needs JavaScript turned on.</noscript>',
+    '<noscript>P!TCH needs JavaScript turned on.</noscript>',
     '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" async></script>',
     `<script>\n${js}\n/* ${artifact ? 'artifact' : 'site'} build */\n</script>`
   ].join('\n');

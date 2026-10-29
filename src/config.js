@@ -1,4 +1,4 @@
-/* PITCH! settings you may want to change. */
+/* P!TCH settings you may want to change. */
 window.PITCH = window.PITCH || {};
 window.PITCH.config = {
   version: '1.0.0',

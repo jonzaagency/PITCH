@@ -1,4 +1,4 @@
-# PITCH!
+# P!TCH
 
 A Jackbox-style party game for 3 to 20+ players, in the same room or online. One browser (TV or laptop) is the Host and runs the game; everyone else plays on their phone.
 
@@ -19,6 +19,7 @@ A Jackbox-style party game for 3 to 20+ players, in the same room or online. One
 | `src/ui-core.js`, `ui-tv.js`, `ui-phone.js` | Screens for the TV and the phones |
 | `src/app.js` | Home screen, Practice mode with bots, startup |
 | `src/style.css` | The look |
+| `brand/` | Logo versions (light letters, darker purple, transparent, dark-screen) and the ! / P! icons |
 
 ## Build
 

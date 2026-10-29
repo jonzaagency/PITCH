@@ -1,4 +1,4 @@
-/* PITCH! the TV / Host screen. Shows the shared stage and the Host controls.
+/* P!TCH the TV / Host screen. Shows the shared stage and the Host controls.
  * Reads straight from the engine (the Host device runs the game). Never shows hidden secrets. */
 (function (P) {
   const U = P.ui, E = P.engine, C = P.content;
@@ -367,7 +367,7 @@
       const body = { lobby, roles, brief, lab, fact, pitch, close, scoring, reveal, final, awards }[ph](v);
       const timer = v.timer.main && !v.round?.activeScrew ? U.timerHTML(v.timer.main, recvAt, 'main-timer', true) : (v.timer.main ? U.timerHTML(v.timer.main, recvAt, 'main-timer paused-by-screw') : '');
       const html = '<div class="tv phase-' + ph + '">' +
-        '<header class="tv-top"><div class="logo" aria-label="PITCH!">PITCH<span>!</span></div>' +
+        '<header class="tv-top"><div class="logo" aria-label="P!TCH">P<span>!</span>TCH</div>' +
         '<div class="tv-phase">' + (v.round && ['lobby', 'final', 'roles', 'awards'].indexOf(ph) < 0 ? '<span class="eyebrow">Round ' + v.round.n + '</span>' : '') + '<span class="ph-name">' + PHASE_TITLE[ph] + '</span>' + stepper(ph) + '</div>' +
         '<div class="tv-right">' + (v.hostPaused ? '<span class="tag red">Paused</span>' : '') + (v.expired && !v.settings.autoAdvance ? '<span class="tag red">Time!</span>' : '') + timer + '</div></header>' +
         '<main class="tv-stage" data-key="stage-' + ph + '">' + body + '</main>' +

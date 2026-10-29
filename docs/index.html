@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>PITCH! Party Game</title>
+<title>P!TCH Party Game</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;500;600;700;800&display=swap">
 <style>
-/* PITCH! look: a late-night infomercial game show. Navy stage, gold marquee type, price-tag money.
+/* P!TCH look: a late-night infomercial game show. Navy stage, gold marquee type, price-tag money.
    Single deliberate dark theme (a stage), so colors are set explicitly everywhere. */
 :root {
   --ink: #10152a;       /* page background */
@@ -598,11 +598,11 @@ input[type=range] { width: 100%; accent-color: var(--gold); height: 34px; }
 </head>
 <body>
 <div id="app"></div>
-<noscript>PITCH! needs JavaScript turned on.</noscript>
+<noscript>P!TCH needs JavaScript turned on.</noscript>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" async></script>
 <script>
 /* ===== config.js ===== */
-/* PITCH! settings you may want to change. */
+/* P!TCH settings you may want to change. */
 window.PITCH = window.PITCH || {};
 window.PITCH.config = {
   version: '1.0.0',
@@ -619,7 +619,7 @@ window.PITCH.config = {
 };
 
 /* ===== content.js ===== */
-/* PITCH! card decks and prospect profile pieces.
+/* P!TCH card decks and prospect profile pieces.
  * Edit these lists freely: add a line, save, rebuild. Every deck is shuffled each round.
  * The Peddler builds an invention from two decks: Items and Functions. */
 (function (P) {
@@ -899,7 +899,7 @@ window.PITCH.config = {
 })(window.PITCH = window.PITCH || {});
 
 /* ===== engine.js ===== */
-/* PITCH! game engine.
+/* P!TCH game engine.
  * Runs only on the Host (TV) device. Phones send actions; the engine applies the
  * rulebook, then publishes a public view (everyone) and a private view (one player).
  * Nothing in here touches the DOM, so it can be tested in Node. */
@@ -2176,7 +2176,7 @@ window.PITCH.config = {
 })(window.PITCH = window.PITCH || {});
 
 /* ===== net.js ===== */
-/* PITCH! networking.
+/* P!TCH networking.
  * Online play uses a free public MQTT broker over secure WebSockets (no accounts, no server to run).
  * The Host's browser is the game server: phones publish actions, the Host publishes views.
  * Practice mode swaps in an in-page broker with the exact same API, so both paths share code.
@@ -2611,7 +2611,7 @@ window.PITCH.config = {
 })(window.PITCH = window.PITCH || {});
 
 /* ===== ui-core.js ===== */
-/* PITCH! shared UI helpers: HTML escaping, DOM morphing, timers, drawing pad, sounds, storage. */
+/* P!TCH shared UI helpers: HTML escaping, DOM morphing, timers, drawing pad, sounds, storage. */
 (function (P) {
   const U = (P.ui = {});
 
@@ -2863,7 +2863,7 @@ window.PITCH.config = {
 })(window.PITCH = window.PITCH || {});
 
 /* ===== ui-tv.js ===== */
-/* PITCH! the TV / Host screen. Shows the shared stage and the Host controls.
+/* P!TCH the TV / Host screen. Shows the shared stage and the Host controls.
  * Reads straight from the engine (the Host device runs the game). Never shows hidden secrets. */
 (function (P) {
   const U = P.ui, E = P.engine, C = P.content;
@@ -3232,7 +3232,7 @@ window.PITCH.config = {
       const body = { lobby, roles, brief, lab, fact, pitch, close, scoring, reveal, final, awards }[ph](v);
       const timer = v.timer.main && !v.round?.activeScrew ? U.timerHTML(v.timer.main, recvAt, 'main-timer', true) : (v.timer.main ? U.timerHTML(v.timer.main, recvAt, 'main-timer paused-by-screw') : '');
       const html = '<div class="tv phase-' + ph + '">' +
-        '<header class="tv-top"><div class="logo" aria-label="PITCH!">PITCH<span>!</span></div>' +
+        '<header class="tv-top"><div class="logo" aria-label="P!TCH">P<span>!</span>TCH</div>' +
         '<div class="tv-phase">' + (v.round && ['lobby', 'final', 'roles', 'awards'].indexOf(ph) < 0 ? '<span class="eyebrow">Round ' + v.round.n + '</span>' : '') + '<span class="ph-name">' + PHASE_TITLE[ph] + '</span>' + stepper(ph) + '</div>' +
         '<div class="tv-right">' + (v.hostPaused ? '<span class="tag red">Paused</span>' : '') + (v.expired && !v.settings.autoAdvance ? '<span class="tag red">Time!</span>' : '') + timer + '</div></header>' +
         '<main class="tv-stage" data-key="stage-' + ph + '">' + body + '</main>' +
@@ -3317,7 +3317,7 @@ window.PITCH.config = {
 })(window.PITCH = window.PITCH || {});
 
 /* ===== ui-phone.js ===== */
-/* PITCH! the phone controller. One per player. Sends actions, renders the private view. */
+/* P!TCH the phone controller. One per player. Sends actions, renders the private view. */
 (function (P) {
   const U = P.ui, E = P.engine, C = P.content;
   const esc = U.esc;
@@ -3357,7 +3357,7 @@ window.PITCH.config = {
     function header() {
       const p = st.priv, v = st.pub;
       const t = v && v.timer ? (v.timer.screw || v.timer.main) : null;
-      return '<header class="ph-top">' + (p ? U.avatar(p) + '<span class="ph-name">' + esc(p.name) + '</span>' + roleBadge(p.role) : '<span class="ph-name">PITCH!</span>') +
+      return '<header class="ph-top">' + (p ? U.avatar(p) + '<span class="ph-name">' + esc(p.name) + '</span>' + roleBadge(p.role) : '<span class="ph-name">P!TCH</span>') +
         '<span class="grow"></span>' + (t ? U.timerHTML(t, st.recvAt, 'ph-timer') : '') +
         (p ? '<span class="cash" title="Available cash">' + U.money(p.wallet.cash) + '</span>' : '') + '</header>';
     }
@@ -3824,7 +3824,7 @@ window.PITCH.config = {
 })(window.PITCH = window.PITCH || {});
 
 /* ===== app.js ===== */
-/* PITCH! app shell: home screen, hosting, joining, and practice mode. */
+/* P!TCH app shell: home screen, hosting, joining, and practice mode. */
 (function (P) {
   const U = P.ui, N = P.net, E = P.engine, C = P.content;
   const esc = U.esc;
@@ -3857,7 +3857,7 @@ window.PITCH.config = {
     const canRejoin = onlineAllowed() && last && Date.now() - last.at < 4 * 3600e3;
     const hofCount = U.store.get('pitch.hof', []).length;
     root.innerHTML =
-      '<div class="home"><header class="hero"><div class="eyebrow">The party game of impossible sales</div><h1 class="logo big">PITCH<span>!</span></h1>' +
+      '<div class="home"><header class="hero"><div class="eyebrow">The party game of impossible sales</div><h1 class="logo big">P<span>!</span>TCH</h1>' +
       '<p class="tagline">Do you have what it takes to sell the impossible, learn about your prospects, and survive their objections?</p>' +
       '<p class="meta">3–20+ players · 1 Peddler · 1–3 Prospects · everyone else: Philanthropists</p></header>' +
       '<div class="choices">' +
@@ -3909,7 +3909,7 @@ window.PITCH.config = {
 
   function statusScreen(title, text, retry) {
     reset('home-mode');
-    root.innerHTML = '<div class="home status"><h1 class="logo">PITCH<span>!</span></h1><h2>' + esc(title) + '</h2><p>' + esc(text || '') + '</p>' +
+    root.innerHTML = '<div class="home status"><h1 class="logo">P<span>!</span>TCH</h1><h2>' + esc(title) + '</h2><p>' + esc(text || '') + '</p>' +
       (retry ? '<div class="actions"><button class="btn gold" data-go="retry">Try again</button><button class="btn ghost" data-go="home">Back</button></div>' : '<div class="spinner" aria-hidden="true"></div>') + '</div>';
     root.onclick = (e) => { const b = e.target.closest('[data-go]'); if (!b) return; if (b.dataset.go === 'retry') retry(); else home(); };
   }
@@ -3965,7 +3965,7 @@ window.PITCH.config = {
   function joinScreen(code, err) {
     reset('phone-mode');
     const prof = U.profile.load();
-    root.innerHTML = '<div class="phone join"><header class="ph-top"><span class="logo">PITCH<span>!</span></span></header><main class="ph-body"><section>' +
+    root.innerHTML = '<div class="phone join"><header class="ph-top"><span class="logo">P<span>!</span>TCH</span></header><main class="ph-body"><section>' +
       '<h2>Join a game</h2><form id="joinForm" novalidate>' +
       '<label class="field"><span>Room code</span><input id="j-code" class="code-input" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" value="' + esc(code || '') + '"></label>' +
       '<label class="field"><span>Your name</span><input id="j-name" maxlength="16" autocomplete="nickname" placeholder="Name" value="' + esc(prof.name) + '"></label>' +
@@ -4030,7 +4030,7 @@ window.PITCH.config = {
     reset('home-mode');
     let n = U.store.get('pitch.practiceN', 5);
     const draw = () => {
-      root.innerHTML = '<div class="home"><header class="hero small"><div class="eyebrow">Practice mode</div><h1 class="logo">PITCH<span>!</span></h1><p class="tagline">The TV and every phone on one screen. Switch phones with the tabs. Bots play every seat except the phone you’re looking at.</p></header>' +
+      root.innerHTML = '<div class="home"><header class="hero small"><div class="eyebrow">Practice mode</div><h1 class="logo">P<span>!</span>TCH</h1><p class="tagline">The TV and every phone on one screen. Switch phones with the tabs. Bots play every seat except the phone you’re looking at.</p></header>' +
         '<section class="setup"><h3>How many players?</h3><div class="seg big-seg">' + [3, 4, 5, 6, 8, 10].map((k) => '<button data-n="' + k + '" class="' + (k === n ? 'on' : '') + '">' + k + '</button>').join('') + '</div>' +
         '<p class="muted">' + PRACTICE_NAMES.slice(0, n).join(', ') + '</p><div class="actions"><button class="btn ghost" data-go="back">Back</button><button class="btn gold big" data-go="start">Start practice</button></div></section></div>';
     };
