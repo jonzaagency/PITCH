@@ -339,6 +339,17 @@
       return '<section class="hello"><span class="eyebrow">Final results</span><h2>' + (me && me.winner ? 'You’re the session champion!' : 'You finished #' + rank) + '</h2><div class="price-tag big-tag"><b>' + U.money2(p.earned) + '</b></div><p class="muted">Your cash and Power Cards are saved on this device for next time.</p></section>' + myTrophies() + shop() + wallet();
     }
 
+    /** The Peddler's "move on" button, with a confirm tap. Pitch has its own "I'm done pitching". */
+    function peddlerNext() {
+      const v = st.pub;
+      const label = { brief: 'Start the Creation Lab ›', lab: 'Start Fact-Finding ›', fact: 'Start my PITCH! ›', close: 'Open scoring ›' }[v.phase];
+      if (!label || st.priv.role !== 'peddler') return '';
+      const btn = st.confirm === 'pnext'
+        ? '<div class="confirm"><button class="btn gold" data-act="peddlerNext">Yes, move on</button><button class="btn ghost" data-act="cancel">Not yet</button></div>'
+        : '<button class="btn gold" data-act="ask" data-ck="pnext">' + esc(label) + '</button>';
+      return '<section class="ped-next">' + btn + '<p class="hint center">You run the round. Move on when the table is ready.</p></section>';
+    }
+
     function body() {
       const v = st.pub, p = st.priv;
       if (!v || !p) return '<section class="hello"><h2>Connecting…</h2></section>';
@@ -350,11 +361,11 @@
       if (ph === 'final') return finalScreen();
       if (ph === 'awards') return awardsScreen();
       if (role === 'sitout' || !role) return '<section class="hello"><h2>Sitting out this round</h2><p>Enjoy the show. You’ll be in the next one.</p></section>';
-      if (ph === 'brief') return briefScreen();
-      if (ph === 'lab') return role === 'peddler' ? peddlerLab() : role === 'prospect' ? prospectLab() : philWait(esc((st.pub.players.find((x) => x.id === st.pub.round.peddler) || { name: 'The Peddler' }).name) + ' is inventing…');
-      if (ph === 'fact') return role === 'peddler' ? peddlerFact() : role === 'prospect' ? prospectFact() : philWait('Fact-Finding');
+      if (ph === 'brief') return briefScreen() + peddlerNext();
+      if (ph === 'lab') return role === 'peddler' ? peddlerLab() + peddlerNext() : role === 'prospect' ? prospectLab() : philWait(esc((st.pub.players.find((x) => x.id === st.pub.round.peddler) || { name: 'The Peddler' }).name) + ' is inventing…');
+      if (ph === 'fact') return role === 'peddler' ? peddlerNext() + peddlerFact() : role === 'prospect' ? prospectFact() : philWait('Fact-Finding');
       if (ph === 'pitch') return role === 'peddler' ? peddlerPitch() : role === 'prospect' ? prospectPitch() : philWait('PITCH!');
-      if (ph === 'close') return role === 'peddler' ? '<section class="hello"><h2>Objections + Close</h2><p>Answer every objection directly, then clearly <b>ask for the sale</b>.</p></section>' + notes()
+      if (ph === 'close') return role === 'peddler' ? '<section class="hello"><h2>Objections + Close</h2><p>Answer every objection directly, then clearly <b>ask for the sale</b>.</p></section>' + peddlerNext() + notes()
         : role === 'prospect' ? prospectClose() : philWait('Objections + Close');
       if (ph === 'scoring') return role === 'phil' ? scorecard(true) : role === 'prospect' ? '<section class="hello"><h2>The Philanthropists are scoring</h2></section>' + (p.verdict ? '' : verdictBlock())
         : '<section class="hello"><h2>The Philanthropists are deciding your fate</h2><p>Sit tight.</p></section>';
@@ -472,6 +483,7 @@
       else if (a === 'daddy') { send({ type: 'nepo', card: 'daddy', target: d.target }); st.chooser = null; }
       else if (a === 'notToday') send({ type: 'nepo', card: 'notToday' });
       else if (a === 'screwDone') send({ type: 'screwDone' });
+      else if (a === 'peddlerNext') { send({ type: 'peddlerNext' }); st.confirm = null; }
       else if (a === 'screwVote') { (st.priv.screwVotes || []).forEach((x) => { if (x.by === d.by) x.mine = d.result; }); send({ type: 'screwVote', by: d.by, result: d.result }); U.toast('Vote in ✓'); }
       else if (a === 'answer') send({ type: 'secretAnswer', yes: d.yes === '1' });
       else if (a === 'selfReveal') { send({ type: 'secretAnswer', yes: true }); st.confirm = null; }

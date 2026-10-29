@@ -247,6 +247,9 @@ details summary { cursor: pointer; font-weight: 600; margin-top: 6px; }
 .top-secret .lbl { color: #ff9b92; }
 .secret-tip { font-size: 0.9rem; padding: 8px 10px; border-radius: 10px; background: var(--panel-2); }
 .secret-tip b { color: var(--gold); }
+.ph-body > section.ped-next { background: transparent; padding: 0; align-items: stretch; }
+.ped-next > .btn, .ped-next .confirm .btn { width: 100%; font-size: 1.1rem; min-height: 54px; }
+.ped-next .confirm { flex-wrap: nowrap; }
 .hint-list { margin: 6px 0 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 5px; }
 .ph-body > section.found-sec { background: transparent; padding: 4px 0; align-items: stretch; }
 .found-btn { font-size: 1.25rem; min-height: 60px; }
@@ -372,14 +375,14 @@ input[type=range] { width: 100%; accent-color: var(--gold); height: 34px; }
 /* fact */
 .pros { display: grid; grid-template-columns: repeat(auto-fit, minmax(17em, 1fr)); gap: 1.2em; }
 .pro { background: var(--panel); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; border-top: 6px solid var(--sky); min-width: 0; }
-.pro .portrait { border-radius: 0; aspect-ratio: auto; height: min(24vh, 12em); }
-.pro .portrait img { object-fit: contain; }
+.pro .portrait { border-radius: 0; width: 100%; max-height: min(32vh, 16em); }
 .pro-body { padding: 1em 1.2em 1.2em; display: flex; flex-direction: column; gap: 0.4em; }
 .pro-body h3 { font-family: var(--display); font-weight: 400; font-size: 1.4em; }
 .played-by { color: var(--muted); font-size: 0.85em; }
 .pro .facts { list-style: none; padding: 0; margin: 0.2em 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.2em 1em; }
-.portrait { aspect-ratio: 4 / 3; background: #fff; display: grid; place-items: center; overflow: hidden; border-radius: 14px; }
-.portrait img { width: 100%; height: 100%; object-fit: cover; }
+/* drawings are 4:3; the image is pinned inside its box and always shows the whole picture */
+.portrait { position: relative; aspect-ratio: 4 / 3; background: #fff; display: grid; place-items: center; overflow: hidden; border-radius: 14px; }
+.portrait img, .sketch img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 .portrait.sm { width: 5.5em; flex: none; border-radius: 12px; }
 .portrait-empty { font-family: var(--display); font-size: 2.5em; color: #c9cee4; }
 .secret { margin-top: 0.4em; padding: 0.6em 0.8em; border-radius: 12px; background: var(--panel-2); font-weight: 600; }
@@ -396,8 +399,7 @@ input[type=range] { width: 100%; accent-color: var(--gold); height: 34px; }
 /* pitch + close */
 .showcase { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 2em; align-items: center; }
 .showcase.compact { grid-template-columns: minmax(0, 0.6fr) minmax(0, 1fr); font-size: 0.8em; margin-bottom: 1.4em; }
-.sketch { width: min(100%, calc(56vh * 4 / 3)); justify-self: center; background: #fff; border-radius: 22px; aspect-ratio: 4 / 3; overflow: hidden; display: grid; place-items: center; box-shadow: 0 0 0 8px var(--panel-2), 0 20px 50px rgba(0, 0, 0, 0.45); transform: rotate(-1.2deg); }
-.sketch img { width: 100%; height: 100%; object-fit: contain; }
+.sketch { position: relative; width: min(100%, calc(56vh * 4 / 3)); justify-self: center; background: #fff; border-radius: 22px; aspect-ratio: 4 / 3; overflow: hidden; display: grid; place-items: center; box-shadow: 0 0 0 8px var(--panel-2), 0 20px 50px rgba(0, 0, 0, 0.45); transform: rotate(-1.2deg); }
 .show-info { display: flex; flex-direction: column; gap: 0.6em; min-width: 0; }
 .prod { font-family: var(--display); font-weight: 400; font-size: 3em; line-height: 1.02; color: var(--cream); overflow-wrap: anywhere; }
 .show-info .slogan { font-size: 1.4em; }
@@ -1783,6 +1785,16 @@ window.PITCH.config = {
       return { ok: true };
     }
 
+    /** The Peddler can move the round along from their phone, up to scoring (the Host reveals the money). */
+    a_peddlerNext(p) {
+      const s = this.s, r = s.round;
+      if (!r || r.peddler !== p.id) return { ok: false, error: 'Only the Peddler can do that.' };
+      if (['brief', 'lab', 'fact', 'pitch', 'close'].indexOf(s.phase) < 0) return { ok: false, error: 'The Host takes it from here.' };
+      if (r.activeScrew) return { ok: false, error: 'Finish the SCREW! first.' };
+      this.log('info', p.name + ' moved the game on.');
+      return this.advance();
+    }
+
     a_pitchDone(p) {
       const s = this.s, r = s.round;
       if (!r || r.peddler !== p.id || s.phase !== 'pitch') return { ok: false, error: 'Not pitching right now.' };
@@ -2878,7 +2890,8 @@ window.PITCH.config = {
       let cur = null;
       const pos = (e) => { const r = this.canvas.getBoundingClientRect(); return [((e.clientX - r.left) / r.width) * 800, ((e.clientY - r.top) / r.height) * 600]; };
       this.canvas.addEventListener('pointerdown', (e) => {
-        e.preventDefault(); this.canvas.setPointerCapture(e.pointerId);
+        e.preventDefault();
+        try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* some browsers refuse capture; keep drawing anyway */ }
         cur = { c: this.color, s: this.size, pts: [pos(e)] }; this.strokes.push(cur); this.redraw();
       });
       this.canvas.addEventListener('pointermove', (e) => { if (!cur) return; e.preventDefault(); cur.pts.push(pos(e)); this.drawStroke(cur, true); });
@@ -3722,6 +3735,17 @@ window.PITCH.config = {
       return '<section class="hello"><span class="eyebrow">Final results</span><h2>' + (me && me.winner ? 'You’re the session champion!' : 'You finished #' + rank) + '</h2><div class="price-tag big-tag"><b>' + U.money2(p.earned) + '</b></div><p class="muted">Your cash and Power Cards are saved on this device for next time.</p></section>' + myTrophies() + shop() + wallet();
     }
 
+    /** The Peddler's "move on" button, with a confirm tap. Pitch has its own "I'm done pitching". */
+    function peddlerNext() {
+      const v = st.pub;
+      const label = { brief: 'Start the Creation Lab ›', lab: 'Start Fact-Finding ›', fact: 'Start my PITCH! ›', close: 'Open scoring ›' }[v.phase];
+      if (!label || st.priv.role !== 'peddler') return '';
+      const btn = st.confirm === 'pnext'
+        ? '<div class="confirm"><button class="btn gold" data-act="peddlerNext">Yes, move on</button><button class="btn ghost" data-act="cancel">Not yet</button></div>'
+        : '<button class="btn gold" data-act="ask" data-ck="pnext">' + esc(label) + '</button>';
+      return '<section class="ped-next">' + btn + '<p class="hint center">You run the round. Move on when the table is ready.</p></section>';
+    }
+
     function body() {
       const v = st.pub, p = st.priv;
       if (!v || !p) return '<section class="hello"><h2>Connecting…</h2></section>';
@@ -3733,11 +3757,11 @@ window.PITCH.config = {
       if (ph === 'final') return finalScreen();
       if (ph === 'awards') return awardsScreen();
       if (role === 'sitout' || !role) return '<section class="hello"><h2>Sitting out this round</h2><p>Enjoy the show. You’ll be in the next one.</p></section>';
-      if (ph === 'brief') return briefScreen();
-      if (ph === 'lab') return role === 'peddler' ? peddlerLab() : role === 'prospect' ? prospectLab() : philWait(esc((st.pub.players.find((x) => x.id === st.pub.round.peddler) || { name: 'The Peddler' }).name) + ' is inventing…');
-      if (ph === 'fact') return role === 'peddler' ? peddlerFact() : role === 'prospect' ? prospectFact() : philWait('Fact-Finding');
+      if (ph === 'brief') return briefScreen() + peddlerNext();
+      if (ph === 'lab') return role === 'peddler' ? peddlerLab() + peddlerNext() : role === 'prospect' ? prospectLab() : philWait(esc((st.pub.players.find((x) => x.id === st.pub.round.peddler) || { name: 'The Peddler' }).name) + ' is inventing…');
+      if (ph === 'fact') return role === 'peddler' ? peddlerNext() + peddlerFact() : role === 'prospect' ? prospectFact() : philWait('Fact-Finding');
       if (ph === 'pitch') return role === 'peddler' ? peddlerPitch() : role === 'prospect' ? prospectPitch() : philWait('PITCH!');
-      if (ph === 'close') return role === 'peddler' ? '<section class="hello"><h2>Objections + Close</h2><p>Answer every objection directly, then clearly <b>ask for the sale</b>.</p></section>' + notes()
+      if (ph === 'close') return role === 'peddler' ? '<section class="hello"><h2>Objections + Close</h2><p>Answer every objection directly, then clearly <b>ask for the sale</b>.</p></section>' + peddlerNext() + notes()
         : role === 'prospect' ? prospectClose() : philWait('Objections + Close');
       if (ph === 'scoring') return role === 'phil' ? scorecard(true) : role === 'prospect' ? '<section class="hello"><h2>The Philanthropists are scoring</h2></section>' + (p.verdict ? '' : verdictBlock())
         : '<section class="hello"><h2>The Philanthropists are deciding your fate</h2><p>Sit tight.</p></section>';
@@ -3855,6 +3879,7 @@ window.PITCH.config = {
       else if (a === 'daddy') { send({ type: 'nepo', card: 'daddy', target: d.target }); st.chooser = null; }
       else if (a === 'notToday') send({ type: 'nepo', card: 'notToday' });
       else if (a === 'screwDone') send({ type: 'screwDone' });
+      else if (a === 'peddlerNext') { send({ type: 'peddlerNext' }); st.confirm = null; }
       else if (a === 'screwVote') { (st.priv.screwVotes || []).forEach((x) => { if (x.by === d.by) x.mine = d.result; }); send({ type: 'screwVote', by: d.by, result: d.result }); U.toast('Vote in ✓'); }
       else if (a === 'answer') send({ type: 'secretAnswer', yes: d.yes === '1' });
       else if (a === 'selfReveal') { send({ type: 'secretAnswer', yes: true }); st.confirm = null; }

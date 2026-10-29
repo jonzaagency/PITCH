@@ -826,6 +826,16 @@
       return { ok: true };
     }
 
+    /** The Peddler can move the round along from their phone, up to scoring (the Host reveals the money). */
+    a_peddlerNext(p) {
+      const s = this.s, r = s.round;
+      if (!r || r.peddler !== p.id) return { ok: false, error: 'Only the Peddler can do that.' };
+      if (['brief', 'lab', 'fact', 'pitch', 'close'].indexOf(s.phase) < 0) return { ok: false, error: 'The Host takes it from here.' };
+      if (r.activeScrew) return { ok: false, error: 'Finish the SCREW! first.' };
+      this.log('info', p.name + ' moved the game on.');
+      return this.advance();
+    }
+
     a_pitchDone(p) {
       const s = this.s, r = s.round;
       if (!r || r.peddler !== p.id || s.phase !== 'pitch') return { ok: false, error: 'Not pitching right now.' };

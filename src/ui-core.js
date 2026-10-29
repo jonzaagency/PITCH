@@ -209,7 +209,8 @@
       let cur = null;
       const pos = (e) => { const r = this.canvas.getBoundingClientRect(); return [((e.clientX - r.left) / r.width) * 800, ((e.clientY - r.top) / r.height) * 600]; };
       this.canvas.addEventListener('pointerdown', (e) => {
-        e.preventDefault(); this.canvas.setPointerCapture(e.pointerId);
+        e.preventDefault();
+        try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* some browsers refuse capture; keep drawing anyway */ }
         cur = { c: this.color, s: this.size, pts: [pos(e)] }; this.strokes.push(cur); this.redraw();
       });
       this.canvas.addEventListener('pointermove', (e) => { if (!cur) return; e.preventDefault(); cur.pts.push(pos(e)); this.drawStroke(cur, true); });
