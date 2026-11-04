@@ -637,6 +637,44 @@ input[type=text], input:not([type]), input[type=number], select, textarea { bord
 .pr-tab { border-color: var(--inkline); }
 .pr-tab.on { border-color: var(--gold); }
 
+/* ---------- how-to-play walkthrough ---------- */
+.tut-cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; }
+.tut-ov { z-index: 80; }
+.tut { position: relative; width: min(560px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--stage); border: 3px solid var(--inkline); box-shadow: 8px 8px 0 var(--inkline); border-radius: 24px; padding: 20px 18px 16px; display: flex; flex-direction: column; gap: 12px; font-size: 16px; touch-action: pan-y; }
+.tut-x { position: absolute; top: 10px; right: 12px; width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--inkline); background: var(--panel); color: var(--cream); cursor: pointer; font-size: 1rem; }
+.tut-step { color: var(--muted); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.1em; }
+.tut-slide { display: flex; flex-direction: column; gap: 10px; animation: rise 0.35s ease both; }
+.tut-slide h2 { font-family: var(--display); font-weight: 400; color: var(--cream); text-shadow: 2px 2px 0 rgba(238, 123, 111, 0.85); text-align: center; }
+.tut-art { min-height: 190px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 14px; border-radius: 18px; background: var(--panel); border: 2px solid var(--inkline); }
+.tut-lines { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; font-size: 1.05rem; }
+.tut-dots { display: flex; justify-content: center; gap: 8px; }
+.tut-dots button { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--inkline); background: var(--panel-2); cursor: pointer; padding: 0; }
+.tut-dots button.on { background: var(--gold); }
+.tut-nav { display: flex; justify-content: space-between; gap: 10px; }
+.tut-logo { width: min(320px, 90%); }
+.tut-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 14px; }
+.tut-who { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.tut-cards .deck { width: 150px; }
+.tut-plus { font-family: var(--display); font-size: 1.6rem; color: var(--gold); }
+.tut-result { font-family: var(--display); color: var(--gold); font-size: 1.2rem; }
+.tut-chat { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.tut-bubble { align-self: flex-start; max-width: 85%; padding: 8px 12px; border-radius: 14px 14px 14px 4px; background: var(--card); color: var(--card-ink); border: 2px solid var(--inkline); font-size: 0.95rem; }
+.tut-bubble b { display: block; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: #6b5a2a; }
+.tut-bubble.right { align-self: flex-end; border-radius: 14px 14px 4px 14px; background: #dfe2ff; }
+.tut-phone { width: 200px; padding: 18px 10px 12px; border-radius: 26px; background: var(--ink); border: 3px solid var(--inkline); box-shadow: 4px 4px 0 var(--inkline); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.tut-notch { width: 50px; height: 6px; border-radius: 3px; background: var(--panel-2); margin-top: -8px; }
+.tut-btn { width: 100%; text-align: center; padding: 10px 8px; border-radius: 999px; border: 2px solid var(--inkline); font-weight: 800; font-size: 0.85rem; color: #1a1230; }
+.tut-btn.mint { background: var(--mint); } .tut-btn.gold { background: var(--gold); }
+.tut-tag { font-size: 0.95rem; }
+.tut-screw { width: 90px; background: #fffaf0; border-radius: 18px; padding: 8px; box-sizing: content-box; }
+.tut-objection { max-width: 220px; padding: 12px 14px; border-radius: 16px; background: var(--violet); color: #24103f; border: 2px solid var(--inkline); font-weight: 800; }
+.tut-objection .eyebrow { display: block; color: #24103f; }
+.tut-bars { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+.tut-art .big-tag { font-size: 1.5rem; }
+.tut-bars .bar-row { grid-template-columns: 7em minmax(0, 1fr); }
+.tut-coach { width: 100%; font-size: 0.8rem; background: var(--panel); border-left: 4px solid var(--gold); border-radius: 10px; padding: 8px; }
+.tut-coach ol { margin: 4px 0 0; padding-left: 1.2em; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {
   .practice { grid-template-columns: minmax(0, 1fr); }
@@ -874,8 +912,17 @@ window.PITCH.config = {
   ];
   C.themeOf = (item) => C.themes.find((t) => t.items.indexOf(item) >= 0) || C.themes[0];
   /** A story told for one Item: the fun fact, the secret and the Prospect's hints, with {item} filled in. */
+  const PLURAL_ITEMS = ['Cowboy boots', 'Ski goggles'];
+  const PLURAL_VERB = { is: 'are', has: 'have', comes: 'come', works: 'work', does: 'do', goes: 'go', keeps: 'keep', makes: 'make', gives: 'give', counts: 'count' };
   C.tell = (theme, i, item) => {
-    const st = theme.stories[i], fill = (x) => x.replace(/\{item\}/g, String(item || 'product').toLowerCase());
+    const name = String(item || 'product').toLowerCase();
+    const plural = PLURAL_ITEMS.indexOf(item) >= 0;
+    // "the cowboy boots is" -> "the cowboy boots are"
+    const fill = (x) => {
+      const out = x.replace(/\{item\}/g, name);
+      return plural ? out.replace(new RegExp('(' + name + ') (“?)(' + Object.keys(PLURAL_VERB).join('|') + ')\\b', 'g'), (m, n, q, v) => n + ' ' + q + PLURAL_VERB[v]) : out;
+    };
+    const st = theme.stories[i];
     return { key: theme.id + i, topic: theme.id, fact: st.fact, ask: st.ask, secret: fill(st.secret), hints: st.act.map(fill).concat('Try this: ' + fill(st.try)) };
   };
 
@@ -3129,10 +3176,10 @@ window.PITCH.config = {
       const qr = opts.practice ? '' : U.qr(url + (url.indexOf('?') < 0 ? '?' : '&') + 'room=' + v.code);
       const players = v.players;
       return '<section class="lobby">' +
-        (opts.practice ? '<div class="join-card practice-note">' + U.logo('lobby') + '<div class="eyebrow">Practice mode</div><h2>Everyone plays on this screen</h2><p>Use the phone panel to act as each player. Turn on bots to let the other players act on their own.</p></div>' :
+        (opts.practice ? '<div class="join-card practice-note">' + U.logo('lobby') + '<div class="eyebrow">Practice mode</div><h2>Everyone plays on this screen</h2><p>Use the phone panel to act as each player. Turn on bots to let the other players act on their own.</p><button class="btn ghost" data-act="tutorial">▶ How to play</button></div>' :
           '<div class="join-card">' + U.logo('lobby') + '<div class="eyebrow">Join on your phone</div><p class="join-url">' + esc(shortUrl) + '</p>' +
           '<div class="code-tag" aria-label="Room code ' + esc(v.code.split('').join(' ')) + '">' + esc(v.code) + '</div>' +
-          (qr ? '<div class="qr">' + qr + '</div>' : '') + '<p class="muted">3 to 20+ players. Phones are the controllers; this screen is the stage.</p></div>') +
+          (qr ? '<div class="qr">' + qr + '</div>' : '') + '<p class="muted">3 to 20+ players. Phones are the controllers; this screen is the stage.</p><button class="btn ghost" data-act="tutorial">▶ How to play</button></div>') +
         '<div class="lobby-main"><div class="lobby-head"><h2>Players <span class="count">' + players.filter((p) => p.connected).length + '</span></h2>' +
         '<button class="btn gold big" data-act="start"' + (players.filter((p) => p.connected).length < 3 ? ' disabled' : '') + '>Start the game</button></div>' +
         (players.length ? '<div class="pgrid">' + players.map((p) => '<button class="pcard' + (p.connected ? '' : ' off') + '" data-key="pc-' + esc(p.id) + '" data-act="manage" data-pid="' + esc(p.id) + '">' + U.avatar(p, 'lg') +
@@ -3455,6 +3502,7 @@ window.PITCH.config = {
       const d = el.dataset, a = d.act;
       const simple = ['start', 'shuffle', 'begin', 'next', 'pause', 'resume', 'reveal', 'nextRound', 'end', 'newGame', 'daddyDone', 'finishAwards', 'screwEnd'];
       if (simple.indexOf(a) >= 0) { host(a); if (a === 'end' || a === 'newGame') ui.menu = false; }
+      else if (a === 'tutorial') { P.tutorial.open(); return; }
       else if (a === 'addTime') host('addTime', { sec: 30 });
       else if (a === 'secret') host('secret', { pid: d.pid, status: d.status });
       else if (a === 'setRole') { host('setRole', { pid: d.pid, role: d.role }); ui.manage = null; }
@@ -3744,7 +3792,7 @@ window.PITCH.config = {
       }).join('<br>');
       return screw + coach('Your pitch, step by step', [
         { t: 'Point at your sketch on the big screen.' },
-        { t: 'Say what it is in one sentence.', try: 'The ' + inv.name + ' is a ' + String(inv.item).toLowerCase() + ' that ' + String(inv.func).charAt(0).toLowerCase() + String(inv.func).slice(1) + '.' },
+        { t: 'Say what it is in one sentence.', try: 'Meet ' + inv.name + '! It ' + String(inv.func).charAt(0).toLowerCase() + String(inv.func).slice(1) + '.' },
         { t: 'Sell it to each Prospect using what you learned:<br>' + sellTo },
         { t: 'Got SCREW!ed? Answer it in 15 seconds, then tap “I’m done responding.”' },
         { t: 'Finished? Tap “I’m done pitching” below.' }
@@ -3922,7 +3970,7 @@ window.PITCH.config = {
       const need = Math.floor(b.voters / 2) + 1;
       if (b.sent >= b.max) return '<section class="object-board"><h3>Inventor objections</h3><p class="muted">All ' + b.max + ' objections sent this round. Nice heckling.</p></section>';
       return '<section class="object-board"><div class="sec-head"><h3>Send an objection</h3><span class="muted">' + b.sent + ' of ' + b.max + ' sent</span></div>' +
-        '<p class="muted">Vote for one. When ' + need + ' Inventor' + (need === 1 ? '' : 's') + ' agree, it pops up on a Prospect’s phone and they have to act it out.</p>' +
+        '<p class="muted">' + (need === 1 ? 'Tap one and it pops up' : 'Vote for one. When ' + need + ' Inventors agree, it pops up') + ' on a Prospect’s phone, and they have to act it out.</p>' +
         b.options.map((o, i) => '<button type="button" class="object-opt' + (b.mine === i ? ' on' : '') + '" data-act="objectVote" data-idx="' + i + '"><span>' + esc(o) + '</span><b>' + b.counts[i] + '/' + need + '</b></button>').join('') +
         '<p class="hint">One every 20 seconds, up to ' + b.max + ' per round.</p></section>';
     }
@@ -4081,6 +4129,79 @@ window.PITCH.config = {
   P.phone = { create };
 })(window.PITCH = window.PITCH || {});
 
+/* ===== tutorial.js ===== */
+/* P!TCH how-to-play walkthrough: a swipeable deck of picture cards, one idea per card.
+ * Opens over any screen (home, TV lobby) with P.tutorial.open(). */
+(function (P) {
+  const U = P.ui;
+  const esc = U.esc;
+
+  // little pictures built from the game's own pieces
+  const av = (name, color, role) => '<div class="tut-who"><span class="av av-lg" style="--c:' + color + '">' + esc(name[0]) + '</span><b>' + esc(name) + '</b><span class="role-badge rb-' + role + '">' + esc(U.roleName(role)) + '</span></div>';
+  const phone = (inner) => '<div class="tut-phone"><div class="tut-notch"></div>' + inner + '</div>';
+  const bubble = (who, text, side) => '<div class="tut-bubble ' + (side || '') + '"><b>' + esc(who) + '</b>' + esc(text) + '</div>';
+
+  const SLIDES = [
+    { title: 'Welcome to P!TCH', art: () => U.logo('tut-logo'),
+      lines: ['One player is the <b>Peddler</b>. They invent a ridiculous product and try to sell it.', 'Everyone else plays along on their phone. <b>Most money at the end wins.</b>'] },
+    { title: 'Who’s who', art: () => '<div class="tut-row">' + av('Peddler', '#f0c35a', 'peddler') + av('Prospect', '#8d98f2', 'prospect') + av('Inventor', '#82d69c', 'phil') + '</div>',
+      lines: ['<b>Peddler:</b> invents, asks questions, pitches.', '<b>Prospects (1–3):</b> play a character with a secret.', '<b>Inventors (everyone else):</b> heckle, guess and score.'] },
+    { title: '1 · Creation Lab', art: () => '<div class="tut-row tut-cards"><div class="deck deck-item"><span class="deck-k">Item</span><span class="deck-t">Hot tub</span></div><span class="tut-plus">+</span><div class="deck deck-func"><span class="deck-k">Function</span><span class="deck-t">Plays smooth jazz</span></div></div><p class="tut-result">= The Jazz-uzzi 3000</p>',
+      lines: ['The Peddler picks an <b>Item</b> and a <b>Function</b>, names it and sketches it.', 'Prospects draw their character. Their <b>fun fact and secret are tied to the product</b>.'] },
+    { title: '2 · Fact-Finding', art: () => '<div class="tut-chat">' + bubble('Peddler', 'Why did you stop lifeguarding?') + bubble('Prospect', 'Oh, I just… rest my eyes near water.', 'right') + bubble('Peddler', 'I bet you napped on the job!') + '</div>' +
+        phone('<div class="tut-btn mint">The Peddler guessed my secret!</div><div class="price-tag tut-tag"><span>Peddler</span><b>+$25</b></div>'),
+      lines: ['The Peddler asks questions and <b>guesses secrets out loud</b>.', 'Right guess? The Prospect taps it in: <b>+$25</b>.', 'Inventors secretly guess too: +$10 each.'] },
+    { title: '3 · The PITCH!', art: () => '<div class="tut-row">' + U.screwIcon('tut-screw') + '<div class="tut-objection"><span class="eyebrow">The Inventors object!</span>“I object! My dog would hate this.”</div></div>',
+      lines: ['The Peddler sells it to each Prospect, using what they learned.', 'Each Prospect can <b>SCREW!</b> them once: 15 seconds to answer, then everyone votes.', 'Inventors send funny <b>objections</b> for Prospects to act out.'] },
+    { title: '4 · Objections + Close', art: () => '<div class="tut-chat">' + bubble('Prospect', 'I object! It’s way too loud.', 'right') + bubble('Peddler', 'It has a whisper mode. So, can I count you in today?') + '</div>',
+      lines: ['Prospects raise one last objection.', 'The Peddler answers it and <b>asks for the sale</b>.'] },
+    { title: '5 · Money Reveal', art: () => '<div class="tut-bars">' + ['Invention', 'Fact-Finding', 'The Close'].map((n, i) => '<div class="bar-row" style="--d:' + (0.2 * i) + 's"><span class="bar-name">' + n + '</span><span class="bar"><i style="--w:' + [80, 60, 90][i] + '%"></i></span></div>').join('') + '</div><div class="price-tag big-tag"><span>Peddler earns</span><b>$190</b></div>',
+      lines: ['Inventors score six categories, $0–$50 each.', 'The Peddler earns the average plus <b>$25 per secret</b>. Then a new Peddler steps up.'] },
+    { title: 'Your phone shows the way', art: () => phone('<div class="tut-coach"><b>Fact-Finding game plan</b><ol><li>Talk to every Prospect</li><li>Ask follow-ups</li><li>Guess out loud</li></ol></div><div class="tut-btn gold">Start my PITCH! ›</div>'),
+      lines: ['Every phone shows <b>your next step</b>.', 'The Peddler gets a game plan, “Try:” questions and a <b>Move on</b> button.', 'Want to practice first? Try <b>Practice mode</b> with bots.'] }
+  ];
+
+  let el = null, i = 0, startX = null;
+
+  function render() {
+    const s = SLIDES[i];
+    el.innerHTML = '<div class="tut" role="dialog" aria-modal="true" aria-label="How to play P!TCH">' +
+      '<button class="tut-x" data-tut="close" aria-label="Close">✕</button>' +
+      '<div class="tut-step">' + (i + 1) + ' / ' + SLIDES.length + '</div>' +
+      '<div class="tut-slide"><div class="tut-art">' + s.art() + '</div><h2>' + esc(s.title) + '</h2><ul class="tut-lines">' + s.lines.map((l) => '<li>' + l + '</li>').join('') + '</ul></div>' +
+      '<div class="tut-dots">' + SLIDES.map((_, k) => '<button class="' + (k === i ? 'on' : '') + '" data-tut="go" data-k="' + k + '" aria-label="Card ' + (k + 1) + '"></button>').join('') + '</div>' +
+      '<div class="tut-nav"><button class="btn ghost" data-tut="prev"' + (i === 0 ? ' disabled' : '') + '>‹ Back</button>' +
+      (i < SLIDES.length - 1 ? '<button class="btn gold big" data-tut="next">Next ›</button>' : '<button class="btn gold big" data-tut="close">Let’s play!</button>') + '</div></div>';
+  }
+  function go(k) { i = Math.max(0, Math.min(SLIDES.length - 1, k)); render(); }
+  function close() { if (el) { el.remove(); el = null; document.removeEventListener('keydown', onKey); } }
+  function onKey(e) {
+    if (e.key === 'ArrowRight') go(i + 1); else if (e.key === 'ArrowLeft') go(i - 1); else if (e.key === 'Escape') close();
+  }
+
+  P.tutorial = {
+    open() {
+      close();
+      i = 0;
+      el = document.createElement('div');
+      el.className = 'overlay tut-ov';
+      document.body.appendChild(el);
+      el.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-tut]');
+        if (!b) { if (e.target === el) close(); return; }
+        const a = b.dataset.tut;
+        if (a === 'next') go(i + 1); else if (a === 'prev') go(i - 1); else if (a === 'go') go(Number(b.dataset.k)); else if (a === 'close') close();
+      });
+      // swipe left/right on phones
+      el.addEventListener('pointerdown', (e) => { startX = e.clientX; });
+      el.addEventListener('pointerup', (e) => { if (startX == null) return; const dx = e.clientX - startX; startX = null; if (Math.abs(dx) > 60) go(i + (dx < 0 ? 1 : -1)); });
+      document.addEventListener('keydown', onKey);
+      render();
+    },
+    close
+  };
+})(window.PITCH = window.PITCH || {});
+
 /* ===== app.js ===== */
 /* P!TCH app shell: home screen, hosting, joining, and practice mode. */
 (function (P) {
@@ -4127,7 +4248,8 @@ window.PITCH.config = {
       '<button class="choice c-prac" data-go="practice"><span class="c-k">One screen</span><b>Practice mode</b><span>See the TV and every phone side by side. Bots can play the other seats.</span></button></div>' +
       (canResume ? '<div class="resume"><span>Your room <b>' + esc(saved.state.code) + '</b> is still open on this device.</span><button class="btn gold" data-go="resume">Resume hosting</button><button class="btn ghost" data-go="forget">Forget it</button></div>' : '') +
       (canRejoin ? '<div class="resume"><span>Rejoin room <b>' + esc(last.code) + '</b> as ' + esc(last.name) + '?</span><button class="btn gold" data-go="rejoin">Rejoin</button></div>' : '') +
-      '<details class="howto"><summary>How to play</summary>' + howTo() + '</details>' +
+      '<div class="tut-cta"><button class="btn gold big" data-go="tutorial">▶ How to play</button><span class="muted">8 quick picture cards. About 2 minutes.</span></div>' +
+      '<details class="howto"><summary>Full written rules</summary>' + howTo() + '</details>' +
       '<footer class="home-foot"><button class="btn ghost sm" data-go="hof">Hall of Fame (' + hofCount + ')</button><span class="muted">Official rules, Inventor Edition v4.0</span></footer></div>';
     root.onclick = (e) => {
       const b = e.target.closest('[data-go]');
@@ -4141,18 +4263,19 @@ window.PITCH.config = {
       else if (go === 'rejoin') doJoin(last.code, last.name, U.profile.load().prefs);
       else if (go === 'practice') practiceSetup();
       else if (go === 'hof') hofScreen();
+      else if (go === 'tutorial') P.tutorial.open();
     };
   }
 
   function howTo() {
-    return '<div class="howto-body"><div><h4>Roles</h4><ul><li><b>Peddler</b> invents a product from three cards, interviews the Prospects, pitches, and closes.</li>' +
-      '<li><b>Prospects</b> (1–3) play fictional characters with a secret, draw a portrait, and each play one SCREW! card.</li>' +
-      '<li><b>Inventors</b> (everyone else) score the Peddler with game money.</li></ul></div>' +
+    return '<div class="howto-body"><div><h4>Roles</h4><ul><li><b>Peddler</b> invents a product from an Item card and a Function card, interviews the Prospects, pitches, and closes.</li>' +
+      '<li><b>Prospects</b> (1–3) play fictional characters whose fun fact and secret are tied to the product, draw a portrait, and each play one SCREW! card.</li>' +
+      '<li><b>Inventors</b> (everyone else) vote on SCREW!s, send funny objections to the Prospects, guess secrets, and score the Peddler with game money.</li></ul></div>' +
       '<div><h4>Each round</h4><ol><li>Creation Lab · 2:00</li><li>Fact-Finding · 2:30 · $25 per secret uncovered</li><li>PITCH! · 1:30 · each Prospect may SCREW! once (15 s, clock pauses, then the table votes)</li><li>Objections + Close · 0:45</li><li>Money Reveal</li></ol></div>' +
       '<div><h4>Money</h4><p>Each Inventor awards $0–$50 in six categories: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close. ' +
       'The Peddler earns the average scorecard plus $25 per secret (with 4+ Inventors, a scorecard more than $100 away from the rest of the room is set aside). Prospects earn the average of up to $25 each for role-play. ' +
       '<b>Secret Sleuth:</b> during Fact-Finding, Inventors guess each Prospect’s secret from 4 options, $10 per correct guess. The Peddler can buy <b>INSIDE TRADING</b> to peek at a guess. Most money tonight wins.</p>' +
-      '<p>Spend cash between rounds on NEPO BABY! Power Cards: NOT TODAY! ($75), I KNOW PEOPLE ($100), DADDY MADE A CALL ($125).</p></div></div>';
+      '<p>Spend cash between rounds on NEPO BABY! Power Cards: NOT TODAY! ($75), I KNOW PEOPLE ($100), INSIDE TRADING ($100), DADDY MADE A CALL ($125).</p></div></div>';
   }
 
   function hofScreen() {

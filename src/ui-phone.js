@@ -245,7 +245,7 @@
       }).join('<br>');
       return screw + coach('Your pitch, step by step', [
         { t: 'Point at your sketch on the big screen.' },
-        { t: 'Say what it is in one sentence.', try: 'The ' + inv.name + ' is a ' + String(inv.item).toLowerCase() + ' that ' + String(inv.func).charAt(0).toLowerCase() + String(inv.func).slice(1) + '.' },
+        { t: 'Say what it is in one sentence.', try: 'Meet ' + inv.name + '! It ' + String(inv.func).charAt(0).toLowerCase() + String(inv.func).slice(1) + '.' },
         { t: 'Sell it to each Prospect using what you learned:<br>' + sellTo },
         { t: 'Got SCREW!ed? Answer it in 15 seconds, then tap “I’m done responding.”' },
         { t: 'Finished? Tap “I’m done pitching” below.' }
@@ -423,7 +423,7 @@
       const need = Math.floor(b.voters / 2) + 1;
       if (b.sent >= b.max) return '<section class="object-board"><h3>Inventor objections</h3><p class="muted">All ' + b.max + ' objections sent this round. Nice heckling.</p></section>';
       return '<section class="object-board"><div class="sec-head"><h3>Send an objection</h3><span class="muted">' + b.sent + ' of ' + b.max + ' sent</span></div>' +
-        '<p class="muted">Vote for one. When ' + need + ' Inventor' + (need === 1 ? '' : 's') + ' agree, it pops up on a Prospect’s phone and they have to act it out.</p>' +
+        '<p class="muted">' + (need === 1 ? 'Tap one and it pops up' : 'Vote for one. When ' + need + ' Inventors agree, it pops up') + ' on a Prospect’s phone, and they have to act it out.</p>' +
         b.options.map((o, i) => '<button type="button" class="object-opt' + (b.mine === i ? ' on' : '') + '" data-act="objectVote" data-idx="' + i + '"><span>' + esc(o) + '</span><b>' + b.counts[i] + '/' + need + '</b></button>').join('') +
         '<p class="hint">One every 20 seconds, up to ' + b.max + ' per round.</p></section>';
     }

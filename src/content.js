@@ -176,8 +176,17 @@
   ];
   C.themeOf = (item) => C.themes.find((t) => t.items.indexOf(item) >= 0) || C.themes[0];
   /** A story told for one Item: the fun fact, the secret and the Prospect's hints, with {item} filled in. */
+  const PLURAL_ITEMS = ['Cowboy boots', 'Ski goggles'];
+  const PLURAL_VERB = { is: 'are', has: 'have', comes: 'come', works: 'work', does: 'do', goes: 'go', keeps: 'keep', makes: 'make', gives: 'give', counts: 'count' };
   C.tell = (theme, i, item) => {
-    const st = theme.stories[i], fill = (x) => x.replace(/\{item\}/g, String(item || 'product').toLowerCase());
+    const name = String(item || 'product').toLowerCase();
+    const plural = PLURAL_ITEMS.indexOf(item) >= 0;
+    // "the cowboy boots is" -> "the cowboy boots are"
+    const fill = (x) => {
+      const out = x.replace(/\{item\}/g, name);
+      return plural ? out.replace(new RegExp('(' + name + ') (“?)(' + Object.keys(PLURAL_VERB).join('|') + ')\\b', 'g'), (m, n, q, v) => n + ' ' + q + PLURAL_VERB[v]) : out;
+    };
+    const st = theme.stories[i];
     return { key: theme.id + i, topic: theme.id, fact: st.fact, ask: st.ask, secret: fill(st.secret), hints: st.act.map(fill).concat('Try this: ' + fill(st.try)) };
   };
 

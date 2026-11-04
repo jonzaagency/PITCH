@@ -43,7 +43,8 @@
       '<button class="choice c-prac" data-go="practice"><span class="c-k">One screen</span><b>Practice mode</b><span>See the TV and every phone side by side. Bots can play the other seats.</span></button></div>' +
       (canResume ? '<div class="resume"><span>Your room <b>' + esc(saved.state.code) + '</b> is still open on this device.</span><button class="btn gold" data-go="resume">Resume hosting</button><button class="btn ghost" data-go="forget">Forget it</button></div>' : '') +
       (canRejoin ? '<div class="resume"><span>Rejoin room <b>' + esc(last.code) + '</b> as ' + esc(last.name) + '?</span><button class="btn gold" data-go="rejoin">Rejoin</button></div>' : '') +
-      '<details class="howto"><summary>How to play</summary>' + howTo() + '</details>' +
+      '<div class="tut-cta"><button class="btn gold big" data-go="tutorial">▶ How to play</button><span class="muted">8 quick picture cards. About 2 minutes.</span></div>' +
+      '<details class="howto"><summary>Full written rules</summary>' + howTo() + '</details>' +
       '<footer class="home-foot"><button class="btn ghost sm" data-go="hof">Hall of Fame (' + hofCount + ')</button><span class="muted">Official rules, Inventor Edition v4.0</span></footer></div>';
     root.onclick = (e) => {
       const b = e.target.closest('[data-go]');
@@ -57,18 +58,19 @@
       else if (go === 'rejoin') doJoin(last.code, last.name, U.profile.load().prefs);
       else if (go === 'practice') practiceSetup();
       else if (go === 'hof') hofScreen();
+      else if (go === 'tutorial') P.tutorial.open();
     };
   }
 
   function howTo() {
-    return '<div class="howto-body"><div><h4>Roles</h4><ul><li><b>Peddler</b> invents a product from three cards, interviews the Prospects, pitches, and closes.</li>' +
-      '<li><b>Prospects</b> (1–3) play fictional characters with a secret, draw a portrait, and each play one SCREW! card.</li>' +
-      '<li><b>Inventors</b> (everyone else) score the Peddler with game money.</li></ul></div>' +
+    return '<div class="howto-body"><div><h4>Roles</h4><ul><li><b>Peddler</b> invents a product from an Item card and a Function card, interviews the Prospects, pitches, and closes.</li>' +
+      '<li><b>Prospects</b> (1–3) play fictional characters whose fun fact and secret are tied to the product, draw a portrait, and each play one SCREW! card.</li>' +
+      '<li><b>Inventors</b> (everyone else) vote on SCREW!s, send funny objections to the Prospects, guess secrets, and score the Peddler with game money.</li></ul></div>' +
       '<div><h4>Each round</h4><ol><li>Creation Lab · 2:00</li><li>Fact-Finding · 2:30 · $25 per secret uncovered</li><li>PITCH! · 1:30 · each Prospect may SCREW! once (15 s, clock pauses, then the table votes)</li><li>Objections + Close · 0:45</li><li>Money Reveal</li></ol></div>' +
       '<div><h4>Money</h4><p>Each Inventor awards $0–$50 in six categories: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close. ' +
       'The Peddler earns the average scorecard plus $25 per secret (with 4+ Inventors, a scorecard more than $100 away from the rest of the room is set aside). Prospects earn the average of up to $25 each for role-play. ' +
       '<b>Secret Sleuth:</b> during Fact-Finding, Inventors guess each Prospect’s secret from 4 options, $10 per correct guess. The Peddler can buy <b>INSIDE TRADING</b> to peek at a guess. Most money tonight wins.</p>' +
-      '<p>Spend cash between rounds on NEPO BABY! Power Cards: NOT TODAY! ($75), I KNOW PEOPLE ($100), DADDY MADE A CALL ($125).</p></div></div>';
+      '<p>Spend cash between rounds on NEPO BABY! Power Cards: NOT TODAY! ($75), I KNOW PEOPLE ($100), INSIDE TRADING ($100), DADDY MADE A CALL ($125).</p></div></div>';
   }
 
   function hofScreen() {

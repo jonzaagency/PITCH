@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 const SRC = path.join(__dirname, 'src');
-const ORDER = ['config.js', 'content.js', 'engine.js', 'net.js', 'ui-core.js', 'ui-tv.js', 'ui-phone.js', 'app.js'];
+const ORDER = ['config.js', 'content.js', 'engine.js', 'net.js', 'ui-core.js', 'ui-tv.js', 'ui-phone.js', 'tutorial.js', 'app.js'];
 const read = f => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\n+$/, '') + '\n';
 // Images in src/assets are inlined as data URLs so each build stays one self-contained file.
 const asset = f => 'data:image/' + (f.endsWith('.webp') ? 'webp' : 'png') + ';base64,' + fs.readFileSync(path.join(SRC, 'assets', f)).toString('base64');
