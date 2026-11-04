@@ -33,7 +33,7 @@
     root.innerHTML =
       '<div class="home"><header class="hero"><div class="eyebrow">The party game of impossible sales</div><h1 class="hero-logo">' + U.logo() + '</h1>' +
       '<p class="tagline">Do you have what it takes to sell the impossible, learn about your prospects, and survive their objections?</p>' +
-      '<p class="meta">3–20+ players · 1 Peddler · 1–3 Prospects · everyone else: Philanthropists</p></header>' +
+      '<p class="meta">3–20+ players · 1 Peddler · 1–3 Prospects · everyone else: Inventors</p></header>' +
       '<div class="choices">' +
       (onlineAllowed()
         ? '<button class="choice c-host" data-go="host"><span class="c-k">On the TV or laptop</span><b>Host a game</b><span>Opens a room with a 4-letter code. This screen becomes the stage.</span></button>' +
@@ -44,7 +44,7 @@
       (canResume ? '<div class="resume"><span>Your room <b>' + esc(saved.state.code) + '</b> is still open on this device.</span><button class="btn gold" data-go="resume">Resume hosting</button><button class="btn ghost" data-go="forget">Forget it</button></div>' : '') +
       (canRejoin ? '<div class="resume"><span>Rejoin room <b>' + esc(last.code) + '</b> as ' + esc(last.name) + '?</span><button class="btn gold" data-go="rejoin">Rejoin</button></div>' : '') +
       '<details class="howto"><summary>How to play</summary>' + howTo() + '</details>' +
-      '<footer class="home-foot"><button class="btn ghost sm" data-go="hof">Hall of Fame (' + hofCount + ')</button><span class="muted">Official rules, Philanthropist Edition v4.0</span></footer></div>';
+      '<footer class="home-foot"><button class="btn ghost sm" data-go="hof">Hall of Fame (' + hofCount + ')</button><span class="muted">Official rules, Inventor Edition v4.0</span></footer></div>';
     root.onclick = (e) => {
       const b = e.target.closest('[data-go]');
       if (!b) return;
@@ -63,11 +63,11 @@
   function howTo() {
     return '<div class="howto-body"><div><h4>Roles</h4><ul><li><b>Peddler</b> invents a product from three cards, interviews the Prospects, pitches, and closes.</li>' +
       '<li><b>Prospects</b> (1–3) play fictional characters with a secret, draw a portrait, and each play one SCREW! card.</li>' +
-      '<li><b>Philanthropists</b> (everyone else) score the Peddler with game money.</li></ul></div>' +
+      '<li><b>Inventors</b> (everyone else) score the Peddler with game money.</li></ul></div>' +
       '<div><h4>Each round</h4><ol><li>Creation Lab · 2:00</li><li>Fact-Finding · 2:30 · $25 per secret uncovered</li><li>PITCH! · 1:30 · each Prospect may SCREW! once (15 s, clock pauses, then the table votes)</li><li>Objections + Close · 0:45</li><li>Money Reveal</li></ol></div>' +
-      '<div><h4>Money</h4><p>Each Philanthropist awards $0–$50 in six categories: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close. ' +
-      'The Peddler earns the average scorecard plus $25 per secret (with 4+ Philanthropists, a scorecard more than $100 away from the rest of the room is set aside). Prospects earn the average of up to $25 each for role-play. ' +
-      '<b>Secret Sleuth:</b> during Fact-Finding, Philanthropists guess each Prospect’s secret from 4 options, $10 per correct guess. The Peddler can buy <b>INSIDE TRADING</b> to peek at a guess. Most money tonight wins.</p>' +
+      '<div><h4>Money</h4><p>Each Inventor awards $0–$50 in six categories: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close. ' +
+      'The Peddler earns the average scorecard plus $25 per secret (with 4+ Inventors, a scorecard more than $100 away from the rest of the room is set aside). Prospects earn the average of up to $25 each for role-play. ' +
+      '<b>Secret Sleuth:</b> during Fact-Finding, Inventors guess each Prospect’s secret from 4 options, $10 per correct guess. The Peddler can buy <b>INSIDE TRADING</b> to peek at a guess. Most money tonight wins.</p>' +
       '<p>Spend cash between rounds on NEPO BABY! Power Cards: NOT TODAY! ($75), I KNOW PEOPLE ($100), DADDY MADE A CALL ($125).</p></div></div>';
   }
 

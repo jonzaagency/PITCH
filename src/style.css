@@ -13,7 +13,7 @@
   --gold-ink: #1a1230;
   --red: #e2584c;       /* SCREW! */
   --sky: #8d98f2;       /* Prospect */
-  --mint: #82d69c;      /* Philanthropist, good */
+  --mint: #82d69c;      /* Inventor, good */
   --coral: #ee7b6f;
   --violet: #cfa5f0;    /* NEPO BABY! */
   --card: #f6ecd6;
@@ -237,6 +237,7 @@ details summary { cursor: pointer; font-weight: 600; margin-top: 6px; }
 .ph-body > section.ped-next { background: transparent; padding: 0; align-items: stretch; }
 .ped-next > .btn, .ped-next .confirm .btn { width: 100%; font-size: 1.1rem; min-height: 54px; }
 .ped-next .confirm { flex-wrap: nowrap; }
+.story-wait { margin-top: 8px; padding: 10px 12px; border-radius: 12px; border: 2px dashed var(--gold); color: var(--cream); font-size: 0.92rem; }
 .hint-list { margin: 6px 0 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 5px; }
 .ph-body > section.found-sec { background: transparent; padding: 4px 0; align-items: stretch; }
 .found-btn { font-size: 1.25rem; min-height: 60px; }

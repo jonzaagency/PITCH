@@ -7,19 +7,19 @@
   const E = (P.engine = {});
 
   E.ROLES = ['peddler', 'prospect', 'phil'];
-  E.ROLE_NAMES = { peddler: 'Peddler', prospect: 'Prospect', phil: 'Philanthropist', sitout: 'Sitting out' };
+  E.ROLE_NAMES = { peddler: 'Peddler', prospect: 'Prospect', phil: 'Inventor', sitout: 'Sitting out' };
   E.DEFAULT_SETTINGS = {
     timers: { brief: 45, lab: 120, fact: 150, pitch: 90, close: 45, screw: 15 }, // seconds (rulebook section 5; brief = role briefing)
     maxProspects: 3,  // Host may reduce to 1 or 2
     rounds: 0,        // 0 = keep going until everyone who wants to has pitched once
     autoAdvance: true, // move on automatically when a timer runs out or everyone is done
-    sleuth: true,     // Secret Sleuth: Philanthropists pick hidden secrets for bonus money
+    sleuth: true,     // Secret Sleuth: Inventors pick hidden secrets for bonus money
     trimOutliers: true, // set aside a scorecard that is dramatically out of line (4+ scorecards)
     briefing: true,     // Role briefing at the start of each round (veterans can turn it off)
     awards: true        // End-of-night awards vote before the final results
   };
   E.SECRET_BONUS = 25;
-  E.SLEUTH_BONUS = 10; // Secret Sleuth: per hidden secret a Philanthropist picks correctly
+  E.SLEUTH_BONUS = 10; // Secret Sleuth: per hidden secret an Inventor picks correctly
   E.SLEUTH_OPTIONS = 4; // the real secret plus 3 decoys
   E.CATEGORY_MAX = 50;
   E.PROSPECT_AWARD_MAX = 25;
@@ -40,7 +40,7 @@
   /** Rulebook section 9 + 10. Pure function, unit-tested.
    *  scorecards: [{cats:{invention:..}, prospects:{pid: amount}}]
    *  Returns base (average scorecard total), bonus ($25 per confirmed secret), total, per-category averages,
-   *  and each Prospect's role-play award (average of the Philanthropists' awards). */
+   *  and each Prospect's role-play award (average of the Inventors' awards). */
   /** House rule: with 4+ scorecards, set aside the lowest and/or highest scorecard if it is DRAMATICALLY
    *  out of line: more than $100 (a third of the $300 maximum) away from the middle (median) scorecard.
    *  At most one low and one high card are set aside. Returns indexes into `totals`. */
@@ -62,7 +62,7 @@
   /** Rulebook section 9 + 10. Pure function, unit-tested.
    *  scorecards: [{cats:{invention:..}, prospects:{pid: amount}}]
    *  Returns base (average scorecard total), bonus ($25 per confirmed secret), total, per-category averages,
-   *  and each Prospect's role-play award (average of the Philanthropists' awards).
+   *  and each Prospect's role-play award (average of the Inventors' awards).
    *  opts.trim: set aside dramatic outliers (see findOutliers); the averages use the remaining scorecards. */
   E.computeEarnings = function (scorecards, secretsConfirmed, prospectIds, opts) {
     const totalOf = (sc) => C.categories.reduce((s, c) => s + clampInt(sc.cats[c.id], 0, E.CATEGORY_MAX), 0);
@@ -303,7 +303,7 @@
       for (const cand of byLeast(rest.filter((p) => this.eligible(p, 'prospect')), 'prospect')) {
         if (prospects.length >= want) break;
         const isPhil = this.eligible(cand, 'phil');
-        if (isPhil && philLeft <= 1) continue; // keep at least one Philanthropist
+        if (isPhil && philLeft <= 1) continue; // keep at least one Inventor
         prospects.push(cand);
         if (isPhil) philLeft -= 1;
       }
@@ -329,13 +329,13 @@
       if (!live(pr.peddler) || !this.eligible(s.players[pr.peddler], 'peddler')) return 'Choose a Peddler.';
       if (pr.prospects.length < 1 || pr.prospects.length > 3) return 'You need 1 to 3 Prospects.';
       if (pr.prospects.some((id) => !live(id) || !this.eligible(s.players[id], 'prospect'))) return 'A Prospect is not available.';
-      if (pr.phils.filter(live).length < 1) return 'You need at least one Philanthropist.';
+      if (pr.phils.filter(live).length < 1) return 'You need at least one Inventor.';
       return null;
     }
     ensureProposal() {
       const s = this.s;
       if (s.phase !== 'roles') return;
-      // keep the Host's arrangement if it is still valid; add newcomers as Philanthropists
+      // keep the Host's arrangement if it is still valid; add newcomers as Inventors
       if (s.proposal && !this.validateProposal(s.proposal)) {
         const pr = s.proposal;
         const placed = [pr.peddler].concat(pr.prospects, pr.phils, pr.sitOut);
@@ -378,27 +378,30 @@
     }
 
     // ---------- round lifecycle ----------
-    /** One fun fact + secret, never repeating a fun fact already used by another Prospect this round,
-     *  and avoiding secrets used earlier in the session until the pool runs low. */
-    drawSecret(takenTopics) {
-      const used = this.s.used.secrets;
-      let pool = C.secrets.filter((x) => used.indexOf(x.text) < 0 && takenTopics.indexOf(x.topic) < 0);
-      if (!pool.length) { this.s.used.secrets = []; pool = C.secrets.filter((x) => takenTopics.indexOf(x.topic) < 0); }
-      if (!pool.length) pool = C.secrets.slice();
-      const pick = this.pick(pool);
-      this.s.used.secrets.push(pick.text);
-      takenTopics.push(pick.topic);
-      return pick;
+    /** Gives every Prospect a fun fact + secret from the theme of the Peddler's Item (all different),
+     *  avoiding stories used earlier in the session until the theme runs low. Runs whenever the Peddler
+     *  picks an Item, so Prospects can read their story while they draw. */
+    assignStories() {
+      const s = this.s, r = s.round, item = r && r.invention.item != null ? r.hand.items[r.invention.item] : null;
+      if (!item || r.storyItem === item) return;
+      const theme = C.themeOf(item), used = s.used.secrets;
+      let pool = theme.stories.map((_, i) => i).filter((i) => used.indexOf(theme.id + i) < 0);
+      if (pool.length < r.prospects.length) pool = theme.stories.map((_, i) => i);
+      pool = this.shuffle(pool);
+      r.prospects.forEach((id, k) => {
+        const t = C.tell(theme, pool[k % pool.length], item);
+        Object.assign(r.profiles[id], { background: t.fact, secret: t.secret, secretTopic: t.topic, secretKey: t.key, secretHints: t.hints });
+      });
+      r.storyItem = item;
     }
 
-    makeProfile(takenNames, takenTopics) {
+    makeProfile(takenNames) {
       let name;
       for (let i = 0; i < 20; i++) {
         name = this.pick(C.firstNames) + ' ' + this.pick(C.lastNames);
         if (takenNames.indexOf(name) < 0) break;
       }
       takenNames.push(name);
-      const sec = this.drawSecret(takenTopics || []);
       const marital = this.pick(C.marital);
       return {
         name,
@@ -406,10 +409,11 @@
         marital,
         kids: Math.floor(this.rand() * this.rand() * 6),
         job: this.pick(C.occupations),
-        background: sec.fact,
-        secret: sec.text,
-        secretTopic: sec.topic,
-        secretHints: sec.hints
+        // the fun fact and secret come from the Peddler's product (see assignStories)
+        background: null,
+        secret: null,
+        secretTopic: null,
+        secretHints: []
       };
     }
 
@@ -423,10 +427,10 @@
         items: this.draw('items', C.items, 3),
         functions: this.draw('functions', C.functions, 3)
       };
-      const taken = [], takenTopics = [];
+      const taken = [];
       const profiles = {}, screwHands = {}, secrets = {};
       pr.prospects.forEach((id) => {
-        profiles[id] = this.makeProfile(taken, takenTopics);
+        profiles[id] = this.makeProfile(taken);
         screwHands[id] = this.draw('screws', C.screws, 3);
         secrets[id] = 'hidden';
       });
@@ -476,7 +480,7 @@
       if (phase === 'scoring') this.checkAllDone();
     }
 
-    /** Secret Sleuth (house rule): during Fact-Finding, each Philanthropist sees 4 possible secrets
+    /** Secret Sleuth (house rule): during Fact-Finding, each Inventor sees 4 possible secrets
      *  for every Prospect and picks one while listening. A pick locks once that secret is uncovered. */
     setupSleuth() {
       const s = this.s, r = s.round;
@@ -490,12 +494,17 @@
       const options = {}, answer = {};
       targets.forEach((id) => {
         const real = r.profiles[id].secret;
-        // two decoys from the same fun fact (rewards listening to the details) + one from another fun fact
-        const topic = r.profiles[id].secretTopic;
-        const free = C.secrets.filter((x) => roundSecrets.indexOf(x.text) < 0 && x.text !== real);
-        const same = this.shuffle(free.filter((x) => x.topic === topic)).slice(0, 2);
-        const other = this.shuffle(free.filter((x) => x.topic !== topic && same.indexOf(x) < 0));
-        const decoys = same.concat(other).slice(0, E.SLEUTH_OPTIONS - 1).map((x) => x.text);
+        // two decoys from the same product theme (rewards listening to the details) + one from another theme
+        const theme = C.themes.find((t) => t.id === r.profiles[id].secretTopic) || C.themes[0];
+        const item = r.storyItem;
+        const same = this.shuffle(theme.stories.map((_, i) => C.tell(theme, i, item).secret)
+          .filter((x) => roundSecrets.indexOf(x) < 0 && x !== real)).slice(0, 2);
+        const others = C.themes.filter((t) => t !== theme);
+        const decoys = same.slice();
+        while (decoys.length < E.SLEUTH_OPTIONS - 1) {
+          const t = this.pick(others), d = C.tell(t, Math.floor(this.rand() * t.stories.length), this.pick(t.items)).secret;
+          if (decoys.indexOf(d) < 0 && d !== real) decoys.push(d);
+        }
         options[id] = this.shuffle([real].concat(decoys));
         answer[id] = options[id].indexOf(real);
       });
@@ -507,6 +516,8 @@
       const inv = r.invention;
       if (inv.item == null) inv.item = 0;
       if (inv.func == null) inv.func = 0;
+      this.assignStories();
+      r.prospects.forEach((id) => { if (r.profiles[id].secretKey) this.s.used.secrets.push(r.profiles[id].secretKey); });
       if (!inv.name) inv.name = 'The ' + r.hand.items[inv.item] + '-Matic';
     }
 
@@ -709,7 +720,7 @@
       if (s.phase !== 'lab') return { ok: false, error: 'The Creation Lab is closed.' };
       const inv = r.invention;
       const idx = (v) => (v === null || v === undefined ? null : clampInt(v, 0, 2));
-      if ('item' in a) inv.item = idx(a.item);
+      if ('item' in a) { inv.item = idx(a.item); this.assignStories(); }
       if ('func' in a) inv.func = idx(a.func);
       if ('name' in a) inv.name = str(a.name, 40);
       if ('slogan' in a) inv.slogan = str(a.slogan, 90);
@@ -865,7 +876,7 @@
 
     a_scorecard(p, a) {
       const s = this.s, r = s.round;
-      if (!r || r.phils.indexOf(p.id) < 0) return { ok: false, error: 'Only Philanthropists score.' };
+      if (!r || r.phils.indexOf(p.id) < 0) return { ok: false, error: 'Only Inventors score.' };
       if (s.phase !== 'scoring') return { ok: false, error: 'Scoring opens after the close.' };
       const cats = {}, pros = {};
       C.categories.forEach((c) => { cats[c.id] = clampInt((a.cats || {})[c.id], 0, E.CATEGORY_MAX); });
@@ -877,7 +888,7 @@
 
     a_sleuthPick(p, a) {
       const s = this.s, r = s.round;
-      if (!r || r.phils.indexOf(p.id) < 0) return { ok: false, error: 'Only Philanthropists play Secret Sleuth.' };
+      if (!r || r.phils.indexOf(p.id) < 0) return { ok: false, error: 'Only Inventors play Secret Sleuth.' };
       if (!r.sleuth || s.phase !== 'fact') return { ok: false, error: 'Secret Sleuth guesses close when Fact-Finding ends.' };
       if (r.sleuth.targets.indexOf(a.target) < 0) return { ok: false, error: 'Pick a Prospect.' };
       if (r.secrets[a.target] === 'confirmed') return { ok: false, error: 'That secret is already out.' };
@@ -909,11 +920,11 @@
         r.phils = r.phils.filter((x) => x !== inn);
         r.sitOut = r.sitOut.filter((x) => x !== inn);
         if (this.eligible(s.players[out], 'phil')) r.phils.push(out); else r.sitOut.push(out);
-        if (r.phils.length < 1) { // undo: the table needs a Philanthropist
+        if (r.phils.length < 1) { // undo: the table needs an Inventor
           r.prospects[idx] = out;
           r.phils = r.phils.filter((x) => x !== out); r.sitOut = r.sitOut.filter((x) => x !== out);
           r.phils.push(inn);
-          return { ok: false, error: 'That would leave no Philanthropists.' };
+          return { ok: false, error: 'That would leave no Inventors.' };
         }
         ['profiles', 'screwHands', 'secrets'].forEach((k) => { r[k][inn] = r[k][out]; delete r[k][out]; });
         delete r.portraits[out]; delete r.labDone[out];
@@ -931,7 +942,7 @@
       } else if (card.id === 'insider') {
         if (s.phase !== 'fact') return { ok: false, error: 'Use INSIDE TRADING during Fact-Finding.' };
         if (!r.sleuth) return { ok: false, error: 'Secret Sleuth is turned off this game.' };
-        if (r.phils.indexOf(a.phil) < 0 || r.prospects.indexOf(a.target) < 0) return { ok: false, error: 'Pick a Philanthropist and a Prospect.' };
+        if (r.phils.indexOf(a.phil) < 0 || r.prospects.indexOf(a.target) < 0) return { ok: false, error: 'Pick an Inventor and a Prospect.' };
         const pick = (r.sleuthPicks[a.phil] || {})[a.target];
         if (pick === undefined) return { ok: false, error: s.players[a.phil].name + ' has not guessed ' + r.profiles[a.target].name + '’s secret yet. Try again soon.' };
         r.insider = { phil: a.phil, target: a.target, text: r.sleuth.options[a.target][pick] };
