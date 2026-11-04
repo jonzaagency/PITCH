@@ -66,7 +66,7 @@ section('Secret Sleuth + INSIDE TRADING');
   const r = s.round, phil = r.phils[0], pro = r.prospects[0], pro2 = r.prospects[1];
   ok(!g.act(phil, { type: 'sleuthPick', target: pro, idx: 0 }).ok, 'no guessing during the Creation Lab');
   g.host('next');
-  ok(s.phase === 'fact' && g.privateView(phil).sleuth.length === r.prospects.length, 'Inventors see options for every Prospect');
+  ok(s.phase === 'fact' && g.privateView(phil).sleuth.length === r.prospects.length, 'Investors see options for every Prospect');
   ok(!g.privateView('p0').sleuth && !g.privateView(pro).sleuth, 'Peddler and Prospects do not see the options');
   ok(!g.act('p0', { type: 'nepo', card: 'insider', phil, target: pro }).ok && s.players.p0.wallet.inventory.insider === 1, 'peek fails before a guess, card kept');
   const right = r.sleuth.answer[pro];
@@ -96,7 +96,7 @@ section('SCREW! voting');
   const [a, b, c] = r.prospects;
   ok(g.act(a, { type: 'screw', idx: 0 }).ok, 'a Prospect plays a SCREW!');
   const voters = r.phils.concat(r.prospects).filter((id) => id !== a);
-  ok(voters.every((id) => (g.privateView(id).screwVotes || []).some((x) => x.by === a)), 'Inventors and other Prospects get the vote');
+  ok(voters.every((id) => (g.privateView(id).screwVotes || []).some((x) => x.by === a)), 'Investors and other Prospects get the vote');
   ok(!(g.privateView(a).screwVotes || []).length && !g.privateView(r.peddler).screwVotes, 'the player who played it and the Peddler do not vote');
   ok(!g.act(voters[0], { type: 'screwVote', by: a, result: 'done' }).ok, 'no voting while the Peddler responds');
   ok(g.act(r.peddler, { type: 'screwDone' }).ok && !r.activeScrew, 'the Peddler can end the response early');
@@ -119,25 +119,25 @@ section('Peddler moves the round on');
   ok(!g.act(r.peddler, { type: 'peddlerNext' }).ok, 'the Peddler cannot reveal the money');
 }
 
-section('Inventor objections');
+section('Investor objections');
 if (typeof E.Game.prototype.a_objectVote === 'function') {
   const g = game(8, 'pitch'), s = g.s, r = s.round;
   const inv = r.phils;
-  ok(inv.length >= 2, 'enough Inventors for the test (' + inv.length + ')');
+  ok(inv.length >= 2, 'enough Investors for the test (' + inv.length + ')');
   const pv = g.privateView(inv[0]).objectBoard;
-  ok(pv && pv.options.length === 3, 'Inventors see 3 objection options');
+  ok(pv && pv.options.length === 3, 'Investors see 3 objection options');
   ok(!g.act(r.prospects[0], { type: 'objectVote', idx: 0 }).ok, 'Prospects cannot vote objections');
   inv.forEach((id) => g.act(id, { type: 'objectVote', idx: 1 }));
-  const sent = r.inventorObjections[r.inventorObjections.length - 1];
+  const sent = r.investorObjections[r.investorObjections.length - 1];
   ok(sent && sent.text === pv.options[1], 'the top-voted objection is sent');
-  ok(g.privateView(sent.to).inventorObjection && g.privateView(sent.to).inventorObjection.text === sent.text, 'the Prospect gets it on their phone');
-  ok(g.act(sent.to, { type: 'objectionDone' }).ok && !g.privateView(sent.to).inventorObjection, 'the Prospect can mark it done');
+  ok(g.privateView(sent.to).investorObjection && g.privateView(sent.to).investorObjection.text === sent.text, 'the Prospect gets it on their phone');
+  ok(g.act(sent.to, { type: 'objectionDone' }).ok && !g.privateView(sent.to).investorObjection, 'the Prospect can mark it done');
   ok(!g.act(inv[0], { type: 'objectVote', idx: 0 }).ok, 'a short wait is enforced between objections');
   let clock = Date.now();
   g.now = () => clock;
   for (let k = 0; k < 4; k++) { clock += E.OBJECT_COOLDOWN_MS + 1; inv.forEach((id) => g.act(id, { type: 'objectVote', idx: 0 })); }
-  ok(r.inventorObjections.length === E.OBJECT_MAX, 'at most ' + E.OBJECT_MAX + ' objections per round');
-  const counts = r.prospects.map((id) => r.inventorObjections.filter((o) => o.to === id).length);
+  ok(r.investorObjections.length === E.OBJECT_MAX, 'at most ' + E.OBJECT_MAX + ' objections per round');
+  const counts = r.prospects.map((id) => r.investorObjections.filter((o) => o.to === id).length);
   ok(Math.max.apply(null, counts) - Math.min.apply(null, counts) <= 1, 'objections are spread across the Prospects');
 } else console.log('  (not built yet)');
 

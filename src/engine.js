@@ -7,22 +7,22 @@
   const E = (P.engine = {});
 
   E.ROLES = ['peddler', 'prospect', 'phil'];
-  E.ROLE_NAMES = { peddler: 'Peddler', prospect: 'Prospect', phil: 'Inventor', sitout: 'Sitting out' };
+  E.ROLE_NAMES = { peddler: 'Peddler', prospect: 'Prospect', phil: 'Investor', sitout: 'Sitting out' };
   E.DEFAULT_SETTINGS = {
     timers: { brief: 45, lab: 120, fact: 150, pitch: 90, close: 45, screw: 15 }, // seconds (rulebook section 5; brief = role briefing)
     maxProspects: 3,  // Host may reduce to 1 or 2
     rounds: 0,        // 0 = keep going until everyone who wants to has pitched once
     autoAdvance: true, // move on automatically when a timer runs out or everyone is done
-    sleuth: true,     // Secret Sleuth: Inventors pick hidden secrets for bonus money
+    sleuth: true,     // Secret Sleuth: Investors pick hidden secrets for bonus money
     trimOutliers: true, // set aside a scorecard that is dramatically out of line (4+ scorecards)
     briefing: true,     // Role briefing at the start of each round (veterans can turn it off)
     awards: true        // End-of-night awards vote before the final results
   };
   E.SECRET_BONUS = 25;
-  E.SLEUTH_BONUS = 10; // Secret Sleuth: per hidden secret an Inventor picks correctly
+  E.SLEUTH_BONUS = 10; // Secret Sleuth: per hidden secret an Investor picks correctly
   E.SLEUTH_OPTIONS = 4; // the real secret plus 3 decoys
-  E.OBJECT_MAX = 3;            // Inventor objections sent per round
-  E.OBJECT_COOLDOWN_MS = 20000; // at least this long between Inventor objections
+  E.OBJECT_MAX = 3;            // Investor objections sent per round
+  E.OBJECT_COOLDOWN_MS = 20000; // at least this long between Investor objections
   E.CATEGORY_MAX = 50;
   E.PROSPECT_AWARD_MAX = 25;
   E.SCREW_LOCKOUT_MS = 10000; // no SCREW! in the final 10 seconds of the pitch
@@ -42,7 +42,7 @@
   /** Rulebook section 9 + 10. Pure function, unit-tested.
    *  scorecards: [{cats:{invention:..}, prospects:{pid: amount}}]
    *  Returns base (average scorecard total), bonus ($25 per confirmed secret), total, per-category averages,
-   *  and each Prospect's role-play award (average of the Inventors' awards). */
+   *  and each Prospect's role-play award (average of the Investors' awards). */
   /** House rule: with 4+ scorecards, set aside the lowest and/or highest scorecard if it is DRAMATICALLY
    *  out of line: more than $100 (a third of the $300 maximum) away from the middle (median) scorecard.
    *  At most one low and one high card are set aside. Returns indexes into `totals`. */
@@ -64,7 +64,7 @@
   /** Rulebook section 9 + 10. Pure function, unit-tested.
    *  scorecards: [{cats:{invention:..}, prospects:{pid: amount}}]
    *  Returns base (average scorecard total), bonus ($25 per confirmed secret), total, per-category averages,
-   *  and each Prospect's role-play award (average of the Inventors' awards).
+   *  and each Prospect's role-play award (average of the Investors' awards).
    *  opts.trim: set aside dramatic outliers (see findOutliers); the averages use the remaining scorecards. */
   E.computeEarnings = function (scorecards, secretsConfirmed, prospectIds, opts) {
     const totalOf = (sc) => C.categories.reduce((s, c) => s + clampInt(sc.cats[c.id], 0, E.CATEGORY_MAX), 0);
@@ -305,7 +305,7 @@
       for (const cand of byLeast(rest.filter((p) => this.eligible(p, 'prospect')), 'prospect')) {
         if (prospects.length >= want) break;
         const isPhil = this.eligible(cand, 'phil');
-        if (isPhil && philLeft <= 1) continue; // keep at least one Inventor
+        if (isPhil && philLeft <= 1) continue; // keep at least one Investor
         prospects.push(cand);
         if (isPhil) philLeft -= 1;
       }
@@ -331,13 +331,13 @@
       if (!live(pr.peddler) || !this.eligible(s.players[pr.peddler], 'peddler')) return 'Choose a Peddler.';
       if (pr.prospects.length < 1 || pr.prospects.length > 3) return 'You need 1 to 3 Prospects.';
       if (pr.prospects.some((id) => !live(id) || !this.eligible(s.players[id], 'prospect'))) return 'A Prospect is not available.';
-      if (pr.phils.filter(live).length < 1) return 'You need at least one Inventor.';
+      if (pr.phils.filter(live).length < 1) return 'You need at least one Investor.';
       return null;
     }
     ensureProposal() {
       const s = this.s;
       if (s.phase !== 'roles') return;
-      // keep the Host's arrangement if it is still valid; add newcomers as Inventors
+      // keep the Host's arrangement if it is still valid; add newcomers as Investors
       if (s.proposal && !this.validateProposal(s.proposal)) {
         const pr = s.proposal;
         const placed = [pr.peddler].concat(pr.prospects, pr.phils, pr.sitOut);
@@ -483,7 +483,7 @@
       if (phase === 'scoring') this.checkAllDone();
     }
 
-    /** Secret Sleuth (house rule): during Fact-Finding, each Inventor sees 4 possible secrets
+    /** Secret Sleuth (house rule): during Fact-Finding, each Investor sees 4 possible secrets
      *  for every Prospect and picks one while listening. A pick locks once that secret is uncovered. */
     setupSleuth() {
       const s = this.s, r = s.round;
@@ -850,23 +850,23 @@
       return this.advance();
     }
 
-    // ---------- Inventor objections ----------
-    /** Three fresh objection cards for the Inventors to vote on. */
+    // ---------- Investor objections ----------
+    /** Three fresh objection cards for the Investors to vote on. */
     newObjectBoard() {
       const r = this.s.round;
-      r.inventorObjections = r.inventorObjections || [];
-      r.objectBoard = { options: this.shuffle(C.inventorObjections.slice()).slice(0, 3), votes: {} };
+      r.investorObjections = r.investorObjections || [];
+      r.objectBoard = { options: this.shuffle(C.investorObjections.slice()).slice(0, 3), votes: {} };
     }
     a_objectVote(p, a) {
       const s = this.s, r = s.round;
-      if (!r || r.phils.indexOf(p.id) < 0) return { ok: false, error: 'Only Inventors send objections.' };
+      if (!r || r.phils.indexOf(p.id) < 0) return { ok: false, error: 'Only Investors send objections.' };
       if (['pitch', 'close'].indexOf(s.phase) < 0 || !r.objectBoard) return { ok: false, error: 'Objections open during the pitch.' };
-      if (r.inventorObjections.length >= E.OBJECT_MAX) return { ok: false, error: 'The Inventors have used all their objections this round.' };
-      const last = r.inventorObjections[r.inventorObjections.length - 1];
+      if (r.investorObjections.length >= E.OBJECT_MAX) return { ok: false, error: 'The Investors have used all their objections this round.' };
+      const last = r.investorObjections[r.investorObjections.length - 1];
       if (last && this.now() - last.at < E.OBJECT_COOLDOWN_MS) return { ok: false, error: 'Give the Peddler a moment before the next objection.' };
       const idx = clampInt(a.idx, 0, r.objectBoard.options.length - 1);
       r.objectBoard.votes[p.id] = idx;
-      // a majority of the connected Inventors sends it
+      // a majority of the connected Investors sends it
       const voters = r.phils.filter((id) => s.players[id] && s.players[id].connected);
       const count = Object.keys(r.objectBoard.votes).filter((id) => r.objectBoard.votes[id] === idx && voters.indexOf(id) >= 0).length;
       if (count >= Math.floor(voters.length / 2) + 1) this.sendObjection(r.objectBoard.options[idx]);
@@ -877,16 +877,16 @@
       const s = this.s, r = s.round;
       const live = r.prospects.filter((id) => s.players[id] && s.players[id].connected);
       if (!live.length) return;
-      const got = (id) => r.inventorObjections.filter((o) => o.to === id).length;
+      const got = (id) => r.investorObjections.filter((o) => o.to === id).length;
       const least = Math.min.apply(null, live.map(got));
       const to = this.pick(live.filter((id) => got(id) === least));
-      r.inventorObjections.push({ to, text, at: this.now(), done: false });
-      this.log('objection', 'The Inventors object! ' + r.profiles[to].name + ' has something to say…', { big: true });
+      r.investorObjections.push({ to, text, at: this.now(), done: false });
+      this.log('objection', 'The Investors object! ' + r.profiles[to].name + ' has something to say…', { big: true });
       this.newObjectBoard();
     }
     a_objectionDone(p) {
       const r = this.s.round;
-      const o = r && (r.inventorObjections || []).filter((x) => x.to === p.id && !x.done).pop();
+      const o = r && (r.investorObjections || []).filter((x) => x.to === p.id && !x.done).pop();
       if (!o) return { ok: false, error: 'No objection to finish.' };
       o.done = true;
       return { ok: true };
@@ -921,7 +921,7 @@
 
     a_scorecard(p, a) {
       const s = this.s, r = s.round;
-      if (!r || r.phils.indexOf(p.id) < 0) return { ok: false, error: 'Only Inventors score.' };
+      if (!r || r.phils.indexOf(p.id) < 0) return { ok: false, error: 'Only Investors score.' };
       if (s.phase !== 'scoring') return { ok: false, error: 'Scoring opens after the close.' };
       const cats = {}, pros = {};
       C.categories.forEach((c) => { cats[c.id] = clampInt((a.cats || {})[c.id], 0, E.CATEGORY_MAX); });
@@ -933,7 +933,7 @@
 
     a_sleuthPick(p, a) {
       const s = this.s, r = s.round;
-      if (!r || r.phils.indexOf(p.id) < 0) return { ok: false, error: 'Only Inventors play Secret Sleuth.' };
+      if (!r || r.phils.indexOf(p.id) < 0) return { ok: false, error: 'Only Investors play Secret Sleuth.' };
       if (!r.sleuth || s.phase !== 'fact') return { ok: false, error: 'Secret Sleuth guesses close when Fact-Finding ends.' };
       if (r.sleuth.targets.indexOf(a.target) < 0) return { ok: false, error: 'Pick a Prospect.' };
       if (r.secrets[a.target] === 'confirmed') return { ok: false, error: 'That secret is already out.' };
@@ -965,11 +965,11 @@
         r.phils = r.phils.filter((x) => x !== inn);
         r.sitOut = r.sitOut.filter((x) => x !== inn);
         if (this.eligible(s.players[out], 'phil')) r.phils.push(out); else r.sitOut.push(out);
-        if (r.phils.length < 1) { // undo: the table needs an Inventor
+        if (r.phils.length < 1) { // undo: the table needs an Investor
           r.prospects[idx] = out;
           r.phils = r.phils.filter((x) => x !== out); r.sitOut = r.sitOut.filter((x) => x !== out);
           r.phils.push(inn);
-          return { ok: false, error: 'That would leave no Inventors.' };
+          return { ok: false, error: 'That would leave no Investors.' };
         }
         ['profiles', 'screwHands', 'secrets'].forEach((k) => { r[k][inn] = r[k][out]; delete r[k][out]; });
         delete r.portraits[out]; delete r.labDone[out];
@@ -987,7 +987,7 @@
       } else if (card.id === 'insider') {
         if (s.phase !== 'fact') return { ok: false, error: 'Use INSIDE TRADING during Fact-Finding.' };
         if (!r.sleuth) return { ok: false, error: 'Secret Sleuth is turned off this game.' };
-        if (r.phils.indexOf(a.phil) < 0 || r.prospects.indexOf(a.target) < 0) return { ok: false, error: 'Pick an Inventor and a Prospect.' };
+        if (r.phils.indexOf(a.phil) < 0 || r.prospects.indexOf(a.target) < 0) return { ok: false, error: 'Pick an Investor and a Prospect.' };
         const pick = (r.sleuthPicks[a.phil] || {})[a.target];
         if (pick === undefined) return { ok: false, error: s.players[a.phil].name + ' has not guessed ' + r.profiles[a.target].name + '’s secret yet. Try again soon.' };
         r.insider = { phil: a.phil, target: a.target, text: r.sleuth.options[a.target][pick] };
@@ -1287,7 +1287,7 @@
         out.verdict = r.verdicts[pid] || null;
       }
       if (r && role === 'phil' && r.objectBoard && ['pitch', 'close'].indexOf(s.phase) >= 0) {
-        const sent = (r.inventorObjections || []).length, last = (r.inventorObjections || [])[sent - 1];
+        const sent = (r.investorObjections || []).length, last = (r.investorObjections || [])[sent - 1];
         out.objectBoard = {
           options: r.objectBoard.options, mine: r.objectBoard.votes[pid] == null ? null : r.objectBoard.votes[pid],
           counts: r.objectBoard.options.map((_, i) => Object.keys(r.objectBoard.votes).filter((id) => r.objectBoard.votes[id] === i).length),
@@ -1296,8 +1296,8 @@
         };
       }
       if (r && role === 'prospect') {
-        const o = (r.inventorObjections || []).filter((x) => x.to === pid && !x.done).pop();
-        out.inventorObjection = o && ['pitch', 'close'].indexOf(s.phase) >= 0 ? { text: o.text } : null;
+        const o = (r.investorObjections || []).filter((x) => x.to === pid && !x.done).pop();
+        out.investorObjection = o && ['pitch', 'close'].indexOf(s.phase) >= 0 ? { text: o.text } : null;
       }
       if (r && (role === 'phil' || role === 'prospect')) {
         out.screwVotes = Object.keys(r.screwVotes || {}).filter((by) => r.screwVotes[by].open && r.screwVotes[by].voters.indexOf(pid) >= 0)

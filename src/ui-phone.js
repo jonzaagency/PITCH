@@ -103,13 +103,13 @@
           '<b>Fact-Finding (' + mm(t.fact) + '):</b> ask every Prospect real questions and say your guesses out loud. Each secret you uncover earns <b>$25</b>. No typing needed.',
           '<b>PITCH! (' + mm(t.pitch) + '):</b> sell it using what you learned. Each Prospect can SCREW! you once; you get ' + t.screw + ' seconds to respond, then the table votes on how you did.',
           '<b>Objections + Close (' + mm(t.close) + '):</b> answer every objection, then clearly ask for the sale.',
-          'Inventors score you in six categories, $0–$50 each.'],
+          'Investors score you in six categories, $0–$50 each.'],
         prospect: ['<b>Draw</b> a portrait of your character during the Creation Lab.',
           '<b>Answer in character</b> when the Peddler questions you. Your phone gives you ways to hint at your secret. When they guess it out loud, tap <b>The Peddler guessed my secret!</b> at the top of your phone',
           '<b>During the pitch,</b> play one of your three SCREW! cards to throw the Peddler off. When another Prospect plays one, vote on your phone: did the Peddler nail it?',
-          '<b>If the Inventors object,</b> it pops up on your phone. Say it out loud, in character, then tap Done.',
+          '<b>If the Investors object,</b> it pops up on your phone. Say it out loud, in character, then tap Done.',
           '<b>After the pitch,</b> raise one objection and decide whether your character would buy.',
-          'Inventors can award you up to <b>$25</b> for great role-play.'],
+          'Investors can award you up to <b>$25</b> for great role-play.'],
         phil: ['<b>Watch closely:</b> the Peddler invents, questions the Prospects, and pitches.',
           '<b>Vote on every SCREW!</b> when it pops up on your phone: did the Peddler nail it or miss it?',
           '<b>Send objections:</b> during the pitch, vote funny objections onto the Prospects’ phones. They have to act them out.',
@@ -119,7 +119,7 @@
           v.settings.trimOutliers && r.phils.length >= E.OUTLIER_MIN_CARDS ? ['Score fairly: a scorecard way out of line with the room gets set aside.'] : [])
       }[p.role];
       if (!items) return '<section class="hello"><h2>Sitting out this round</h2><p>Enjoy the show. You’ll be in the next one.</p></section>';
-      const title = { peddler: 'the Peddler', prospect: 'a Prospect', phil: 'an Inventor' }[p.role];
+      const title = { peddler: 'the Peddler', prospect: 'a Prospect', phil: 'an Investor' }[p.role];
       return '<section class="brief-card rb-bg-' + p.role + '"><span class="eyebrow">This round you are</span><h2>' + title + '</h2>' +
         '<ul class="brief-list">' + items.map((x) => '<li>' + x + '</li>').join('') + '</ul>' +
         (done ? '<p class="ok center">Ready ✓ Waiting for the others…</p>' : '<button class="btn gold big" data-act="briefed">Got it</button>') + '</section>' +
@@ -204,7 +204,7 @@
       const r = st.pub.round, p = st.priv;
       const peek = p.insider ? '<section class="nepo-use"><h3>INSIDE TRADING</h3><p>' + esc(playerName(p.insider.phil)) + ' thinks <b>' + esc(r.profiles[p.insider.target].name) + '</b>’s secret is:</p><p class="guess">“' + esc(p.insider.text) + '”</p><p class="muted">Only you can see this. Still confirm it with good questions!</p></section>' : '';
       if (!(p.wallet.inventory.insider > 0) || r.nepoUsed || !st.pub.settings.sleuth) return peek;
-      if (st.chooser !== 'insider') return '<section class="nepo-use"><h3>INSIDE TRADING</h3><p class="muted">Peek at one Inventor’s Secret Sleuth guess.</p><button class="btn violet" data-act="chooser" data-c="insider">Use it</button></section>';
+      if (st.chooser !== 'insider') return '<section class="nepo-use"><h3>INSIDE TRADING</h3><p class="muted">Peek at one Investor’s Secret Sleuth guess.</p><button class="btn violet" data-act="chooser" data-c="insider">Use it</button></section>';
       return '<section class="nepo-use"><h3>INSIDE TRADING</h3>' +
         '<label class="field"><span>Whose notes?</span><select id="it-phil" data-draft="it-phil">' + r.phils.map((id) => '<option value="' + esc(id) + '"' + (draft('it-phil', r.phils[0]) === id ? ' selected' : '') + '>' + esc(playerName(id)) + '</option>').join('') + '</select></label>' +
         '<label class="field"><span>Which Prospect?</span><select id="it-target" data-draft="it-target">' + r.prospects.map((id) => '<option value="' + esc(id) + '"' + (draft('it-target', r.prospects[0]) === id ? ' selected' : '') + '>' + esc(r.profiles[id].name) + '</option>').join('') + '</select></label>' +
@@ -411,31 +411,31 @@
       if (ph === 'pitch') return role === 'peddler' ? peddlerPitch() : role === 'prospect' ? prospectPitch() : philWait('PITCH!');
       if (ph === 'close') return role === 'peddler' ? closeCoach() + peddlerNext() + notes()
         : role === 'prospect' ? prospectClose() : philWait('Objections + Close');
-      if (ph === 'scoring') return role === 'phil' ? scorecard(true) : role === 'prospect' ? '<section class="hello"><h2>The Inventors are scoring</h2></section>' + (p.verdict ? '' : verdictBlock())
-        : '<section class="hello"><h2>The Inventors are deciding your fate</h2><p>Sit tight.</p></section>';
+      if (ph === 'scoring') return role === 'phil' ? scorecard(true) : role === 'prospect' ? '<section class="hello"><h2>The Investors are scoring</h2></section>' + (p.verdict ? '' : verdictBlock())
+        : '<section class="hello"><h2>The Investors are deciding your fate</h2><p>Sit tight.</p></section>';
       return '';
     }
 
-    /** Inventors vote an objection onto a Prospect's phone during the pitch. */
+    /** Investors vote an objection onto a Prospect's phone during the pitch. */
     function objectBoard() {
       const b = st.priv.objectBoard;
       if (!b) return '';
       const need = Math.floor(b.voters / 2) + 1;
-      if (b.sent >= b.max) return '<section class="object-board"><h3>Inventor objections</h3><p class="muted">All ' + b.max + ' objections sent this round. Nice heckling.</p></section>';
+      if (b.sent >= b.max) return '<section class="object-board"><h3>Investor objections</h3><p class="muted">All ' + b.max + ' objections sent this round. Nice heckling.</p></section>';
       return '<section class="object-board"><div class="sec-head"><h3>Send an objection</h3><span class="muted">' + b.sent + ' of ' + b.max + ' sent</span></div>' +
-        '<p class="muted">' + (need === 1 ? 'Tap one and it pops up' : 'Vote for one. When ' + need + ' Inventors agree, it pops up') + ' on a Prospect’s phone, and they have to act it out.</p>' +
+        '<p class="muted">' + (need === 1 ? 'Tap one and it pops up' : 'Vote for one. When ' + need + ' Investors agree, it pops up') + ' on a Prospect’s phone, and they have to act it out.</p>' +
         b.options.map((o, i) => '<button type="button" class="object-opt' + (b.mine === i ? ' on' : '') + '" data-act="objectVote" data-idx="' + i + '"><span>' + esc(o) + '</span><b>' + b.counts[i] + '/' + need + '</b></button>').join('') +
         '<p class="hint">One every 20 seconds, up to ' + b.max + ' per round.</p></section>';
     }
-    /** A Prospect's pop-up when the Inventors send them an objection. */
+    /** A Prospect's pop-up when the Investors send them an objection. */
     function objectPop() {
-      const o = st.priv && st.priv.inventorObjection;
+      const o = st.priv && st.priv.investorObjection;
       if (!o) return '';
-      return '<div class="overlay object-ov" role="alertdialog" aria-label="Inventor objection"><div class="object-pop"><div class="eyebrow">The Inventors object!</div>' +
+      return '<div class="overlay object-ov" role="alertdialog" aria-label="Investor objection"><div class="object-pop"><div class="eyebrow">The Investors object!</div>' +
         '<h3>Say this out loud, in character:</h3><p class="object-text">' + esc(o.text) + '</p><button class="btn gold big" data-act="objectionDone">Done</button></div></div>';
     }
 
-    /** SCREW! vote pop-up for Inventors and the other Prospects. Buttons open once the Peddler's response time ends. */
+    /** SCREW! vote pop-up for Investors and the other Prospects. Buttons open once the Peddler's response time ends. */
     function screwPop() {
       const v = st.pub, p = st.priv;
       if (!v || !p || !v.round || v.phase !== 'pitch') return '';
@@ -473,7 +473,7 @@
       const prev = st.priv;
       st.priv = p;
       const fresh = (p.screwVotes || []).some((x) => !(prev && prev.screwVotes || []).some((y) => y.by === x.by)) ||
-        (p.inventorObjection && !(prev && prev.inventorObjection && prev.inventorObjection.text === p.inventorObjection.text));
+        (p.investorObjection && !(prev && prev.investorObjection && prev.investorObjection.text === p.investorObjection.text));
       if (fresh) U.vibrate([120, 60, 120]);
       if (p.lastError && p.lastError.at !== st.lastErr) {
         if (st.lastErr) U.toast(p.lastError.error, 'warn');
@@ -548,7 +548,7 @@
       else if (a === 'notToday') send({ type: 'nepo', card: 'notToday' });
       else if (a === 'screwDone') send({ type: 'screwDone' });
       else if (a === 'objectVote') { if (st.priv.objectBoard) st.priv.objectBoard.mine = Number(d.idx); send({ type: 'objectVote', idx: Number(d.idx) }); }
-      else if (a === 'objectionDone') { st.priv.inventorObjection = null; send({ type: 'objectionDone' }); }
+      else if (a === 'objectionDone') { st.priv.investorObjection = null; send({ type: 'objectionDone' }); }
       else if (a === 'peddlerNext') { send({ type: 'peddlerNext' }); st.confirm = null; }
       else if (a === 'screwVote') { (st.priv.screwVotes || []).forEach((x) => { if (x.by === d.by) x.mine = d.result; }); send({ type: 'screwVote', by: d.by, result: d.result }); U.toast('Vote in ✓'); }
       else if (a === 'answer') send({ type: 'secretAnswer', yes: d.yes === '1' });

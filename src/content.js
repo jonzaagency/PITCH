@@ -236,9 +236,9 @@
   ];
 
   // DADDY MADE A CALL challenges: a Prospect has to do one of these.
-  // Inventor objections: during the pitch, Inventors vote one of these onto a Prospect's phone,
+  // Investor objections: during the pitch, Investors vote one of these onto a Prospect's phone,
   // and the Prospect performs it out loud, in character.
-  C.inventorObjections = [
+  C.investorObjections = [
     '“I object! This would never fit in my apartment.”',
     '“Hold on. What happens if it breaks on day one?”',
     'Stand up and say: “My cousin sells this for half the price.”',
@@ -287,10 +287,10 @@
     notToday: { id: 'notToday', name: 'NOT TODAY!', price: 75, when: 'During a SCREW!', effect: 'Cancel one SCREW! challenge played against you.' },
     knowPeople: { id: 'knowPeople', name: 'I KNOW PEOPLE', price: 100, when: 'Creation Lab', effect: 'Before fact-finding, replace one Prospect with an eligible player.' },
     daddy: { id: 'daddy', name: 'DADDY MADE A CALL', price: 125, when: 'Fact-Finding through the Close', effect: 'Require a Prospect to complete a brief, funny challenge.' },
-    insider: { id: 'insider', name: 'INSIDE TRADING', price: 100, when: 'Fact-Finding', effect: 'Secretly peek at one Inventor’s Secret Sleuth guess for any Prospect.' }
+    insider: { id: 'insider', name: 'INSIDE TRADING', price: 100, when: 'Fact-Finding', effect: 'Secretly peek at one Investor’s Secret Sleuth guess for any Prospect.' }
   };
 
-  // The six Inventor scoring categories, $0-$50 each (rulebook section 9).
+  // The six Investor scoring categories, $0-$50 each (rulebook section 9).
   C.categories = [
     { id: 'invention', name: 'Invention', hint: 'Product concept, name, and how well the invention is presented.' },
     { id: 'ingenuity', name: 'Ingenuity', hint: 'Originality, creative thinking, and adaptation under pressure.' },

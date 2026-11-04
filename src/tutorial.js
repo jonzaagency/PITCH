@@ -12,19 +12,19 @@
   const SLIDES = [
     { title: 'Welcome to P!TCH', art: () => U.logo('tut-logo'),
       lines: ['One player is the <b>Peddler</b>. They invent a ridiculous product and try to sell it.', 'Everyone else plays along on their phone. <b>Most money at the end wins.</b>'] },
-    { title: 'Who’s who', art: () => '<div class="tut-row">' + av('Peddler', '#f0c35a', 'peddler') + av('Prospect', '#8d98f2', 'prospect') + av('Inventor', '#82d69c', 'phil') + '</div>',
-      lines: ['<b>Peddler:</b> invents, asks questions, pitches.', '<b>Prospects (1–3):</b> play a character with a secret.', '<b>Inventors (everyone else):</b> heckle, guess and score.'] },
+    { title: 'Who’s who', art: () => '<div class="tut-row">' + av('Peddler', '#f0c35a', 'peddler') + av('Prospect', '#8d98f2', 'prospect') + av('Investor', '#82d69c', 'phil') + '</div>',
+      lines: ['<b>Peddler:</b> invents, asks questions, pitches.', '<b>Prospects (1–3):</b> play a character with a secret.', '<b>Investors (everyone else):</b> heckle, guess and score.'] },
     { title: '1 · Creation Lab', art: () => '<div class="tut-row tut-cards"><div class="deck deck-item"><span class="deck-k">Item</span><span class="deck-t">Hot tub</span></div><span class="tut-plus">+</span><div class="deck deck-func"><span class="deck-k">Function</span><span class="deck-t">Plays smooth jazz</span></div></div><p class="tut-result">= The Jazz-uzzi 3000</p>',
       lines: ['The Peddler picks an <b>Item</b> and a <b>Function</b>, names it and sketches it.', 'Prospects draw their character. Their <b>fun fact and secret are tied to the product</b>.'] },
     { title: '2 · Fact-Finding', art: () => '<div class="tut-chat">' + bubble('Peddler', 'Why did you stop lifeguarding?') + bubble('Prospect', 'Oh, I just… rest my eyes near water.', 'right') + bubble('Peddler', 'I bet you napped on the job!') + '</div>' +
         phone('<div class="tut-btn mint">The Peddler guessed my secret!</div><div class="price-tag tut-tag"><span>Peddler</span><b>+$25</b></div>'),
-      lines: ['The Peddler asks questions and <b>guesses secrets out loud</b>.', 'Right guess? The Prospect taps it in: <b>+$25</b>.', 'Inventors secretly guess too: +$10 each.'] },
-    { title: '3 · The PITCH!', art: () => '<div class="tut-row">' + U.screwIcon('tut-screw') + '<div class="tut-objection"><span class="eyebrow">The Inventors object!</span>“I object! My dog would hate this.”</div></div>',
-      lines: ['The Peddler sells it to each Prospect, using what they learned.', 'Each Prospect can <b>SCREW!</b> them once: 15 seconds to answer, then everyone votes.', 'Inventors send funny <b>objections</b> for Prospects to act out.'] },
+      lines: ['The Peddler asks questions and <b>guesses secrets out loud</b>.', 'Right guess? The Prospect taps it in: <b>+$25</b>.', 'Investors secretly guess too: +$10 each.'] },
+    { title: '3 · The PITCH!', art: () => '<div class="tut-row">' + U.screwIcon('tut-screw') + '<div class="tut-objection"><span class="eyebrow">The Investors object!</span>“I object! My dog would hate this.”</div></div>',
+      lines: ['The Peddler sells it to each Prospect, using what they learned.', 'Each Prospect can <b>SCREW!</b> them once: 15 seconds to answer, then everyone votes.', 'Investors send funny <b>objections</b> for Prospects to act out.'] },
     { title: '4 · Objections + Close', art: () => '<div class="tut-chat">' + bubble('Prospect', 'I object! It’s way too loud.', 'right') + bubble('Peddler', 'It has a whisper mode. So, can I count you in today?') + '</div>',
       lines: ['Prospects raise one last objection.', 'The Peddler answers it and <b>asks for the sale</b>.'] },
     { title: '5 · Money Reveal', art: () => '<div class="tut-bars">' + ['Invention', 'Fact-Finding', 'The Close'].map((n, i) => '<div class="bar-row" style="--d:' + (0.2 * i) + 's"><span class="bar-name">' + n + '</span><span class="bar"><i style="--w:' + [80, 60, 90][i] + '%"></i></span></div>').join('') + '</div><div class="price-tag big-tag"><span>Peddler earns</span><b>$190</b></div>',
-      lines: ['Inventors score six categories, $0–$50 each.', 'The Peddler earns the average plus <b>$25 per secret</b>. Then a new Peddler steps up.'] },
+      lines: ['Investors score six categories, $0–$50 each.', 'The Peddler earns the average plus <b>$25 per secret</b>. Then a new Peddler steps up.'] },
     { title: 'Your phone shows the way', art: () => phone('<div class="tut-coach"><b>Fact-Finding game plan</b><ol><li>Talk to every Prospect</li><li>Ask follow-ups</li><li>Guess out loud</li></ol></div><div class="tut-btn gold">Start my PITCH! ›</div>'),
       lines: ['Every phone shows <b>your next step</b>.', 'The Peddler gets a game plan, “Try:” questions and a <b>Move on</b> button.', 'Want to practice first? Try <b>Practice mode</b> with bots.'] }
   ];
