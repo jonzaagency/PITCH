@@ -13,10 +13,11 @@ A Jackbox-style party game for 3 to 20+ players, in the same room or online. One
 | File | What it holds |
 | --- | --- |
 | `src/config.js` | Settings: version, online URL, broker list |
-| `src/content.js` | All the cards and prospect profile pieces (edit freely) |
+| `src/content.js` | All the cards, product-themed Prospect stories, and objections (edit freely) |
 | `src/engine.js` | The rulebook: roles, rounds, SCREW! cards, scoring, NEPO BABY! shop |
 | `src/net.js` | Small MQTT 3.1.1 client and room messaging |
 | `src/ui-core.js`, `ui-tv.js`, `ui-phone.js` | Screens for the TV and the phones |
+| `src/tutorial.js` | The "How to play" picture walkthrough |
 | `src/app.js` | Home screen, Practice mode with bots, startup |
 | `src/style.css` | The look |
 | `brand/` | Logo versions (light letters, darker purple, transparent, dark-screen) and the ! / P! icons |
@@ -28,6 +29,14 @@ node build.js
 ```
 
 This writes `docs/index.html` (the online game) and `dist/pitch-artifact.html` (the Claude artifact copy).
+
+## Test
+
+```
+node tests/engine.test.js
+```
+
+Runs the game-rule checks (stories, Secret Sleuth, SCREW! votes, objections, the Peddler's move-on button) without a browser.
 
 ## Turn on the online game
 
