@@ -306,6 +306,10 @@
       (p.sleuth || []).forEach((t) => { if (!t.locked && (p.sleuthPicks || {})[t.pid] === undefined) once('sleuth-' + t.pid, () => setTimeout(() => { if (st.pub.phase === 'fact') send({ type: 'sleuthPick', target: t.pid, idx: rnd(t.options.length) }); }, 1500 + rnd(6000))); });
     } else if (v.phase === 'pitch' && (p.screwVotes || []).some((x) => !x.mine && !(r.activeScrew && r.activeScrew.by === x.by))) {
       p.screwVotes.forEach((x) => { if (!x.mine && !(r.activeScrew && r.activeScrew.by === x.by)) once('vote-screw-' + x.by, () => setTimeout(() => { if (st.pub.phase === 'pitch') send({ type: 'screwVote', by: x.by, result: chance(0.6) ? 'done' : 'missed' }); }, 800 + rnd(3000))); });
+    } else if ((v.phase === 'pitch' || v.phase === 'close') && p.inventorObjection) {
+      once('obj-' + p.inventorObjection.text, () => setTimeout(() => send({ type: 'objectionDone' }), 2500 + rnd(2500)));
+    } else if ((v.phase === 'pitch' || v.phase === 'close') && p.objectBoard && p.objectBoard.mine == null && p.objectBoard.sent < p.objectBoard.max && chance(0.04)) {
+      send({ type: 'objectVote', idx: rnd(p.objectBoard.options.length) });
     } else if (v.phase === 'pitch' && p.role === 'prospect') {
       const t = v.timer.main;
       const left = t ? t.remaining - (t.running ? Date.now() - st.recvAt : 0) : 0;

@@ -142,7 +142,7 @@
         '<div class="rcols">' + who([r.peddler], 'peddler') + who(r.prospects, 'prospect') + who(r.phils, 'phil') + '</div>' +
         '<ol class="brief-steps"><li><b>Creation Lab</b> ' + mm(st.lab) + '<span>The Peddler invents; Prospects draw their characters.</span></li>' +
         '<li><b>Fact-Finding</b> ' + mm(st.fact) + '<span>The Peddler interviews every Prospect. +$25 per secret uncovered.' + (v.settings.sleuth ? ' Inventors play Secret Sleuth.' : '') + '</span></li>' +
-        '<li><b>PITCH!</b> ' + mm(st.pitch) + '<span>Each Prospect may SCREW! the Peddler once. Everyone else votes: nailed it or missed it?</span></li>' +
+        '<li><b>PITCH!</b> ' + mm(st.pitch) + '<span>Each Prospect may SCREW! the Peddler once. Everyone else votes: nailed it or missed it? Inventors can send funny objections to the Prospects.</span></li>' +
         '<li><b>Objections + Close</b> ' + mm(st.close) + '<span>Final objections, then ask for the sale.</span></li>' +
         '<li><b>Money Reveal</b><span>Inventors score six categories, $0–$50 each.</span></li></ol></section>';
     }

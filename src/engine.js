@@ -21,6 +21,8 @@
   E.SECRET_BONUS = 25;
   E.SLEUTH_BONUS = 10; // Secret Sleuth: per hidden secret an Inventor picks correctly
   E.SLEUTH_OPTIONS = 4; // the real secret plus 3 decoys
+  E.OBJECT_MAX = 3;            // Inventor objections sent per round
+  E.OBJECT_COOLDOWN_MS = 20000; // at least this long between Inventor objections
   E.CATEGORY_MAX = 50;
   E.PROSPECT_AWARD_MAX = 25;
   E.SCREW_LOCKOUT_MS = 10000; // no SCREW! in the final 10 seconds of the pitch
@@ -390,7 +392,7 @@
       pool = this.shuffle(pool);
       r.prospects.forEach((id, k) => {
         const t = C.tell(theme, pool[k % pool.length], item);
-        Object.assign(r.profiles[id], { background: t.fact, secret: t.secret, secretTopic: t.topic, secretKey: t.key, secretHints: t.hints });
+        Object.assign(r.profiles[id], { background: t.fact, ask: t.ask, secret: t.secret, secretTopic: t.topic, secretKey: t.key, secretHints: t.hints });
       });
       r.storyItem = item;
     }
@@ -477,6 +479,7 @@
       if (s.round && phase !== 'pitch') this.closeScrewVotes();
       s.timer.main = TIMED_PHASES[phase] ? this.newTimer(s.settings.timers[TIMED_PHASES[phase]]) : null;
       if (phase === 'fact') { this.finalizeInvention(); this.setupSleuth(); }
+      if (phase === 'pitch' && s.round && !s.round.objectBoard) this.newObjectBoard();
       if (phase === 'scoring') this.checkAllDone();
     }
 
@@ -847,6 +850,48 @@
       return this.advance();
     }
 
+    // ---------- Inventor objections ----------
+    /** Three fresh objection cards for the Inventors to vote on. */
+    newObjectBoard() {
+      const r = this.s.round;
+      r.inventorObjections = r.inventorObjections || [];
+      r.objectBoard = { options: this.shuffle(C.inventorObjections.slice()).slice(0, 3), votes: {} };
+    }
+    a_objectVote(p, a) {
+      const s = this.s, r = s.round;
+      if (!r || r.phils.indexOf(p.id) < 0) return { ok: false, error: 'Only Inventors send objections.' };
+      if (['pitch', 'close'].indexOf(s.phase) < 0 || !r.objectBoard) return { ok: false, error: 'Objections open during the pitch.' };
+      if (r.inventorObjections.length >= E.OBJECT_MAX) return { ok: false, error: 'The Inventors have used all their objections this round.' };
+      const last = r.inventorObjections[r.inventorObjections.length - 1];
+      if (last && this.now() - last.at < E.OBJECT_COOLDOWN_MS) return { ok: false, error: 'Give the Peddler a moment before the next objection.' };
+      const idx = clampInt(a.idx, 0, r.objectBoard.options.length - 1);
+      r.objectBoard.votes[p.id] = idx;
+      // a majority of the connected Inventors sends it
+      const voters = r.phils.filter((id) => s.players[id] && s.players[id].connected);
+      const count = Object.keys(r.objectBoard.votes).filter((id) => r.objectBoard.votes[id] === idx && voters.indexOf(id) >= 0).length;
+      if (count >= Math.floor(voters.length / 2) + 1) this.sendObjection(r.objectBoard.options[idx]);
+      return { ok: true };
+    }
+    /** Delivers an objection to the Prospect who has had the fewest so far. */
+    sendObjection(text) {
+      const s = this.s, r = s.round;
+      const live = r.prospects.filter((id) => s.players[id] && s.players[id].connected);
+      if (!live.length) return;
+      const got = (id) => r.inventorObjections.filter((o) => o.to === id).length;
+      const least = Math.min.apply(null, live.map(got));
+      const to = this.pick(live.filter((id) => got(id) === least));
+      r.inventorObjections.push({ to, text, at: this.now(), done: false });
+      this.log('objection', 'The Inventors object! ' + r.profiles[to].name + ' has something to say…', { big: true });
+      this.newObjectBoard();
+    }
+    a_objectionDone(p) {
+      const r = this.s.round;
+      const o = r && (r.inventorObjections || []).filter((x) => x.to === p.id && !x.done).pop();
+      if (!o) return { ok: false, error: 'No objection to finish.' };
+      o.done = true;
+      return { ok: true };
+    }
+
     a_pitchDone(p) {
       const s = this.s, r = s.round;
       if (!r || r.peddler !== p.id || s.phase !== 'pitch') return { ok: false, error: 'Not pitching right now.' };
@@ -1172,7 +1217,7 @@
         const profiles = {};
         r.prospects.forEach((id) => {
           const pr = r.profiles[id];
-          profiles[id] = { name: pr.name, age: pr.age, marital: pr.marital, kids: pr.kids, job: pr.job, background: pr.background };
+          profiles[id] = { name: pr.name, age: pr.age, marital: pr.marital, kids: pr.kids, job: pr.job, background: pr.background, ask: pr.ask };
           if (r.secrets[id] === 'confirmed' || s.phase === 'reveal') profiles[id].secret = pr.secret;
         });
         const inv = r.invention;
@@ -1240,6 +1285,19 @@
         out.claimGuess = r.secrets[pid] === 'claimed' ? r.claims[pid] || '' : null;
         out.labDone = !!r.labDone[pid];
         out.verdict = r.verdicts[pid] || null;
+      }
+      if (r && role === 'phil' && r.objectBoard && ['pitch', 'close'].indexOf(s.phase) >= 0) {
+        const sent = (r.inventorObjections || []).length, last = (r.inventorObjections || [])[sent - 1];
+        out.objectBoard = {
+          options: r.objectBoard.options, mine: r.objectBoard.votes[pid] == null ? null : r.objectBoard.votes[pid],
+          counts: r.objectBoard.options.map((_, i) => Object.keys(r.objectBoard.votes).filter((id) => r.objectBoard.votes[id] === i).length),
+          voters: r.phils.filter((id) => s.players[id] && s.players[id].connected).length,
+          sent, max: E.OBJECT_MAX, waitUntil: last ? last.at + E.OBJECT_COOLDOWN_MS : 0
+        };
+      }
+      if (r && role === 'prospect') {
+        const o = (r.inventorObjections || []).filter((x) => x.to === pid && !x.done).pop();
+        out.inventorObjection = o && ['pitch', 'close'].indexOf(s.phase) >= 0 ? { text: o.text } : null;
       }
       if (r && (role === 'phil' || role === 'prospect')) {
         out.screwVotes = Object.keys(r.screwVotes || {}).filter((by) => r.screwVotes[by].open && r.screwVotes[by].voters.indexOf(pid) >= 0)

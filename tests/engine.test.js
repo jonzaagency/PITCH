@@ -132,6 +132,13 @@ if (typeof E.Game.prototype.a_objectVote === 'function') {
   ok(sent && sent.text === pv.options[1], 'the top-voted objection is sent');
   ok(g.privateView(sent.to).inventorObjection && g.privateView(sent.to).inventorObjection.text === sent.text, 'the Prospect gets it on their phone');
   ok(g.act(sent.to, { type: 'objectionDone' }).ok && !g.privateView(sent.to).inventorObjection, 'the Prospect can mark it done');
+  ok(!g.act(inv[0], { type: 'objectVote', idx: 0 }).ok, 'a short wait is enforced between objections');
+  let clock = Date.now();
+  g.now = () => clock;
+  for (let k = 0; k < 4; k++) { clock += E.OBJECT_COOLDOWN_MS + 1; inv.forEach((id) => g.act(id, { type: 'objectVote', idx: 0 })); }
+  ok(r.inventorObjections.length === E.OBJECT_MAX, 'at most ' + E.OBJECT_MAX + ' objections per round');
+  const counts = r.prospects.map((id) => r.inventorObjections.filter((o) => o.to === id).length);
+  ok(Math.max.apply(null, counts) - Math.min.apply(null, counts) <= 1, 'objections are spread across the Prospects');
 } else console.log('  (not built yet)');
 
 console.log(`${passed} passed, ${failed} failed`);

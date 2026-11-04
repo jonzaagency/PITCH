@@ -237,6 +237,24 @@ details summary { cursor: pointer; font-weight: 600; margin-top: 6px; }
 .ph-body > section.ped-next { background: transparent; padding: 0; align-items: stretch; }
 .ped-next > .btn, .ped-next .confirm .btn { width: 100%; font-size: 1.1rem; min-height: 54px; }
 .ped-next .confirm { flex-wrap: nowrap; }
+.ph-body > section.coach { border-left: 6px solid var(--gold) !important; gap: 6px; }
+.coach h3 { color: var(--gold); }
+.coach ol { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 8px; }
+.coach li::marker { color: var(--gold); font-weight: 800; }
+.coach li em { display: block; font-style: normal; color: var(--sky); margin-top: 2px; }
+.coach li.done { opacity: 0.55; text-decoration: line-through; }
+.try-q { padding: 8px 10px; border-radius: 10px; background: var(--panel-2); color: var(--cream); }
+.try-q b { color: var(--sky); }
+.pros-card.done { opacity: 0.75; }
+.pros-card .played { font-size: 0.8rem; font-weight: 600; }
+.object-board { border-left: 6px solid var(--violet) !important; }
+.object-opt { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; min-height: 48px; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--inkline); background: var(--ink); cursor: pointer; font-weight: 500; line-height: 1.3; }
+.object-opt b { flex: none; color: var(--violet); font-variant-numeric: tabular-nums; }
+.object-opt.on { border-color: var(--violet); background: rgba(207, 165, 240, 0.16); font-weight: 700; }
+.object-pop { background: var(--violet); color: #24103f; border: 3px solid var(--inkline); box-shadow: 6px 6px 0 var(--inkline); border-radius: 24px; padding: 20px 18px; width: min(420px, 100%); text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; animation: shake 0.6s ease 1 both; }
+.object-pop .eyebrow { color: #24103f; font-size: 0.9rem; }
+.object-pop h3 { font-family: var(--display); font-weight: 400; }
+.object-text { font-size: 1.3rem; font-weight: 800; line-height: 1.3; }
 .story-wait { margin-top: 8px; padding: 10px 12px; border-radius: 12px; border: 2px dashed var(--gold); color: var(--cream); font-size: 0.92rem; }
 .hint-list { margin: 6px 0 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 5px; }
 .ph-body > section.found-sec { background: transparent; padding: 4px 0; align-items: stretch; }
