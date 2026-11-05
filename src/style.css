@@ -258,6 +258,16 @@ details summary { cursor: pointer; font-weight: 600; margin-top: 6px; }
 .opener { margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: rgba(141, 152, 242, 0.16); border: 2px solid var(--sky); }
 .opener .lbl { color: var(--sky); }
 .opener p { font-size: 1.08rem; font-weight: 700; margin: 2px 0 4px; }
+.learn-list { border-left: 6px solid var(--sky) !important; }
+.learn-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; min-height: 50px; padding: 8px 12px; border-radius: 12px; border: 2px solid var(--inkline); background: var(--ink); cursor: pointer; color: var(--cream); }
+.learn-row span { display: flex; flex-direction: column; min-width: 0; }
+.learn-row span b { font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.learn-row em { flex: none; font-style: normal; font-weight: 800; color: var(--gold); }
+.learn-row.on { background: rgba(130, 214, 156, 0.16); border-color: var(--mint); }
+.learn-row.on em { color: var(--mint); }
+.facts.known li.unknown { color: var(--muted); }
+.learn-count { color: var(--sky); margin-top: 6px; }
+.hidden-lbl { color: var(--coral); margin-top: 6px; }
 .story-wait { margin-top: 8px; padding: 10px 12px; border-radius: 12px; border: 2px dashed var(--gold); color: var(--cream); font-size: 0.92rem; }
 .hint-list { margin: 6px 0 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 5px; }
 .ph-body > section.found-sec { background: transparent; padding: 4px 0; align-items: stretch; }

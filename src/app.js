@@ -69,7 +69,7 @@
       '<div><h4>Each round</h4><ol><li>Creation Lab · 2:00</li><li>Fact-Finding · 2:30 · $25 per secret uncovered</li><li>PITCH! · 1:30 · each Prospect may SCREW! once (15 s, clock pauses, then the table votes)</li><li>Objections + Close · 0:45</li><li>Money Reveal</li></ol></div>' +
       '<div><h4>Money</h4><p>Each Investor awards $0–$50 in six categories: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close. ' +
       'Scoring guide: ' + P.content.scoreAnchors.map((a) => '<b>$' + a.min + '–$' + a.max + '</b> ' + U.esc(a.desc.replace(/\.$/, '').toLowerCase())).join('; ') + '. ' +
-      'The Peddler earns the average scorecard plus $25 per secret (with 4+ Investors, a scorecard more than $100 away from the rest of the room is set aside). Prospects earn the average of up to $25 each for role-play. ' +
+      'The Peddler earns the average scorecard plus $25 per secret and $5 per hidden detail learned (with 4+ Investors, a scorecard more than $100 away from the rest of the room is set aside). Prospects earn the average of up to $25 each for role-play. ' +
       '<b>Secret Sleuth:</b> during Fact-Finding, Investors guess each Prospect’s secret from 4 options, $10 per correct guess. The Peddler can buy <b>INSIDE TRADING</b> to peek at a guess. Most money tonight wins.</p>' +
       '<p>Spend cash between rounds on NEPO BABY! Power Cards: NOT TODAY! ($75), I KNOW PEOPLE ($100), INSIDE TRADING ($100), DADDY MADE A CALL ($125).</p></div></div>';
   }
@@ -305,6 +305,7 @@
       if (!p.labDone && chance(0.3)) send({ type: 'labDone' });
     } else if (v.phase === 'fact' && p.role === 'prospect') {
       if (p.secretStatus !== 'confirmed' && chance(0.004)) send({ type: 'secretAnswer', yes: true });
+      if (chance(0.02)) { const f = C.detailFields[rnd(C.detailFields.length)].id; if (!(p.learned || {})[f]) send({ type: 'learned', field: f }); }
     } else if (v.phase === 'fact' && p.role === 'phil') {
       (p.sleuth || []).forEach((t) => { if (!t.locked && (p.sleuthPicks || {})[t.pid] === undefined) once('sleuth-' + t.pid, () => setTimeout(() => { if (st.pub.phase === 'fact') send({ type: 'sleuthPick', target: t.pid, idx: rnd(t.options.length) }); }, 1500 + rnd(6000))); });
     } else if (v.phase === 'pitch' && (p.screwVotes || []).some((x) => !x.mine && !(r.activeScrew && r.activeScrew.by === x.by))) {

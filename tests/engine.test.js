@@ -90,6 +90,28 @@ section('Prospects award their own secret');
   ok(g.act(pro, { type: 'secretAnswer', yes: true }).ok && r.secrets[pro] === 'confirmed', 'a Prospect can award their secret during the pitch');
 }
 
+section('Hidden Prospect details');
+{
+  const g = game(6, 'fact'), s = g.s, r = s.round, pro = r.prospects[0], pr = r.profiles[pro];
+  const pub = () => g.publicView().round.profiles[pro];
+  ok(pub().name === pr.name.split(' ')[0] && pub().background === pr.background, 'public: first name and general situation');
+  ok(C.detailFields.every((f) => pub()[f.id] === undefined), 'public: age, status, family, job, motivation, objection all hidden');
+  ok(pr.motive && pr.concern, 'every Prospect has a buying motivation and an objection');
+  ok(!g.act(r.peddler, { type: 'learned', field: 'age' }).ok, 'only the Prospect can tick off details');
+  ok(g.act(pro, { type: 'learned', field: 'age' }).ok && pub().age === pr.age && pub().learned === 1, 'ticking a detail reveals it on screen');
+  g.act(pro, { type: 'learned', field: 'job' }); g.act(pro, { type: 'learned', field: 'motive' });
+  g.act(pro, { type: 'learned', field: 'motive', on: false });
+  ok(pub().motive === undefined && pub().learned === 2, 'a mis-tap can be unticked');
+  ok(!g.act(pro, { type: 'learned', field: 'shoeSize' }).ok, 'unknown details are rejected');
+  while (s.phase !== 'scoring') g.host('next');
+  const before = s.players[r.peddler].session.earned;
+  r.phils.forEach((id) => g.act(id, { type: 'scorecard', cats: {}, prospects: {} }));
+  if (s.phase === 'scoring') g.host('reveal');
+  ok(r.results.details === 2 && r.results.detailBonus === 2 * E.DETAIL_BONUS, '2 details learned = $' + 2 * E.DETAIL_BONUS);
+  ok(Math.abs(s.players[r.peddler].session.earned - before - r.results.total) < 0.001 && r.results.total === Math.round((r.results.base + r.results.bonus + r.results.detailBonus) * 100) / 100, 'the detail bonus is paid to the Peddler');
+  ok(g.publicView().round.profiles[pro].concern === pr.concern, 'everything is revealed at the Money Reveal');
+}
+
 section('SCREW! voting');
 {
   const g = game(7, 'pitch'), s = g.s, r = s.round;

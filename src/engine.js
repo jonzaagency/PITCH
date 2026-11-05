@@ -21,6 +21,7 @@
   E.SECRET_BONUS = 25;
   E.SLEUTH_BONUS = 10; // Secret Sleuth: per hidden secret an Investor picks correctly
   E.SLEUTH_OPTIONS = 4; // the real secret plus 3 decoys
+  E.DETAIL_BONUS = 5;          // per hidden Prospect detail the Peddler learns
   E.OBJECT_MAX = 3;            // Investor objections sent per round
   E.OBJECT_COOLDOWN_MS = 20000; // at least this long between Investor objections
   E.CATEGORY_MAX = 50;
@@ -181,7 +182,7 @@
     /** Draw n distinct entries from a deck, avoiding ones used earlier in this session until the deck runs low. */
     draw(deckName, deck, n, key) {
       key = key || ((x) => (typeof x === 'string' ? x : x.t));
-      let used = this.s.used[deckName];
+      let used = this.s.used[deckName] = this.s.used[deckName] || [];
       let pool = deck.filter((c) => used.indexOf(key(c)) < 0);
       if (pool.length < n) { used = this.s.used[deckName] = []; pool = deck.slice(); }
       const out = this.shuffle(pool).slice(0, n);
@@ -411,6 +412,8 @@
         marital,
         kids: Math.floor(this.rand() * this.rand() * 6),
         job: this.pick(C.occupations),
+        motive: this.draw('motives', C.motivations, 1)[0],
+        concern: this.draw('concerns', C.concerns, 1)[0],
         // the fun fact and secret come from the Peddler's product (see assignStories)
         background: null,
         secret: null,
@@ -430,11 +433,12 @@
         functions: this.draw('functions', C.functions, 3)
       };
       const taken = [];
-      const profiles = {}, screwHands = {}, secrets = {};
+      const profiles = {}, screwHands = {}, secrets = {}, learned = {};
       pr.prospects.forEach((id) => {
         profiles[id] = this.makeProfile(taken);
         screwHands[id] = this.draw('screws', C.screws, 3);
         secrets[id] = 'hidden';
+        learned[id] = {};
       });
       s.round = {
         n: s.roundNo,
@@ -444,7 +448,7 @@
         sitOut: this.activePlayers().map((p) => p.id).filter((id) => id !== pr.peddler && pr.prospects.indexOf(id) < 0 && pr.phils.indexOf(id) < 0),
         hand,
         invention: { item: null, func: null, name: '', slogan: '', sketch: null },
-        profiles, screwHands, secrets,
+        profiles, screwHands, secrets, learned,
         claims: {},
         portraits: {},
         labDone: {},
@@ -555,6 +559,10 @@
       const cards = r.phils.map((id) => r.scorecards[id]).filter(Boolean);
       const confirmed = r.prospects.filter((id) => r.secrets[id] === 'confirmed').length;
       const res = E.computeEarnings(cards, confirmed, r.prospects, { trim: s.settings.trimOutliers });
+      // +$5 for every hidden detail the Prospects ticked off
+      res.details = r.prospects.reduce((n, id) => n + Object.keys((r.learned || {})[id] || {}).length, 0);
+      res.detailBonus = res.details * E.DETAIL_BONUS;
+      res.total = round2(res.total + res.detailBonus);
       r.results = res;
       const pay = (pid, amt) => {
         const p = s.players[pid];
@@ -788,6 +796,21 @@
       return { ok: true };
     }
 
+    /** The Prospect ticks off a hidden detail the Peddler found out. It appears on screen, +$5 each. */
+    a_learned(p, a) {
+      const r = this.s.round;
+      if (!r || r.prospects.indexOf(p.id) < 0) return { ok: false, error: 'Only Prospects tick off details.' };
+      if (!this.secretPhase()) return { ok: false, error: 'Tick off details from Fact-Finding through the close.' };
+      if (!C.detailFields.some((f) => f.id === a.field)) return { ok: false, error: 'Unknown detail.' };
+      const mine = r.learned[p.id] = r.learned[p.id] || {};
+      if (a.on === false) delete mine[a.field];
+      else if (!mine[a.field]) {
+        mine[a.field] = true;
+        this.log('learn', this.s.players[r.peddler].name + ' learned ' + r.profiles[p.id].name.split(' ')[0] + '’s ' + C.detailFields.find((f) => f.id === a.field).name.toLowerCase() + '. +$' + E.DETAIL_BONUS);
+      }
+      return { ok: true };
+    }
+
     a_secretAnswer(p, a) {
       const s = this.s, r = s.round;
       if (!r || r.prospects.indexOf(p.id) < 0) return { ok: false, error: 'Only Prospects answer this.' };
@@ -971,7 +994,7 @@
           r.phils.push(inn);
           return { ok: false, error: 'That would leave no Investors.' };
         }
-        ['profiles', 'screwHands', 'secrets'].forEach((k) => { r[k][inn] = r[k][out]; delete r[k][out]; });
+        ['profiles', 'screwHands', 'secrets', 'learned'].forEach((k) => { if (r[k]) { r[k][inn] = r[k][out]; delete r[k][out]; } });
         delete r.portraits[out]; delete r.labDone[out];
         s.players[out].session.prospect -= 1; np.session.prospect += 1;
         if (r.phils.indexOf(out) >= 0) s.players[out].session.phil += 1;
@@ -1217,7 +1240,10 @@
         const profiles = {};
         r.prospects.forEach((id) => {
           const pr = r.profiles[id];
-          profiles[id] = { name: pr.name, age: pr.age, marital: pr.marital, kids: pr.kids, job: pr.job, background: pr.background, ask: pr.ask };
+          // public: first name and the general situation; hidden details appear once the Prospect ticks them off
+          const known = (r.learned && r.learned[id]) || {};
+          profiles[id] = { name: pr.name.split(' ')[0], background: pr.background, ask: pr.ask, learned: Object.keys(known).length };
+          C.detailFields.forEach((f) => { if (known[f.id] || s.phase === 'reveal') profiles[id][f.id] = pr[f.id]; });
           if (r.secrets[id] === 'confirmed' || s.phase === 'reveal') profiles[id].secret = pr.secret;
         });
         const inv = r.invention;
@@ -1285,6 +1311,7 @@
         out.claimGuess = r.secrets[pid] === 'claimed' ? r.claims[pid] || '' : null;
         out.labDone = !!r.labDone[pid];
         out.verdict = r.verdicts[pid] || null;
+        out.learned = (r.learned && r.learned[pid]) || {};
       }
       if (r && role === 'phil' && r.objectBoard && ['pitch', 'close'].indexOf(s.phase) >= 0) {
         const sent = (r.investorObjections || []).length, last = (r.investorObjections || [])[sent - 1];
@@ -1306,7 +1333,7 @@
       if (r && role === 'phil') {
         out.scorecard = r.scorecards[pid] || null;
         if (r.sleuth && ['fact', 'pitch', 'close', 'scoring', 'reveal'].indexOf(s.phase) >= 0) {
-          out.sleuth = r.sleuth.targets.map((id) => ({ pid: id, name: r.profiles[id].name, options: r.sleuth.options[id], locked: s.phase !== 'fact' || r.secrets[id] === 'confirmed' }));
+          out.sleuth = r.sleuth.targets.map((id) => ({ pid: id, name: r.profiles[id].name.split(' ')[0], options: r.sleuth.options[id], locked: s.phase !== 'fact' || r.secrets[id] === 'confirmed' }));
           out.sleuthPicks = r.sleuthPicks[pid] || {};
           if (s.phase === 'reveal') {
             out.sleuthAnswers = r.sleuth.answer;

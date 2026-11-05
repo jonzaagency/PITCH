@@ -236,6 +236,30 @@
   ];
 
   // DADDY MADE A CALL challenges: a Prospect has to do one of these.
+  // Hidden Prospect details: what would make them buy, and what holds them back. The Peddler has to
+  // find these out (+$5 each when the Prospect ticks them off).
+  C.motivations = [
+    'Wants to impress the neighbors.', 'Needs more free time in the mornings.', 'Wants to save money in the long run.',
+    'Is shopping for a gift for a very picky relative.', 'Wants something the whole family can use.', 'Loves being the first to own new gadgets.',
+    'Wants to feel less stressed at home.', 'Is trying to get healthier this year.', 'Needs something that makes work easier.',
+    'Wants to finally win at something.', 'Wants to be the most popular person on the block.', 'Is trying to make their home cozier.',
+    'Wants a great story to tell at parties.', 'Needs to keep the kids busy.', 'Is redecorating and wants a statement piece.',
+    'Wants peace and quiet, at any cost.'
+  ];
+  C.concerns = [
+    'Thinks it’s too expensive.', 'Doesn’t have room for it.', 'Worries it will break in a week.', 'Doesn’t trust new gadgets.',
+    'Needs to ask their partner first.', 'Thinks it looks complicated.', 'Worries what the neighbors will say.', 'Already owns something similar.',
+    'Hates monthly payments.', 'Is worried it’s too loud.', 'Doesn’t want to deal with returns.', 'Thinks it’s just a fad.',
+    'Is nervous about safety.', 'Worries it will need batteries forever.', 'Doesn’t have time to learn something new.',
+    'Got burned by a salesperson once and never forgot it.'
+  ];
+  // The hidden details, in the order the Prospect's checklist shows them.
+  C.detailFields = [
+    { id: 'age', name: 'Exact age' }, { id: 'marital', name: 'Relationship status' }, { id: 'kids', name: 'Children and family' },
+    { id: 'job', name: 'Occupation' }, { id: 'motive', name: 'Buying motivation' }, { id: 'concern', name: 'Biggest objection' }
+  ];
+  C.detailText = (field, pr) => field === 'kids' ? (pr.kids ? pr.kids + (pr.kids === 1 ? ' kid' : ' kids') : 'No kids') : String(pr[field]);
+
   // Investor objections: during the pitch, Investors vote one of these onto a Prospect's phone,
   // and the Prospect performs it out loud, in character.
   C.investorObjections = [

@@ -50,9 +50,11 @@
       const img = asset(r.portraits[id]);
       return '<div class="portrait ' + (size || '') + '">' + (img ? '<img alt="Portrait of ' + esc(r.profiles[id].name) + '" src="' + img + '">' : '<span class="portrait-empty">?</span>') + '</div>';
     }
+    /** A Prospect on the big screen: the general situation, plus only the details the Peddler has learned. */
     function profileFacts(pr) {
-      return '<ul class="facts"><li><b>Age</b> ' + esc(pr.age) + '</li><li><b>Status</b> ' + esc(pr.marital) + '</li><li><b>Kids</b> ' + esc(pr.kids) +
-        '</li><li><b>Job</b> ' + esc(pr.job) + '</li></ul><p class="bg"><b>Fun fact:</b> ' + esc(pr.background) + '</p>';
+      return '<p class="bg"><b>Fun fact:</b> ' + esc(pr.background) + '</p>' +
+        '<p class="lbl learn-count">Learned ' + (pr.learned || 0) + ' of ' + C.detailFields.length + ' · +' + U.money((pr.learned || 0) * E.DETAIL_BONUS) + '</p><ul class="facts known">' +
+        C.detailFields.map((f) => pr[f.id] != null ? '<li><b>' + esc(f.name) + '</b> ' + esc(C.detailText(f.id, pr)) + '</li>' : '<li class="unknown"><b>' + esc(f.name) + '</b> ?</li>').join('') + '</ul>';
     }
     function secretChip(r, id) {
       const st = r.secrets[id];
@@ -158,7 +160,7 @@
 
     function fact(v) {
       const r = v.round;
-      return '<section class="fact"><p class="lead">' + esc(player(r.peddler).name) + ', ask every Prospect at least one real question. Each secret you uncover earns <b>$25</b>.</p>' +
+      return '<section class="fact"><p class="lead">' + esc(player(r.peddler).name) + ', ask every Prospect at least one real question. Each hidden detail you learn earns <b>' + U.money(E.DETAIL_BONUS) + '</b>; each secret earns <b>$25</b>.</p>' +
         (v.settings.sleuth ? '<p class="sleuth-call center"><b>Investors:</b> play Secret Sleuth on your phone. Guess each secret before the Peddler finds it for <b>+' + U.money(E.SLEUTH_BONUS) + '</b> apiece.</p>' : '') +
         '<div class="pros">' + r.prospects.map((id) => '<article class="pro" data-key="pro-' + esc(id) + '">' + portrait(game.s.round, id) +
           '<div class="pro-body"><h3>' + esc(r.profiles[id].name) + '</h3><p class="played-by">played by ' + esc(player(id).name) + '</p>' + profileFacts(r.profiles[id]) +
@@ -225,7 +227,8 @@
       return '<section class="reveal"><div class="rv-main"><div class="eyebrow">' + esc(player(r.peddler).name) + '’s pitch</div><h2 class="prod">' + esc(r.invention.name) + '</h2>' +
         '<div class="bars">' + bars + '</div>' +
         '<div class="math"><div><span>Average scorecard</span><b>' + U.money2(res.base) + '</b><em>' + res.scorecards + ' scorecard' + (res.scorecards === 1 ? '' : 's') + '</em></div>' +
-        '<div class="plus">+</div><div><span>Secrets found</span><b>' + U.money2(res.bonus) + '</b><em>' + res.secrets + ' × $25</em></div><div class="plus">=</div>' +
+        '<div class="plus">+</div><div><span>Secrets found</span><b>' + U.money2(res.bonus) + '</b><em>' + res.secrets + ' × $25</em></div>' +
+        '<div class="plus">+</div><div><span>Details learned</span><b>' + U.money2(res.detailBonus || 0) + '</b><em>' + (res.details || 0) + ' × ' + U.money(E.DETAIL_BONUS) + '</em></div><div class="plus">=</div>' +
         '<div class="price-tag big-tag"><span>Peddler earns</span><b>' + U.money2(res.total) + '</b></div></div>' +
         (res.setAside && res.setAside.length ? '<p class="set-aside">' + res.setAside.map((x) => 'One ' + U.money(x.total) + ' scorecard was set aside for being way ' + (x.side === 'low' ? 'below' : 'above') + ' the rest of the room.').join(' ') + '</p>' : '') + '</div>' +
         '<div class="rv-side"><h3>Prospects</h3>' + r.prospects.map((id) => '<div class="rv-pro" data-key="rv-' + esc(id) + '">' + portrait(gr, id, 'sm') + '<div><span><b>' + esc(r.profiles[id].name) + '</b><span class="muted"> · ' + esc(player(id).name) + '</span></span>' +
