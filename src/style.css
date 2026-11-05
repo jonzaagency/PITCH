@@ -255,6 +255,9 @@ details summary { cursor: pointer; font-weight: 600; margin-top: 6px; }
 .object-pop .eyebrow { color: #24103f; font-size: 0.9rem; }
 .object-pop h3 { font-family: var(--display); font-weight: 400; }
 .object-text { font-size: 1.3rem; font-weight: 800; line-height: 1.3; }
+.opener { margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: rgba(141, 152, 242, 0.16); border: 2px solid var(--sky); }
+.opener .lbl { color: var(--sky); }
+.opener p { font-size: 1.08rem; font-weight: 700; margin: 2px 0 4px; }
 .story-wait { margin-top: 8px; padding: 10px 12px; border-radius: 12px; border: 2px dashed var(--gold); color: var(--cream); font-size: 0.92rem; }
 .hint-list { margin: 6px 0 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 5px; }
 .ph-body > section.found-sec { background: transparent; padding: 4px 0; align-items: stretch; }

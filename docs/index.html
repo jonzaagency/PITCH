@@ -268,6 +268,9 @@ details summary { cursor: pointer; font-weight: 600; margin-top: 6px; }
 .object-pop .eyebrow { color: #24103f; font-size: 0.9rem; }
 .object-pop h3 { font-family: var(--display); font-weight: 400; }
 .object-text { font-size: 1.3rem; font-weight: 800; line-height: 1.3; }
+.opener { margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: rgba(141, 152, 242, 0.16); border: 2px solid var(--sky); }
+.opener .lbl { color: var(--sky); }
+.opener p { font-size: 1.08rem; font-weight: 700; margin: 2px 0 4px; }
 .story-wait { margin-top: 8px; padding: 10px 12px; border-radius: 12px; border: 2px dashed var(--gold); color: var(--cream); font-size: 0.92rem; }
 .hint-list { margin: 6px 0 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 5px; }
 .ph-body > section.found-sec { background: transparent; padding: 4px 0; align-items: stretch; }
@@ -812,113 +815,113 @@ window.PITCH.config = {
   // PROSPECT STORIES. Each Prospect gets a fun fact (everyone sees it) and a secret (only they see it),
   // and both are tied to the product: when the Peddler picks an Item, every Prospect gets a story from
   // that Item's theme. {item} becomes the Peddler's Item, e.g. "hot tub".
-  // Each story is { fact, ask: the Peddler's opening question, secret, act: [two ways to act it out], try: one line to try }.
+  // Each story is { fact, open: the Prospect's opening line to the Peddler, ask: the Peddler's opening question, secret, act: [two ways to act it out], try: one line to try }.
   // Secret Sleuth uses other stories from the same theme as decoys, so keep at least 6 per theme.
   // To add one: add a story to any theme. To add an Item, put it in C.items and in one theme's `items`.
   C.themes = [
     { id: 'water', items: ['Rubber duck', 'Bathtub', 'Fishbowl', 'Shower cap', 'Pool noodle', 'Hot tub', 'Garden hose', 'Ice cube tray', 'Umbrella'], stories: [
-      { fact: 'Grew up next to a public pool and still smells like chlorine.', ask: 'What’s your morning shower routine like?', secret: 'Is terrified of hot water. Showers are cold, every day.',
+      { fact: 'Grew up next to a public pool and still smells like chlorine.', open: 'Sorry about the smell. Chlorine. It never really washes out, does it?', ask: 'What’s your morning shower routine like?', secret: 'Is terrified of hot water. Showers are cold, every day.',
         act: ['Shiver a little when anything warm and wet comes up.', 'Brag about how “refreshing” cold showers are, a bit too hard.'], try: 'Ask whether the {item} comes in an “ice-cold only” version.' },
-      { fact: 'Takes three baths a day “for the vibes.”', ask: 'When were you last in the ocean?', secret: 'Has never actually learned to swim.',
+      { fact: 'Takes three baths a day “for the vibes.”', open: 'I can only stay a few minutes. My next bath is at three.', ask: 'When were you last in the ocean?', secret: 'Has never actually learned to swim.',
         act: ['Talk big about water, then dodge anything deeper than a bathtub.', 'Change the subject when beaches or pools come up.'], try: 'Ask if the {item} works “in shallow water only.”' },
-      { fact: 'Lifeguarded one summer in 1994 and still mentions it.', ask: 'Why did you stop lifeguarding?', secret: 'Got fired from lifeguarding for napping in the pool.',
+      { fact: 'Lifeguarded one summer in 1994 and still mentions it.', open: 'Before you start: I was a lifeguard, you know. Summer of ’94. Ask me anything.', ask: 'Why did you stop lifeguarding?', secret: 'Got fired from lifeguarding for napping in the pool.',
         act: ['Bring up your lifeguard days proudly, then get vague about how it ended.', 'Yawn whenever water comes up.'], try: 'Say you “just rest your eyes” near water.' },
-      { fact: 'Waters their houseplants with a spray bottle named Gerald.', ask: 'How do you get along with your neighbors?', secret: 'Is in a years-long feud with the neighbor over water pressure.',
+      { fact: 'Waters their houseplants with a spray bottle named Gerald.', open: 'Gerald says hi. Gerald is my spray bottle. We’re very close.', ask: 'How do you get along with your neighbors?', secret: 'Is in a years-long feud with the neighbor over water pressure.',
         act: ['Get tense whenever neighbors come up.', 'Talk about water pressure like it’s personal.'], try: 'Say the {item} “better not end up on Doug’s side of the fence.”' },
-      { fact: 'Refuses to own an umbrella on principle.', ask: 'What do you do when it rains?', secret: 'Is secretly terrified of getting their hair wet.',
+      { fact: 'Refuses to own an umbrella on principle.', open: 'If it rains during this pitch, I’m not sharing anyone’s umbrella. On principle.', ask: 'What do you do when it rains?', secret: 'Is secretly terrified of getting their hair wet.',
         act: ['Touch your hair protectively when water comes up.', 'Ask very specific questions about splashing.'], try: 'Ask whether the {item} has “a splash guard for the hair.”' },
-      { fact: 'Fills every free hour with bubble baths.', ask: 'Ever had a disaster at home?', secret: 'Once flooded an entire apartment building.',
+      { fact: 'Fills every free hour with bubble baths.', open: 'You caught me between bubble baths, so let’s make this quick.', ask: 'Ever had a disaster at home?', secret: 'Once flooded an entire apartment building.',
         act: ['Get jumpy if anyone mentions leaks or plumbing.', 'Insist everything is “fully under control now.”'], try: 'Ask if the {item} comes with an emergency shut-off. Twice.' }] },
     { id: 'kitchen', items: ['Toaster', 'Lunchbox', 'Pizza cutter', 'Waffle iron', 'Rolling pin', 'Pickle jar', 'Teapot', 'Slow cooker', 'Salad spinner'], stories: [
-      { fact: 'Hosts a famous Sunday brunch for the whole street.', ask: 'What’s your secret recipe?', secret: 'Secretly buys everything frozen and reheats it.',
+      { fact: 'Hosts a famous Sunday brunch for the whole street.', open: 'You may know me from my famous Sunday brunch. Everyone does.', ask: 'What’s your secret recipe?', secret: 'Secretly buys everything frozen and reheats it.',
         act: ['Brag about your cooking, then go vague on recipes.', 'Mention the microwave a little too fondly.'], try: 'Ask if the {item} can “make store-bought look homemade.”' },
-      { fact: 'Has entered the county pie contest nine years in a row.', ask: 'How many times have you won?', secret: 'Has never once won, and is plotting revenge on the judges.',
+      { fact: 'Has entered the county pie contest nine years in a row.', open: 'Nine years at the county pie contest. Nine. This is my year.', ask: 'How many times have you won?', secret: 'Has never once won, and is plotting revenge on the judges.',
         act: ['Get competitive whenever food comes up.', 'Mention “the judges” with a dark look.'], try: 'Say “this year is MY year” about the {item}.' },
-      { fact: 'Eats the exact same lunch every single day.', ask: 'When did you last try a new food?', secret: 'Is terrified of trying new foods.',
+      { fact: 'Eats the exact same lunch every single day.', open: 'I’ve had the same lunch every day for eleven years. Don’t try to change me.', ask: 'When did you last try a new food?', secret: 'Is terrified of trying new foods.',
         act: ['Look nervous when the Peddler describes anything unusual.', 'Ask what the {item} “normally” makes.'], try: 'Ask “has anyone ever gotten sick from the {item}?”' },
-      { fact: 'Owns more kitchen gadgets than plates.', ask: 'Which gadget do you use the most?', secret: 'Has never actually used a single one of them.',
+      { fact: 'Owns more kitchen gadgets than plates.', open: 'I have more kitchen gadgets than plates, so you’re talking to an expert.', ask: 'Which gadget do you use the most?', secret: 'Has never actually used a single one of them.',
         act: ['Brag about your gadgets, never about using them.', 'Ask how to turn things on.'], try: 'Ask where the on button is on the {item}. Then ask again.' },
-      { fact: 'Was once a contestant on a TV cooking show.', ask: 'How far did you get on the show?', secret: 'Got eliminated in the first round for burning water.',
+      { fact: 'Was once a contestant on a TV cooking show.', open: 'You might recognize me. From TV. A cooking show. Let’s not get into it.', ask: 'How far did you get on the show?', secret: 'Got eliminated in the first round for burning water.',
         act: ['Talk about the show proudly, but go vague on how far you got.', 'Wince at the word “burn.”'], try: 'Say you’re “more of a judge than a cook now.”' },
-      { fact: 'Bakes bread every weekend and gives it to the neighbors.', ask: 'Do you ever eat your own bread?', secret: 'Is allergic to wheat and has never tasted their own bread.',
+      { fact: 'Bakes bread every weekend and gives it to the neighbors.', open: 'I brought bread! I always bring bread. I don’t eat it, I just bring it.', ask: 'Do you ever eat your own bread?', secret: 'Is allergic to wheat and has never tasted their own bread.',
         act: ['Rave about bread, then sneeze.', 'Politely push away any food that comes up.'], try: 'Ask if the {item} is “gluten-free,” very seriously.' }] },
     { id: 'fitness', items: ['Bowling ball', 'Trampoline', 'Pogo stick', 'Unicycle', 'Yoga mat', 'Hula hoop', 'Treadmill', 'Bicycle helmet', 'Ski goggles'], stories: [
-      { fact: 'Has had a gym membership for 12 years running.', ask: 'What’s your favorite machine at the gym?', secret: 'Has never once gone inside the gym.',
+      { fact: 'Has had a gym membership for 12 years running.', open: 'I just came from the gym. Well, near the gym. Same thing.', ask: 'What’s your favorite machine at the gym?', secret: 'Has never once gone inside the gym.',
         act: ['Talk about “working out” with zero details.', 'Get vague about which gym.'], try: 'Ask if the {item} counts as “cardio just by looking at it.”' },
-      { fact: 'Was the high school bowling champion.', ask: 'How did you win the championship?', secret: 'Won the championship with a secretly weighted ball.',
+      { fact: 'Was the high school bowling champion.', open: 'Bowling champion, class of ’91. I still have the trophy. And the ball.', ask: 'How did you win the championship?', secret: 'Won the championship with a secretly weighted ball.',
         act: ['Brag about the trophy, get cagey about the ball.', 'Get defensive about the word “fair.”'], try: 'Ask if the {item} is “tournament legal.”' },
-      { fact: 'Runs five miles every morning before work.', ask: 'What’s your running route?', secret: 'Actually takes the bus and jogs the last block.',
+      { fact: 'Runs five miles every morning before work.', open: 'Five miles this morning before work. Every morning. Totally exhausted.', ask: 'What’s your running route?', secret: 'Actually takes the bus and jogs the last block.',
         act: ['Look a little too fresh for someone who “just ran.”', 'Know the bus schedule by heart.'], try: 'Ask if the {item} has “a shortcut mode.”' },
-      { fact: 'Teaches a weekend yoga class.', ask: 'What’s the hardest pose for you?', secret: 'Can’t touch their own toes.',
+      { fact: 'Teaches a weekend yoga class.', open: 'Namaste. I teach yoga on weekends, so I’m very centered right now.', ask: 'What’s the hardest pose for you?', secret: 'Can’t touch their own toes.',
         act: ['Talk about flexibility, then avoid bending.', 'Wince whenever anyone mentions stretching.'], try: 'Ask if the {item} works “for people who prefer sitting.”' },
-      { fact: 'Went to circus school for one week in college.', ask: 'Why only one week?', secret: 'Got kicked out for juggling the teacher’s phone. And dropping it.',
+      { fact: 'Went to circus school for one week in college.', open: 'I trained at circus school. Briefly. I can juggle almost anything.', ask: 'Why only one week?', secret: 'Got kicked out for juggling the teacher’s phone. And dropping it.',
         act: ['Brag about your circus skills, then trail off.', 'Change the subject when phones come up.'], try: 'Offer to “demonstrate” on the {item}, then don’t.' },
-      { fact: 'Bikes to work in every kind of weather.', ask: 'What’s the scariest part of your ride?', secret: 'Is terrified of going downhill.',
+      { fact: 'Bikes to work in every kind of weather.', open: 'I biked here, rain or shine. Mostly flat roads, though. Very flat.', ask: 'What’s the scariest part of your ride?', secret: 'Is terrified of going downhill.',
         act: ['Go pale when anyone mentions hills or slopes.', 'Ask how the {item} handles “steep stuff.”'], try: 'Ask if the {item} has brakes. Really good brakes.' }] },
     { id: 'party', items: ['Kazoo', 'Disco ball', 'Accordion', 'Tuba', 'Megaphone', 'Wind chime', 'Lava lamp', 'Mood ring'], stories: [
-      { fact: 'Throws a themed party every single month.', ask: 'Who came to your last party?', secret: 'Hasn’t had a single guest show up since March.',
+      { fact: 'Throws a themed party every single month.', open: 'You’re invited to my party next month. Everyone’s invited. Please come.', ask: 'Who came to your last party?', secret: 'Hasn’t had a single guest show up since March.',
         act: ['Rave about your parties, then go quiet about who came.', 'Invite the Peddler to everything.'], try: 'Ask if the {item} “works for a party of one.”' },
-      { fact: 'Played in the marching band for 20 years.', ask: 'How did you learn all your parts?', secret: 'Can’t read music and has faked it the whole time.',
+      { fact: 'Played in the marching band for 20 years.', open: 'Twenty years in the marching band. I hear music in everything.', ask: 'How did you learn all your parts?', secret: 'Can’t read music and has faked it the whole time.',
         act: ['Talk about music with big words and no details.', 'Hum confidently, a little off-key.'], try: 'Ask if the {item} “comes with the notes already in it.”' },
-      { fact: 'Was a wedding DJ for a decade.', ask: 'What’s on your go-to playlist?', secret: 'Only knows three songs.',
+      { fact: 'Was a wedding DJ for a decade.', open: 'Former wedding DJ here. I’ve played every song. All three of them.', ask: 'What’s on your go-to playlist?', secret: 'Only knows three songs.',
         act: ['Name the same song twice.', 'Get nervous when anyone asks for a request.'], try: 'Ask if the {item} can “play the Electric Slide on loop.”' },
-      { fact: 'Believes everything happens because of the stars.', ask: 'Where do you get your horoscopes?', secret: 'Secretly writes the horoscopes for the local paper. Makes them all up.',
+      { fact: 'Believes everything happens because of the stars.', open: 'Before we start: what’s your sign? This matters more than you think.', ask: 'Where do you get your horoscopes?', secret: 'Secretly writes the horoscopes for the local paper. Makes them all up.',
         act: ['Ask the Peddler their sign, then predict something silly.', 'Get defensive about “accuracy.”'], try: 'Say the {item} has “very Scorpio energy.”' },
-      { fact: 'Sang backup on a song that was almost a hit.', ask: 'Why didn’t the song make it?', secret: 'Was cut from the final recording and is still bitter.',
+      { fact: 'Sang backup on a song that was almost a hit.', open: 'You’ve probably heard my voice on the radio. In the background. Almost.', ask: 'Why didn’t the song make it?', secret: 'Was cut from the final recording and is still bitter.',
         act: ['Get wistful when music comes up.', 'Hum the chorus of a song nobody knows.'], try: 'Ask if the {item} “gives credit where credit is due.”' },
-      { fact: 'Has a karaoke machine in every room.', ask: 'What’s your karaoke song?', secret: 'Is terrified of singing in front of people.',
+      { fact: 'Has a karaoke machine in every room.', open: 'I have a karaoke machine in every room. Every room. Even the closet.', ask: 'What’s your karaoke song?', secret: 'Is terrified of singing in front of people.',
         act: ['Rave about karaoke, then refuse to sing.', 'Get flustered whenever anyone says “perform.”'], try: 'Ask if the {item} works “with the lights off.”' }] },
     { id: 'lounge', items: ['Lawn chair', 'Hammock', 'Rocking chair', 'Bean bag chair', 'Recliner', 'Ceiling fan', 'Sleeping bag'], stories: [
-      { fact: 'Takes naps so seriously they keep a nap schedule.', ask: 'How do you sleep at night?', secret: 'Hasn’t slept a full night since 2015.',
+      { fact: 'Takes naps so seriously they keep a nap schedule.', open: 'You have exactly until my 2:15 nap. Go.', ask: 'How do you sleep at night?', secret: 'Hasn’t slept a full night since 2015.',
         act: ['Yawn a lot, then deny being tired.', 'Talk about sleep like a lost love.'], try: 'Ask if the {item} is “nap certified.”' },
-      { fact: 'Has the comfiest living room on the block.', ask: 'Do the neighbors come over a lot?', secret: 'Secretly charges the neighbors to sit in it.',
+      { fact: 'Has the comfiest living room on the block.', open: 'You should see my living room. The comfiest on the block. People line up.', ask: 'Do the neighbors come over a lot?', secret: 'Secretly charges the neighbors to sit in it.',
         act: ['Get very businesslike about comfort.', 'Mention “seat fees” by accident.'], try: 'Ask what the {item} would rent for “per hour.”' },
-      { fact: 'Went camping every summer as a kid.', ask: 'What was camping like at night?', secret: 'Is secretly terrified of the dark.',
+      { fact: 'Went camping every summer as a kid.', open: 'I grew up camping. Love the outdoors. During the day, mostly.', ask: 'What was camping like at night?', secret: 'Is secretly terrified of the dark.',
         act: ['Talk about camping, then shudder at the word “night.”', 'Ask whether things “glow.”'], try: 'Ask if the {item} comes with a night-light.' },
-      { fact: 'Retired early and loves to relax.', ask: 'What do you do all day?', secret: 'Is bored out of their mind and desperate for adventure.',
+      { fact: 'Retired early and loves to relax.', open: 'I’m retired. I relax full time. It’s… so relaxing. Very, very relaxing.', ask: 'What do you do all day?', secret: 'Is bored out of their mind and desperate for adventure.',
         act: ['Say you love relaxing in a very tense voice.', 'Perk up at anything exciting.'], try: 'Ask if the {item} “goes fast.” Hopefully.' },
-      { fact: 'Has a recliner with its own name.', ask: 'Any recliner horror stories?', secret: 'Got stuck in it for six hours last week.',
+      { fact: 'Has a recliner with its own name.', open: 'Barry and I almost didn’t make it today. Barry is my recliner.', ask: 'Any recliner horror stories?', secret: 'Got stuck in it for six hours last week.',
         act: ['Get nervous about anything that folds or tilts.', 'Ask about “the emergency exit.”'], try: 'Ask if the {item} has an eject button.' },
-      { fact: 'Works from home in the comfiest chair possible.', ask: 'Ever had an embarrassing work call?', secret: 'Fell asleep on a video call with the CEO.',
+      { fact: 'Works from home in the comfiest chair possible.', open: 'I work from home, so this is the most awake I’ve been all week.', ask: 'Ever had an embarrassing work call?', secret: 'Fell asleep on a video call with the CEO.',
         act: ['Get jumpy when anyone mentions meetings.', 'Insist you are “very alert.”'], try: 'Ask if the {item} “keeps you awake, legally speaking.”' }] },
     { id: 'yard', items: ['Garden gnome', 'Leaf blower', 'Wheelbarrow', 'Scarecrow', 'Mailbox', 'Traffic cone', 'Step ladder'], stories: [
-      { fact: 'Has the best-kept lawn on the street.', ask: 'What time do you usually mow?', secret: 'Pays a teenager to do all of it at 5 a.m.',
+      { fact: 'Has the best-kept lawn on the street.', open: 'You may have driven past my lawn. Best on the street. Very hands-on.', ask: 'What time do you usually mow?', secret: 'Pays a teenager to do all of it at 5 a.m.',
         act: ['Brag about your lawn with no details.', 'Look at your hands like they’ve never done yard work.'], try: 'Ask if the {item} “does the work while you sleep.”' },
-      { fact: 'Collects garden gnomes. Has 87 of them.', ask: 'Where did you find all your gnomes?', secret: 'Steals gnomes from the neighbors’ yards.',
+      { fact: 'Collects garden gnomes. Has 87 of them.', open: 'I have 87 garden gnomes, and I know where every single one came from.', ask: 'Where did you find all your gnomes?', secret: 'Steals gnomes from the neighbors’ yards.',
         act: ['Get cagey about where your gnomes came from.', 'Glance over your shoulder at the word “neighbor.”'], try: 'Ask if the {item} is “easy to carry quietly.”' },
-      { fact: 'Runs the neighborhood association.', ask: 'What’s your favorite rule?', secret: 'Wrote all the rules just to annoy one neighbor.',
+      { fact: 'Runs the neighborhood association.', open: 'As president of the neighborhood association, I’ll be taking notes.', ask: 'What’s your favorite rule?', secret: 'Wrote all the rules just to annoy one neighbor.',
         act: ['Mention “the rules” a lot.', 'Get dark when one particular neighbor comes up.'], try: 'Ask if the {item} is “against the bylaws.” Hopefully.' },
-      { fact: 'Spends every weekend fixing up the house.', ask: 'Do you ever work on the roof?', secret: 'Is terrified of ladders and heights.',
+      { fact: 'Spends every weekend fixing up the house.', open: 'Spent all weekend fixing up the house. Down low, mostly. Baseboards.', ask: 'Do you ever work on the roof?', secret: 'Is terrified of ladders and heights.',
         act: ['Talk about projects, never about anything high up.', 'Look down whenever anyone says “roof.”'], try: 'Ask if the {item} works “from the ground.”' },
-      { fact: 'Checks the mail six times a day.', ask: 'Who are you waiting to hear from?', secret: 'Is waiting on a letter from a secret pen pal in Iceland.',
+      { fact: 'Checks the mail six times a day.', open: 'Quick question before we start: has the mail come yet?', ask: 'Who are you waiting to hear from?', secret: 'Is waiting on a letter from a secret pen pal in Iceland.',
         act: ['Perk up at the word “mail.”', 'Get vague about who writes to you.'], try: 'Ask if the {item} works “internationally.”' },
-      { fact: 'Grows prize-winning pumpkins.', ask: 'What’s your growing secret?', secret: 'Buys the pumpkins at the farmers market every year.',
+      { fact: 'Grows prize-winning pumpkins.', open: 'I grow prize-winning pumpkins. Ask me anything. Except about seeds.', ask: 'What’s your growing secret?', secret: 'Buys the pumpkins at the farmers market every year.',
         act: ['Brag about your pumpkins, get vague about growing them.', 'Change the subject when seeds come up.'], try: 'Ask if the {item} “comes with a receipt you can hide.”' }] },
     { id: 'style', items: ['Sock', 'Hairbrush', 'Fanny pack', 'Cowboy boots', 'Tiara', 'Backpack', 'Shopping cart'], stories: [
-      { fact: 'Has never been seen without a fanny pack.', ask: 'What’s in the fanny pack?', secret: 'Keeps an emergency rubber chicken in it at all times.',
+      { fact: 'Has never been seen without a fanny pack.', open: 'Don’t mind the fanny pack. It goes everywhere I go.', ask: 'What’s in the fanny pack?', secret: 'Keeps an emergency rubber chicken in it at all times.',
         act: ['Pat your hip protectively.', 'Get cagey when anyone asks what you carry.'], try: 'Ask if the {item} has “a secret pocket for… things.”' },
-      { fact: 'Shops at the mall every single weekend.', ask: 'What’s your favorite thing you’ve bought?', secret: 'Returns everything they buy on Monday.',
+      { fact: 'Shops at the mall every single weekend.', open: 'I love a good sales pitch. I shop every weekend. Every single one.', ask: 'What’s your favorite thing you’ve bought?', secret: 'Returns everything they buy on Monday.',
         act: ['Brag about buying things, never about owning them.', 'Ask about the return policy right away.'], try: 'Ask how long you can “borrow” the {item} before returning it.' },
-      { fact: 'Was a pageant queen in 1998.', ask: 'Do you still have the crown?', secret: 'Still wears the tiara at home every night.',
+      { fact: 'Was a pageant queen in 1998.', open: '*waves like royalty* Miss County, 1998. You may begin.', ask: 'Do you still have the crown?', secret: 'Still wears the tiara at home every night.',
         act: ['Touch your head like something should be there.', 'Wave like royalty, then stop.'], try: 'Ask if the {item} “comes in sparkly.”' },
-      { fact: 'Owns 40 pairs of cowboy boots.', ask: 'Where do you go riding?', secret: 'Has never once been on a horse.',
+      { fact: 'Owns 40 pairs of cowboy boots.', open: 'Howdy. Forty pairs of boots and counting. Real cowboy, through and through.', ask: 'Where do you go riding?', secret: 'Has never once been on a horse.',
         act: ['Talk like a cowboy, but dodge every horse question.', 'Say “yeehaw” once, nervously.'], try: 'Ask if the {item} is “horse-optional.”' },
-      { fact: 'Is known for having perfect hair every day.', ask: 'What’s your hair routine?', secret: 'Has been wearing a wig since 2010.',
+      { fact: 'Is known for having perfect hair every day.', open: 'Please don’t open a window. The hair is perfect today.', ask: 'What’s your hair routine?', secret: 'Has been wearing a wig since 2010.',
         act: ['Touch your hair very carefully.', 'Panic a little at the word “wind.”'], try: 'Ask if the {item} is “safe for hair that might not be yours.”' },
-      { fact: 'Has the most organized backpack in history.', ask: 'Can I see what’s inside?', secret: 'Has a whole sandwich from 2019 in the bottom pocket.',
+      { fact: 'Has the most organized backpack in history.', open: 'I’m very organized. Everything has a pocket. Every… single… pocket.', ask: 'Can I see what’s inside?', secret: 'Has a whole sandwich from 2019 in the bottom pocket.',
         act: ['Brag about organization, avoid opening any bags.', 'Sniff the air suspiciously.'], try: 'Ask if the {item} has “a pocket you never have to open.”' }] },
     { id: 'gadgets', items: ['Stapler', 'Paperclip', 'Doorbell', 'Phone booth', 'Cuckoo clock', 'Baby monitor', 'Bubble wrap', 'Snow globe', 'Toilet plunger', 'Fire extinguisher'], stories: [
-      { fact: 'Is the office tech genius everyone asks for help.', ask: 'How do you fix things so fast?', secret: 'Just turns everything off and on again.',
+      { fact: 'Is the office tech genius everyone asks for help.', open: 'I’m the tech genius at work, so I’ll know if this thing is any good.', ask: 'How do you fix things so fast?', secret: 'Just turns everything off and on again.',
         act: ['Use big tech words, then go vague.', 'Suggest “restarting” anything that comes up.'], try: 'Ask if the {item} has an off button and an on button. Both, ideally.' },
-      { fact: 'Is obsessed with being on time.', ask: 'Were you on time today?', secret: 'Is late for everything and blames the clocks.',
+      { fact: 'Is obsessed with being on time.', open: 'You’re thirty seconds late. I noticed. I notice these things.', ask: 'Were you on time today?', secret: 'Is late for everything and blames the clocks.',
         act: ['Check the time constantly.', 'Blame “the clocks” for anything that goes wrong.'], try: 'Ask if the {item} “keeps accurate time,” suspiciously.' },
-      { fact: 'Has a security camera on every door.', ask: 'Who are you keeping an eye out for?', secret: 'Is hiding from a very persistent salesperson.',
+      { fact: 'Has a security camera on every door.', open: 'Just so you know, I have cameras on every door. Who sent you?', ask: 'Who are you keeping an eye out for?', secret: 'Is hiding from a very persistent salesperson.',
         act: ['Glance nervously at the door.', 'Get suspicious of the Peddler.'], try: 'Ask if the {item} can “screen visitors.”' },
-      { fact: 'Collects snow globes from every city they visit.', ask: 'What’s your favorite city you’ve visited?', secret: 'Has never left their home state. Buys them all online.',
+      { fact: 'Collects snow globes from every city they visit.', open: 'I collect snow globes from every city I visit. I’ve been everywhere.', ask: 'What’s your favorite city you’ve visited?', secret: 'Has never left their home state. Buys them all online.',
         act: ['Name cities, then get vague about visiting them.', 'Change the subject when travel comes up.'], try: 'Ask if the {item} “makes it look like you’ve traveled.”' },
-      { fact: 'Is the safety officer at work.', ask: 'Any incidents at work lately?', secret: 'Set off the fire sprinklers at the company holiday party.',
+      { fact: 'Is the safety officer at work.', open: 'As a trained safety officer, I’ll need to see the fire exits first.', ask: 'Any incidents at work lately?', secret: 'Set off the fire sprinklers at the company holiday party.',
         act: ['Tense up at the words “fire” or “alarm.”', 'Insist safety is “very important now.”'], try: 'Ask if the {item} is “sprinkler-safe.”' },
-      { fact: 'Pops bubble wrap to relax.', ask: 'Where do you keep all that bubble wrap?', secret: 'Has a whole spare room filled with bubble wrap.',
+      { fact: 'Pops bubble wrap to relax.', open: '*pop* Sorry. Bubble wrap. It calms me down. *pop*', ask: 'Where do you keep all that bubble wrap?', secret: 'Has a whole spare room filled with bubble wrap.',
         act: ['Get dreamy whenever anything “pops.”', 'Ask about packaging before the product.'], try: 'Ask if the {item} comes “really, REALLY well wrapped.”' }] }
   ];
   C.themeOf = (item) => C.themes.find((t) => t.items.indexOf(item) >= 0) || C.themes[0];
@@ -934,7 +937,7 @@ window.PITCH.config = {
       return plural ? out.replace(new RegExp('(' + name + ') (“?)(' + Object.keys(PLURAL_VERB).join('|') + ')\\b', 'g'), (m, n, q, v) => n + ' ' + q + PLURAL_VERB[v]) : out;
     };
     const st = theme.stories[i];
-    return { key: theme.id + i, topic: theme.id, fact: st.fact, ask: st.ask, secret: fill(st.secret), hints: st.act.map(fill).concat('Try this: ' + fill(st.try)) };
+    return { key: theme.id + i, topic: theme.id, fact: st.fact, open: st.open, ask: st.ask, secret: fill(st.secret), hints: st.act.map(fill).concat('Try this: ' + fill(st.try)) };
   };
 
   // SCREW! cards: each Prospect gets three and may play one during the pitch.
@@ -1453,7 +1456,7 @@ window.PITCH.config = {
       pool = this.shuffle(pool);
       r.prospects.forEach((id, k) => {
         const t = C.tell(theme, pool[k % pool.length], item);
-        Object.assign(r.profiles[id], { background: t.fact, ask: t.ask, secret: t.secret, secretTopic: t.topic, secretKey: t.key, secretHints: t.hints });
+        Object.assign(r.profiles[id], { background: t.fact, opener: t.open, ask: t.ask, secret: t.secret, secretTopic: t.topic, secretKey: t.key, secretHints: t.hints });
       });
       r.storyItem = item;
     }
@@ -3626,6 +3629,7 @@ window.PITCH.config = {
       // the fun fact and secret are tied to the Peddler's product, so they arrive once an Item is picked
       if (!pr.secret) return head + '<p class="story-wait"><b>Your fun fact and secret are on the way.</b> They’re tied to the product, so they appear the moment the Peddler picks an Item.</p></div>';
       return head + '<p class="bg"><b>Fun fact:</b> ' + esc(pr.background) + '</p>' +
+        (withSecret && pr.opener ? '<div class="opener"><span class="lbl">Your opening line</span><p>“' + esc(pr.opener) + '”</p><span class="hint">Say it when Fact-Finding starts and the Peddler turns to you.</span></div>' : '') +
         (withSecret ? '<div class="top-secret"><span class="lbl">Top secret: only you can see this</span>' + esc(pr.secret) + '</div>' +
           (pr.secretHints && pr.secretHints.length ? '<div class="secret-tip"><b>How to play it</b><ul class="hint-list">' + pr.secretHints.map((h) => '<li>' + esc(h) + '</li>').join('') + '</ul></div>' : '') +
           '<p class="hint">Stay in character and leave clues, but don’t just say it. Tap “The Peddler guessed my secret!” only when they figure it out.</p>' : '') + '</div>';
@@ -3673,6 +3677,7 @@ window.PITCH.config = {
           '<b>Objections + Close (' + mm(t.close) + '):</b> answer every objection, then clearly ask for the sale.',
           'Investors score you in six categories, $0–$50 each.'],
         prospect: ['<b>Draw</b> a portrait of your character during the Creation Lab.',
+          '<b>Open with your line:</b> when Fact-Finding starts, say the opening line on your phone to the Peddler.',
           '<b>Answer in character</b> when the Peddler questions you. Your phone gives you ways to hint at your secret. When they guess it out loud, tap <b>The Peddler guessed my secret!</b> at the top of your phone',
           '<b>During the pitch,</b> play one of your three SCREW! cards to throw the Peddler off. When another Prospect plays one, vote on your phone: did the Peddler nail it?',
           '<b>If the Investors object,</b> it pops up on your phone. Say it out loud, in character, then tap Done.',
@@ -3748,6 +3753,7 @@ window.PITCH.config = {
     function peddlerFact() {
       const v = st.pub, r = v.round, p = st.priv;
       return coach('Fact-Finding game plan', [
+        { t: 'Let each Prospect give their opening line first. Listen for clues.' },
         { t: 'Talk to every Prospect. Their secret grows out of their fun fact, and it’s tied to your product.' },
         { t: 'Ask follow-up questions until something sounds off. Then say your guess out loud.' },
         { t: 'They tap it in on their phone if you’re right. Each secret is +$25.' }
@@ -4170,9 +4176,9 @@ window.PITCH.config = {
       lines: ['<b>Peddler:</b> invents, asks questions, pitches.', '<b>Prospects (1–3):</b> play a character with a secret.', '<b>Investors (everyone else):</b> heckle, guess and score.'] },
     { title: '1 · Creation Lab', art: () => '<div class="tut-row tut-cards"><div class="deck deck-item"><span class="deck-k">Item</span><span class="deck-t">Hot tub</span></div><span class="tut-plus">+</span><div class="deck deck-func"><span class="deck-k">Function</span><span class="deck-t">Plays smooth jazz</span></div></div><p class="tut-result">= The Jazz-uzzi 3000</p>',
       lines: ['The Peddler picks an <b>Item</b> and a <b>Function</b>, names it and sketches it.', 'Prospects draw their character. Their <b>fun fact and secret are tied to the product</b>.'] },
-    { title: '2 · Fact-Finding', art: () => '<div class="tut-chat">' + bubble('Peddler', 'Why did you stop lifeguarding?') + bubble('Prospect', 'Oh, I just… rest my eyes near water.', 'right') + bubble('Peddler', 'I bet you napped on the job!') + '</div>' +
+    { title: '2 · Fact-Finding', art: () => '<div class="tut-chat">' + bubble('Prospect', 'I was a lifeguard, you know. Summer of ’94.', 'right') + bubble('Peddler', 'Why did you stop lifeguarding?') + bubble('Prospect', 'Oh, I just… rest my eyes near water.', 'right') + bubble('Peddler', 'I bet you napped on the job!') + '</div>' +
         phone('<div class="tut-btn mint">The Peddler guessed my secret!</div><div class="price-tag tut-tag"><span>Peddler</span><b>+$25</b></div>'),
-      lines: ['The Peddler asks questions and <b>guesses secrets out loud</b>.', 'Right guess? The Prospect taps it in: <b>+$25</b>.', 'Investors secretly guess too: +$10 each.'] },
+      lines: ['Each Prospect starts with an <b>opening line</b>. Then the Peddler asks questions and <b>guesses secrets out loud</b>.', 'Right guess? The Prospect taps it in: <b>+$25</b>.', 'Investors secretly guess too: +$10 each.'] },
     { title: '3 · The PITCH!', art: () => '<div class="tut-row">' + U.screwIcon('tut-screw') + '<div class="tut-objection"><span class="eyebrow">The Investors object!</span>“I object! My dog would hate this.”</div></div>',
       lines: ['The Peddler sells it to each Prospect, using what they learned.', 'Each Prospect can <b>SCREW!</b> them once: 15 seconds to answer, then everyone votes.', 'Investors send funny <b>objections</b> for Prospects to act out.'] },
     { title: '4 · Objections + Close', art: () => '<div class="tut-chat">' + bubble('Prospect', 'I object! It’s way too loud.', 'right') + bubble('Peddler', 'It has a whisper mode. So, can I count you in today?') + '</div>',

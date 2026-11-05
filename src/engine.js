@@ -392,7 +392,7 @@
       pool = this.shuffle(pool);
       r.prospects.forEach((id, k) => {
         const t = C.tell(theme, pool[k % pool.length], item);
-        Object.assign(r.profiles[id], { background: t.fact, ask: t.ask, secret: t.secret, secretTopic: t.topic, secretKey: t.key, secretHints: t.hints });
+        Object.assign(r.profiles[id], { background: t.fact, opener: t.open, ask: t.ask, secret: t.secret, secretTopic: t.topic, secretKey: t.key, secretHints: t.hints });
       });
       r.storyItem = item;
     }

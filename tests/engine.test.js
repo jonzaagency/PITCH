@@ -44,7 +44,7 @@ section('Product-tied stories');
     const item = r2.hand.items[r2.invention.item], theme = C.themeOf(item);
     r2.prospects.forEach((id) => {
       const pr = r2.profiles[id];
-      if (pr.secretTopic !== theme.id || !pr.background || !pr.secret || pr.secretHints.length !== 3) bad++;
+      if (pr.secretTopic !== theme.id || !pr.background || !pr.secret || !pr.opener || !pr.ask || pr.secretHints.length !== 3) bad++;
       const opts = r2.sleuth.options[id];
       const same = opts.filter((o) => o !== pr.secret && theme.stories.some((_, i) => C.tell(theme, i, item).secret === o)).length;
       if (!(opts.length === 4 && opts.indexOf(pr.secret) >= 0 && same === 2)) sleuthBad++;

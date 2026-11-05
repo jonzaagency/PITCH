@@ -58,6 +58,7 @@
       // the fun fact and secret are tied to the Peddler's product, so they arrive once an Item is picked
       if (!pr.secret) return head + '<p class="story-wait"><b>Your fun fact and secret are on the way.</b> They’re tied to the product, so they appear the moment the Peddler picks an Item.</p></div>';
       return head + '<p class="bg"><b>Fun fact:</b> ' + esc(pr.background) + '</p>' +
+        (withSecret && pr.opener ? '<div class="opener"><span class="lbl">Your opening line</span><p>“' + esc(pr.opener) + '”</p><span class="hint">Say it when Fact-Finding starts and the Peddler turns to you.</span></div>' : '') +
         (withSecret ? '<div class="top-secret"><span class="lbl">Top secret: only you can see this</span>' + esc(pr.secret) + '</div>' +
           (pr.secretHints && pr.secretHints.length ? '<div class="secret-tip"><b>How to play it</b><ul class="hint-list">' + pr.secretHints.map((h) => '<li>' + esc(h) + '</li>').join('') + '</ul></div>' : '') +
           '<p class="hint">Stay in character and leave clues, but don’t just say it. Tap “The Peddler guessed my secret!” only when they figure it out.</p>' : '') + '</div>';
@@ -105,6 +106,7 @@
           '<b>Objections + Close (' + mm(t.close) + '):</b> answer every objection, then clearly ask for the sale.',
           'Investors score you in six categories, $0–$50 each.'],
         prospect: ['<b>Draw</b> a portrait of your character during the Creation Lab.',
+          '<b>Open with your line:</b> when Fact-Finding starts, say the opening line on your phone to the Peddler.',
           '<b>Answer in character</b> when the Peddler questions you. Your phone gives you ways to hint at your secret. When they guess it out loud, tap <b>The Peddler guessed my secret!</b> at the top of your phone',
           '<b>During the pitch,</b> play one of your three SCREW! cards to throw the Peddler off. When another Prospect plays one, vote on your phone: did the Peddler nail it?',
           '<b>If the Investors object,</b> it pops up on your phone. Say it out loud, in character, then tap Done.',
@@ -180,6 +182,7 @@
     function peddlerFact() {
       const v = st.pub, r = v.round, p = st.priv;
       return coach('Fact-Finding game plan', [
+        { t: 'Let each Prospect give their opening line first. Listen for clues.' },
         { t: 'Talk to every Prospect. Their secret grows out of their fun fact, and it’s tied to your product.' },
         { t: 'Ask follow-up questions until something sounds off. Then say your guess out loud.' },
         { t: 'They tap it in on their phone if you’re right. Each secret is +$25.' }
