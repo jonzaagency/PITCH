@@ -1,7 +1,7 @@
 /* P!TCH how-to-play walkthrough: a swipeable deck of picture cards, one idea per card.
  * Opens over any screen (home, TV lobby) with P.tutorial.open(). */
 (function (P) {
-  const U = P.ui;
+  const U = P.ui, C = P.content;
   const esc = U.esc;
 
   // little pictures built from the game's own pieces
@@ -23,6 +23,9 @@
       lines: ['The Peddler sells it to each Prospect, using what they learned.', 'Each Prospect can <b>SCREW!</b> them once: 15 seconds to answer, then everyone votes.', 'Investors send funny <b>objections</b> for Prospects to act out.'] },
     { title: '4 · Objections + Close', art: () => '<div class="tut-chat">' + bubble('Prospect', 'I object! It’s way too loud.', 'right') + bubble('Peddler', 'It has a whisper mode. So, can I count you in today?') + '</div>',
       lines: ['Prospects raise one last objection.', 'The Peddler answers it and <b>asks for the sale</b>.'] },
+    { title: 'How Investors score', art: () => '<div class="tut-anchors">' + C.scoreAnchors.map((a, k) =>
+        '<div class="tut-anchor a' + k + '"><b>$' + a.min + '–$' + a.max + '</b><span><strong>' + esc(a.name) + '</strong> ' + esc(a.desc) + '</span></div>').join('') + '</div>',
+      lines: ['Investors score <b>six categories</b>: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch and The Close.', 'Use the same scale for each one. Your phone shows the band as you slide.'] },
     { title: '5 · Money Reveal', art: () => '<div class="tut-bars">' + ['Invention', 'Fact-Finding', 'The Close'].map((n, i) => '<div class="bar-row" style="--d:' + (0.2 * i) + 's"><span class="bar-name">' + n + '</span><span class="bar"><i style="--w:' + [80, 60, 90][i] + '%"></i></span></div>').join('') + '</div><div class="price-tag big-tag"><span>Peddler earns</span><b>$190</b></div>',
       lines: ['Investors score six categories, $0–$50 each.', 'The Peddler earns the average plus <b>$25 per secret</b>. Then a new Peddler steps up.'] },
     { title: 'Your phone shows the way', art: () => phone('<div class="tut-coach"><b>Fact-Finding game plan</b><ol><li>Talk to every Prospect</li><li>Ask follow-ups</li><li>Guess out loud</li></ol></div><div class="tut-btn gold">Start my PITCH! ›</div>'),

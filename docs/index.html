@@ -675,6 +675,17 @@ input[type=text], input:not([type]), input[type=number], select, textarea { bord
 .tut-coach { width: 100%; font-size: 0.8rem; background: var(--panel); border-left: 4px solid var(--gold); border-radius: 10px; padding: 8px; }
 .tut-coach ol { margin: 4px 0 0; padding-left: 1.2em; }
 
+/* scoring anchors: coral (low) to mint (high) */
+.sl-band { font-family: var(--body); font-style: normal; font-size: 0.72rem; font-weight: 800; padding: 1px 7px; border-radius: 999px; color: #1a1230; vertical-align: middle; }
+.sl-band.b0 { background: #ee7b6f; } .sl-band.b1 { background: #f3a26b; } .sl-band.b2 { background: #f0c35a; } .sl-band.b3 { background: #b9d77a; } .sl-band.b4 { background: #82d69c; }
+.score-guide { background: var(--panel-2); border-radius: 12px; padding: 8px 12px; }
+.score-guide p { margin: 6px 0; font-size: 0.88rem; }
+.tut-anchors { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+.tut-anchor { display: grid; grid-template-columns: 5.6em minmax(0, 1fr); gap: 10px; align-items: center; padding: 6px 10px; border-radius: 10px; border: 2px solid var(--inkline); color: #1a1230; font-size: 0.92rem; text-align: left; }
+.tut-anchor b { font-family: var(--display); font-weight: 400; }
+.tut-anchor strong { display: block; }
+.tut-anchor.a0 { background: #ee7b6f; } .tut-anchor.a1 { background: #f3a26b; } .tut-anchor.a2 { background: #f0c35a; } .tut-anchor.a3 { background: #b9d77a; } .tut-anchor.a4 { background: #82d69c; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {
   .practice { grid-template-columns: minmax(0, 1fr); }
@@ -1035,6 +1046,16 @@ window.PITCH.config = {
     { id: 'pitch', name: 'Overall Pitch', hint: 'Persuasion, clear value, and delivery.' },
     { id: 'close', name: 'The Close', hint: 'Clear call to action and appropriate request for commitment.' }
   ];
+
+  // Scoring anchors: what each $10 band means in every category, so Investors score the same way.
+  C.scoreAnchors = [
+    { min: 0, max: 10, name: 'Little or none', desc: 'Little or no demonstration of the skill.' },
+    { min: 11, max: 20, name: 'Weak', desc: 'Attempted, but weak or incomplete.' },
+    { min: 21, max: 30, name: 'Acceptable', desc: 'Did the job. Solid, nothing special.' },
+    { min: 31, max: 40, name: 'Strong', desc: 'Clear, confident and convincing.' },
+    { min: 41, max: 50, name: 'Outstanding', desc: 'Memorable. The best you’ve seen tonight.' }
+  ];
+  C.anchorFor = (v) => C.scoreAnchors.find((a) => Number(v) <= a.max) || C.scoreAnchors[C.scoreAnchors.length - 1];
 })(window.PITCH = window.PITCH || {});
 
 /* ===== engine.js ===== */
@@ -3840,7 +3861,8 @@ window.PITCH.config = {
       const sc = st.drafts[k] || (st.drafts[k] = { cats: Object.assign(C.categories.reduce((o, c) => { o[c.id] = 25; return o; }, {}), base.cats), prospects: Object.assign({}, base.prospects) });
       const total = C.categories.reduce((s, c) => s + Number(sc.cats[c.id] || 0), 0);
       return '<section class="scorecard"><div class="sec-head"><h3>' + (canSubmit ? 'Your scorecard' : 'Scorecard (submit opens after the close)') + '</h3><span class="sc-total">' + U.money(total) + '<em>/ $300</em></span></div>' +
-        C.categories.map((c) => '<label class="slider" data-key="sl-' + c.id + '"><span class="sl-top"><b>' + esc(c.name) + '</b><span class="sl-val">' + U.money(sc.cats[c.id]) + '</span></span><span class="muted sl-hint">' + esc(c.hint) + '</span>' +
+        '<details class="score-guide"><summary>Scoring guide</summary>' + C.scoreAnchors.map((a, k) => '<p><b class="sl-band b' + k + '">$' + a.min + '–$' + a.max + ' · ' + esc(a.name) + '</b> ' + esc(a.desc) + '</p>').join('') + '</details>' +
+        C.categories.map((c) => '<label class="slider" data-key="sl-' + c.id + '"><span class="sl-top"><b>' + esc(c.name) + '</b><span class="sl-val">' + U.money(sc.cats[c.id]) + ' <em class="sl-band b' + C.scoreAnchors.indexOf(C.anchorFor(sc.cats[c.id])) + '">' + esc(C.anchorFor(sc.cats[c.id]).name) + '</em></span></span><span class="muted sl-hint">' + esc(c.hint) + '</span>' +
           '<input type="range" min="0" max="50" step="5" id="sc-' + c.id + '" data-score="cats.' + c.id + '" value="' + Number(sc.cats[c.id]) + '"></label>').join('') +
         '<h4>Prospect role-play awards (optional)</h4>' + r.prospects.map((id) => '<label class="slider" data-key="slp-' + esc(id) + '"><span class="sl-top"><b>' + esc(r.profiles[id].name) + '</b><span class="sl-val">' + U.money(sc.prospects[id] || 0) + '</span></span><span class="muted sl-hint">Stayed in character, believable, answered fairly, added fun.</span>' +
           '<input type="range" min="0" max="25" step="5" id="scp-' + esc(id) + '" data-score="prospects.' + esc(id) + '" value="' + Number(sc.prospects[id] || 0) + '"></label>').join('') +
@@ -4133,7 +4155,7 @@ window.PITCH.config = {
 /* P!TCH how-to-play walkthrough: a swipeable deck of picture cards, one idea per card.
  * Opens over any screen (home, TV lobby) with P.tutorial.open(). */
 (function (P) {
-  const U = P.ui;
+  const U = P.ui, C = P.content;
   const esc = U.esc;
 
   // little pictures built from the game's own pieces
@@ -4155,6 +4177,9 @@ window.PITCH.config = {
       lines: ['The Peddler sells it to each Prospect, using what they learned.', 'Each Prospect can <b>SCREW!</b> them once: 15 seconds to answer, then everyone votes.', 'Investors send funny <b>objections</b> for Prospects to act out.'] },
     { title: '4 · Objections + Close', art: () => '<div class="tut-chat">' + bubble('Prospect', 'I object! It’s way too loud.', 'right') + bubble('Peddler', 'It has a whisper mode. So, can I count you in today?') + '</div>',
       lines: ['Prospects raise one last objection.', 'The Peddler answers it and <b>asks for the sale</b>.'] },
+    { title: 'How Investors score', art: () => '<div class="tut-anchors">' + C.scoreAnchors.map((a, k) =>
+        '<div class="tut-anchor a' + k + '"><b>$' + a.min + '–$' + a.max + '</b><span><strong>' + esc(a.name) + '</strong> ' + esc(a.desc) + '</span></div>').join('') + '</div>',
+      lines: ['Investors score <b>six categories</b>: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch and The Close.', 'Use the same scale for each one. Your phone shows the band as you slide.'] },
     { title: '5 · Money Reveal', art: () => '<div class="tut-bars">' + ['Invention', 'Fact-Finding', 'The Close'].map((n, i) => '<div class="bar-row" style="--d:' + (0.2 * i) + 's"><span class="bar-name">' + n + '</span><span class="bar"><i style="--w:' + [80, 60, 90][i] + '%"></i></span></div>').join('') + '</div><div class="price-tag big-tag"><span>Peddler earns</span><b>$190</b></div>',
       lines: ['Investors score six categories, $0–$50 each.', 'The Peddler earns the average plus <b>$25 per secret</b>. Then a new Peddler steps up.'] },
     { title: 'Your phone shows the way', art: () => phone('<div class="tut-coach"><b>Fact-Finding game plan</b><ol><li>Talk to every Prospect</li><li>Ask follow-ups</li><li>Guess out loud</li></ol></div><div class="tut-btn gold">Start my PITCH! ›</div>'),
@@ -4273,6 +4298,7 @@ window.PITCH.config = {
       '<li><b>Investors</b> (everyone else) vote on SCREW!s, send funny objections to the Prospects, guess secrets, and score the Peddler with game money.</li></ul></div>' +
       '<div><h4>Each round</h4><ol><li>Creation Lab · 2:00</li><li>Fact-Finding · 2:30 · $25 per secret uncovered</li><li>PITCH! · 1:30 · each Prospect may SCREW! once (15 s, clock pauses, then the table votes)</li><li>Objections + Close · 0:45</li><li>Money Reveal</li></ol></div>' +
       '<div><h4>Money</h4><p>Each Investor awards $0–$50 in six categories: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close. ' +
+      'Scoring guide: ' + P.content.scoreAnchors.map((a) => '<b>$' + a.min + '–$' + a.max + '</b> ' + U.esc(a.desc.replace(/\.$/, '').toLowerCase())).join('; ') + '. ' +
       'The Peddler earns the average scorecard plus $25 per secret (with 4+ Investors, a scorecard more than $100 away from the rest of the room is set aside). Prospects earn the average of up to $25 each for role-play. ' +
       '<b>Secret Sleuth:</b> during Fact-Finding, Investors guess each Prospect’s secret from 4 options, $10 per correct guess. The Peddler can buy <b>INSIDE TRADING</b> to peek at a guess. Most money tonight wins.</p>' +
       '<p>Spend cash between rounds on NEPO BABY! Power Cards: NOT TODAY! ($75), I KNOW PEOPLE ($100), INSIDE TRADING ($100), DADDY MADE A CALL ($125).</p></div></div>';

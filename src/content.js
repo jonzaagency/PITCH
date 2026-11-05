@@ -299,4 +299,14 @@
     { id: 'pitch', name: 'Overall Pitch', hint: 'Persuasion, clear value, and delivery.' },
     { id: 'close', name: 'The Close', hint: 'Clear call to action and appropriate request for commitment.' }
   ];
+
+  // Scoring anchors: what each $10 band means in every category, so Investors score the same way.
+  C.scoreAnchors = [
+    { min: 0, max: 10, name: 'Little or none', desc: 'Little or no demonstration of the skill.' },
+    { min: 11, max: 20, name: 'Weak', desc: 'Attempted, but weak or incomplete.' },
+    { min: 21, max: 30, name: 'Acceptable', desc: 'Did the job. Solid, nothing special.' },
+    { min: 31, max: 40, name: 'Strong', desc: 'Clear, confident and convincing.' },
+    { min: 41, max: 50, name: 'Outstanding', desc: 'Memorable. The best you’ve seen tonight.' }
+  ];
+  C.anchorFor = (v) => C.scoreAnchors.find((a) => Number(v) <= a.max) || C.scoreAnchors[C.scoreAnchors.length - 1];
 })(window.PITCH = window.PITCH || {});
