@@ -485,7 +485,7 @@
       if (s.round && phase !== 'pitch') this.closeScrewVotes();
       s.timer.main = TIMED_PHASES[phase] ? this.newTimer(s.settings.timers[TIMED_PHASES[phase]]) : null;
       if (phase === 'fact') { this.finalizeInvention(); this.setupSleuth(); }
-      if (phase === 'pitch' && s.round && !s.round.objectBoard) this.newObjectBoard();
+      if (phase === 'close' && s.round && !s.round.objectBoard) this.newObjectBoard();
       if (phase === 'scoring') this.checkAllDone();
     }
 
@@ -901,7 +901,7 @@
     a_objectVote(p, a) {
       const s = this.s, r = s.round;
       if (!r || r.phils.indexOf(p.id) < 0) return { ok: false, error: 'Only Investors send objections.' };
-      if (['pitch', 'close'].indexOf(s.phase) < 0 || !r.objectBoard) return { ok: false, error: 'Objections open during the pitch.' };
+      if (s.phase !== 'close' || !r.objectBoard) return { ok: false, error: 'Investor objections open during Objections + Close.' };
       if (r.investorObjections.length >= E.OBJECT_MAX) return { ok: false, error: 'The Investors have used all their objections this round.' };
       const last = r.investorObjections[r.investorObjections.length - 1];
       if (last && this.now() - last.at < E.OBJECT_COOLDOWN_MS) return { ok: false, error: 'Give the Peddler a moment before the next objection.' };
@@ -1333,7 +1333,7 @@
         out.verdict = r.verdicts[pid] || null;
         out.learned = (r.learned && r.learned[pid]) || {};
       }
-      if (r && role === 'phil' && r.objectBoard && ['pitch', 'close'].indexOf(s.phase) >= 0) {
+      if (r && role === 'phil' && r.objectBoard && s.phase === 'close') {
         const sent = (r.investorObjections || []).length, last = (r.investorObjections || [])[sent - 1];
         out.objectBoard = {
           options: r.objectBoard.options, mine: r.objectBoard.votes[pid] == null ? null : r.objectBoard.votes[pid],
@@ -1344,7 +1344,7 @@
       }
       if (r && role === 'prospect') {
         const o = (r.investorObjections || []).filter((x) => x.to === pid && !x.done).pop();
-        out.investorObjection = o && ['pitch', 'close'].indexOf(s.phase) >= 0 ? { text: o.text } : null;
+        out.investorObjection = o && s.phase === 'close' ? { text: o.text } : null;
       }
       if (r && (role === 'phil' || role === 'prospect')) {
         out.screwVotes = Object.keys(r.screwVotes || {}).filter((by) => r.screwVotes[by].open && r.screwVotes[by].voters.indexOf(pid) >= 0)

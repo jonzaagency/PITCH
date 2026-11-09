@@ -165,7 +165,9 @@ section('Peddler moves the round on');
 
 section('Investor objections');
 if (typeof E.Game.prototype.a_objectVote === 'function') {
-  const g = game(8, 'pitch'), s = g.s, r = s.round;
+  const gp = game(8, 'pitch');
+  ok(!gp.privateView(gp.s.round.phils[0]).objectBoard && !gp.act(gp.s.round.phils[0], { type: 'objectVote', idx: 0 }).ok, 'no Investor objections during the PITCH!');
+  const g = game(8, 'close'), s = g.s, r = s.round;
   const inv = r.phils;
   ok(inv.length >= 2, 'enough Investors for the test (' + inv.length + ')');
   const pv = g.privateView(inv[0]).objectBoard;

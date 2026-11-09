@@ -269,6 +269,10 @@ details summary { cursor: pointer; font-weight: 600; margin-top: 6px; }
 .learn-count { color: var(--sky); margin-top: 6px; }
 .hidden-lbl { color: var(--coral); margin-top: 6px; }
 .hint-btn { align-self: flex-start; }
+/* the Prospect's "They found my secret!" bar, pinned to the bottom of the phone */
+.secret-bar { position: sticky; bottom: 0; z-index: 6; margin: 12px -4px 0; padding: 10px 4px calc(10px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(transparent, var(--ink) 18%); display: flex; flex-direction: column; gap: 6px; align-items: stretch; text-align: center; }
+.secret-bar .found-btn { width: 100%; min-height: 58px; font-size: 1.15rem; }
+.secret-bar .confirm { justify-content: center; }
 .hint-row { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; border-top: 1px solid var(--panel-2); }
 .hint-confirm { font-weight: 700; }
 .story-wait { margin-top: 8px; padding: 10px 12px; border-radius: 12px; border: 2px dashed var(--gold); color: var(--cream); font-size: 0.92rem; }
@@ -700,7 +704,7 @@ input[type=text], input:not([type]), input[type=number], select, textarea { bord
   .pr-switch { display: flex; justify-content: center; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; padding: 8px 0; background: var(--ink); }
   .practice:not([data-view=phone]) .pr-side { display: none; }
   .practice[data-view=phone] .pr-tv { display: none; }
-  .pr-side { position: static; max-height: none; }
+  .pr-side { position: static; max-height: none; overflow: visible; } /* lets the Prospect's secret bar stick to the screen */
   .pr-tv .tv { height: calc(100dvh - 64px); }
 }
 @media (max-width: 860px) {

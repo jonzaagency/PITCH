@@ -63,7 +63,7 @@
         (withSecret && pr.opener ? '<div class="opener"><span class="lbl">Your opening line</span><p>“' + esc(pr.opener) + '”</p><span class="hint">Say it when Fact-Finding starts and the Peddler turns to you.</span></div>' : '') +
         (withSecret ? '<div class="top-secret"><span class="lbl">Top secret: only you can see this</span>' + esc(pr.secret) + '</div>' +
           (pr.secretHints && pr.secretHints.length ? '<div class="secret-tip"><b>How to play it</b><ul class="hint-list">' + pr.secretHints.map((h) => '<li>' + esc(h) + '</li>').join('') + '</ul></div>' : '') +
-          '<p class="hint">Stay in character and leave clues, but don’t just say it. Tap “The Peddler guessed my secret!” only when they figure it out.</p>' : '') + '</div>';
+          '<p class="hint">Stay in character and leave clues, but don’t just say it. Tap “They found my secret!” at the bottom of your screen only when they figure it out.</p>' : '') + '</div>';
     }
     /** The Prospect ticks off each hidden detail as the Peddler learns it: it shows on the TV and earns them $5. */
     function detailChecklist() {
@@ -119,14 +119,14 @@
         prospect: ['<b>Draw</b> a portrait of your character during the Creation Lab.',
           '<b>Open with your line:</b> when Fact-Finding starts, say the opening line on your phone to the Peddler.',
           '<b>Keep your details hidden:</b> the Peddler only knows your first name and fun fact. When they find out your age, family, job, motivation or objection, tick it off on your phone (+$5 for them).',
-          '<b>Answer in character</b> when the Peddler questions you. Your phone gives you ways to hint at your secret. When they guess it out loud, tap <b>The Peddler guessed my secret!</b> at the top of your phone',
+          '<b>Answer in character</b> when the Peddler questions you. Your phone gives you ways to hint at your secret. When they guess it out loud, tap <b>They found my secret!</b> at the bottom of your phone',
           '<b>During the pitch,</b> play one of your three SCREW! cards to throw the Peddler off. When another Prospect plays one, vote on your phone: did the Peddler nail it?',
-          '<b>If the Investors object,</b> it pops up on your phone. Say it out loud, in character, then tap Done.',
+          '<b>In Objections + Close,</b> the Investors may send you an objection. It pops up on your phone: say it out loud, in character, then tap Done.',
           '<b>After the pitch,</b> raise one objection and decide whether your character would buy.',
           'Investors can award you up to <b>$25</b> for great role-play.'],
         phil: ['<b>Watch closely:</b> the Peddler invents, questions the Prospects, and pitches.',
           '<b>Vote on every SCREW!</b> when it pops up on your phone: did the Peddler nail it or miss it?',
-          '<b>Send objections:</b> during the pitch, vote funny objections onto the Prospects’ phones. They have to act them out.',
+          '<b>Send objections:</b> during Objections + Close, vote funny objections onto the Prospects’ phones. They have to act them out.',
           '<b>Then score</b> six categories, $0–$50 each: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close.',
           '<b>Reward the Prospects</b> up to $25 each for role-play.'].concat(
           v.settings.sleuth ? ['<b>Secret Sleuth:</b> during Fact-Finding, guess each Prospect’s secret on your phone for <b>$10</b> each. Listen for hints, and lock in before the Peddler finds it!'] : [],
@@ -255,12 +255,17 @@
     }
 
     /** The Prospect awards the secret: shown at the top of their phone from Fact-Finding through the close. */
+    /** Top of the Prospect's screen once their secret is out. (The button itself is the bar pinned to the bottom.) */
     function foundSecret() {
-      const p = st.priv;
-      if (p.secretStatus === 'confirmed') return '<section class="found-sec"><p class="ok center">Your secret is out. The Peddler earned $25.</p></section>';
-      return '<section class="found-sec">' + (st.confirm === 'reveal'
-        ? '<p class="center"><b>Did they really figure it out?</b></p><div class="confirm"><button class="btn mint big" data-act="selfReveal">Yes, award them $25</button><button class="btn ghost" data-act="cancel">Not yet</button></div>'
-        : '<button class="btn mint big found-btn" data-act="ask" data-ck="reveal">The Peddler guessed my secret!</button><p class="hint center">Tap the moment they say it out loud. It gives them $25.</p>') + '</section>';
+      return st.priv.secretStatus === 'confirmed' ? '<section class="found-sec"><p class="ok center">🔓 Your secret is out. The Peddler earned $25.</p></section>' : '';
+    }
+    /** "They found my secret!" pinned to the bottom of the Prospect's phone from Fact-Finding until the money is revealed. */
+    function secretBar() {
+      const v = st.pub, p = st.priv;
+      if (!v || !p || p.role !== 'prospect' || ['fact', 'pitch', 'close', 'scoring'].indexOf(v.phase) < 0 || p.secretStatus === 'confirmed') return '';
+      return '<div class="secret-bar">' + (st.confirm === 'reveal'
+        ? '<p><b>Did they really figure out your secret?</b></p><div class="confirm"><button class="btn mint" data-act="selfReveal">Yes, award them $25</button><button class="btn ghost" data-act="cancel">Not yet</button></div>'
+        : '<button class="btn mint big found-btn" data-act="ask" data-ck="reveal">🔓 They found my secret! · +$25</button>') + '</div>';
     }
 
     function prospectFact() {
@@ -410,6 +415,7 @@
       const objected = r.prospects.filter((id) => r.objections[id]).map((id) => r.profiles[id].name);
       return coach('Objections + Close', [
         { t: objected.length ? 'Answer each objection out loud: ' + objected.map(esc).join(', ') + '.' : 'Wait for objections. Prospects raise them on their phones.', done: false },
+        { t: 'The Investors can send Prospects funny objections too. Answer those as well.' },
         { t: 'Be direct and confident. No dodging.' },
         { t: 'Ask for the sale, clearly.', try: 'So, can I count you in today?' },
         { t: 'Then tap “Open scoring ›” below.' }
@@ -454,7 +460,7 @@
       return '';
     }
 
-    /** Investors vote an objection onto a Prospect's phone during the pitch. */
+    /** Investors vote an objection onto a Prospect's phone during Objections + Close. */
     function objectBoard() {
       const b = st.priv.objectBoard;
       if (!b) return '';
@@ -489,7 +495,7 @@
     }
 
     function render() {
-      U.morph(root, '<div class="phone">' + header() + banners() + '<main class="ph-body" data-key="pb-' + (st.pub ? st.pub.phase + '-' + (st.priv && st.priv.role) : 'x') + '">' + body() + '</main>' + screwPop() + objectPop() + '</div>');
+      U.morph(root, '<div class="phone">' + header() + banners() + '<main class="ph-body" data-key="pb-' + (st.pub ? st.pub.phase + '-' + (st.priv && st.priv.role) : 'x') + '">' + body() + '</main>' + secretBar() + screwPop() + objectPop() + '</div>');
       mountPads();
     }
 
