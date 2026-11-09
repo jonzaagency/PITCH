@@ -21,6 +21,7 @@
   E.SECRET_BONUS = 25;
   E.SLEUTH_BONUS = 10; // Secret Sleuth: per hidden secret an Investor picks correctly
   E.SLEUTH_OPTIONS = 4; // the real secret plus 3 decoys
+  E.HAND_SIZE = 6;             // Item and Function cards the Peddler chooses from
   E.HINT_COST = 10;            // a Peddler hint (the Prospect's "Try:" question) comes off their round earnings
   E.DETAIL_BONUS = 5;          // per hidden Prospect detail the Peddler learns
   E.OBJECT_MAX = 3;            // Investor objections sent per round
@@ -430,8 +431,9 @@
       const pr = s.proposal;
       s.roundNo += 1;
       const hand = {
-        items: this.draw('items', C.items, 3),
-        functions: this.draw('functions', C.functions, 3)
+        items: this.draw('items', C.items, E.HAND_SIZE),
+        // mostly wacky Functions, plus 1 or 2 boring ones, shuffled together
+        functions: (() => { const boring = 1 + Math.floor(this.rand() * 2); return this.shuffle(this.draw('functions', C.functions, E.HAND_SIZE - boring).concat(this.draw('boringFunctions', C.boringFunctions, boring))); })()
       };
       const taken = [];
       const profiles = {}, screwHands = {}, secrets = {}, learned = {};
@@ -735,7 +737,7 @@
       if (!r || r.peddler !== p.id) return { ok: false, error: 'Only the Peddler builds the invention.' };
       if (s.phase !== 'lab') return { ok: false, error: 'The Creation Lab is closed.' };
       const inv = r.invention;
-      const idx = (v) => (v === null || v === undefined ? null : clampInt(v, 0, 2));
+      const idx = (v) => (v === null || v === undefined ? null : clampInt(v, 0, r.hand.items.length - 1));
       if ('item' in a) { inv.item = idx(a.item); this.assignStories(); }
       if ('func' in a) inv.func = idx(a.func);
       if ('name' in a) inv.name = str(a.name, 40);

@@ -296,8 +296,8 @@
       once('brief', () => setTimeout(() => send({ type: 'briefed' }), 800 + rnd(2500)));
     } else if (v.phase === 'lab' && p.role === 'peddler') {
       if (p.invention.item == null) {
-        const it = rnd(3);
-        send({ type: 'invention', item: it, func: rnd(3), name: 'The ' + p.hand.items[it] + ' ' + ['3000', 'Deluxe', 'Pro Max', '-inator', 'Supreme'][rnd(5)], slogan: ['You need this.', 'Why not?', 'Life, upgraded.', 'Patent pending.'][rnd(4)] });
+        const it = rnd(p.hand.items.length);
+        send({ type: 'invention', item: it, func: rnd(p.hand.functions.length), name: 'The ' + p.hand.items[it] + ' ' + ['3000', 'Deluxe', 'Pro Max', '-inator', 'Supreme'][rnd(5)], slogan: ['You need this.', 'Why not?', 'Life, upgraded.', 'Patent pending.'][rnd(4)] });
       } else once('draw', () => { const pad = new U.DrawPad(); pad.scribble(); send({ type: 'drawing', data: pad.export() }); });
       if (p.invention.item != null && !p.labDone && chance(0.3)) send({ type: 'labDone' });
     } else if (v.phase === 'lab' && p.role === 'prospect') {

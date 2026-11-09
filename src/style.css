@@ -719,7 +719,7 @@ input[type=text], input:not([type]), input[type=number], select, textarea { bord
   .decks { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 420px) {
-  .hand { grid-template-columns: minmax(0, 1fr); }
+  .hand { grid-template-columns: repeat(2, minmax(0, 1fr)); } /* 6 cards: two per row on phones */
   .deck { padding-top: 28px; }
   .w-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .dock .btn { flex: 1 1 auto; }

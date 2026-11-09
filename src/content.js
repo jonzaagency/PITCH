@@ -18,22 +18,30 @@
     'Garden hose', 'Recliner', 'Cuckoo clock', 'Salad spinner', 'Ski goggles', 'Baby monitor'
   ];
 
-  // Peddler deck 2 of 2: what the invention does.
+  // Peddler deck 2 of 2: what the invention does. Mostly wacky; each hand also gets 1-2 boring ones (below).
   C.functions = [
-    'Predicts the weather', 'Plays smooth jazz', 'Folds laundry', 'Translates baby talk',
-    'Detects lies', 'Walks your dog', 'Grows vegetables', 'Brews coffee', 'Tells bedtime stories',
-    'Removes wrinkles', 'Charges your phone', 'Finds lost keys', 'Fills awkward silences',
-    'Does your taxes', 'Repels mosquitoes', 'Cooks a three-course meal', 'Gives compliments',
-    'Cleans the gutters', 'Teaches French', 'Keeps secrets', 'Reads minds', 'Breaks up arguments',
-    'Schedules your meetings', 'Glows in the dark', 'Plays fetch', 'Writes poetry',
-    'Massages your feet', 'Calls your mom', 'Counts calories', 'Plays the bagpipes',
-    'Waters your plants', 'Tracks the moon', 'Blocks spam calls', 'Cuts hair', 'Blends smoothies',
-    'Generates electricity', 'Hatches eggs', 'Purifies the air', 'Remembers birthdays',
-    'Plays chess against you', 'Counts your steps', 'Delivers the mail', 'Warms your bed',
-    'Flies short distances', 'Records your dreams', 'Sorts the recycling', 'Irons shirts',
-    'Wakes you up gently', 'Cheers you on', 'Babysits', 'Paints portraits', 'Makes popcorn',
-    'Measures vibes', 'Tells the future', 'Scares away raccoons', 'Writes thank-you notes',
-    'Helps you parallel park', 'Composes theme music', 'Teaches karate', 'Cures hiccups'
+    'Narrates your life like a nature documentary', 'Translates what your cat is plotting', 'Yells motivational quotes at 3 a.m.',
+    'Plays dramatic music when you enter a room', 'Gives you a standing ovation for doing chores', 'Writes your breakup texts',
+    'Hypnotizes your in-laws', 'Summons a tiny rain cloud over your enemies', 'Makes everything taste like birthday cake',
+    'Turns your sneezes into glitter', 'Negotiates with your toddler', 'Teaches your houseplants French',
+    'Finds your missing socks in another dimension', 'Gives brutally honest fashion advice', 'Makes you 4% taller on weekends',
+    'Talks to ghosts (badly)', 'Grows you a mustache on command', 'Launches confetti every time you get an email',
+    'Turns awkward silences into smooth jazz', 'Replies-all to every email for you', 'Cancels your plans so you don’t have to',
+    'Turns any food into soup', 'Rates your dance moves out loud', 'Hatches a baby dragon every Tuesday',
+    'Gets you out of jury duty', 'Makes your boss forget about meetings', 'Bakes cookies using only moonlight',
+    'Teleports your keys back to you, eventually', 'Detects lies, but only from pigeons', 'Hires a mariachi band on demand',
+    'Predicts who will win every argument', 'Smells exactly like your grandma’s house', 'Sings your name like an opera star',
+    'Hides vegetables in your dessert', 'Turns Mondays into Fridays (emotionally)', 'Reads your dog’s diary out loud',
+    'Shrinks your problems to the size of a grape', 'Wins staring contests for you', 'Makes you sound smart on video calls',
+    'Scares away raccoons with interpretive dance', 'Writes thank-you notes in your handwriting', 'Composes a theme song for your commute',
+    'Cures hiccups by startling you constantly', 'Tells your neighbors exactly what you think of them', 'Makes popcorn using pure enthusiasm',
+    'Plays chess against you and gloats', 'Records your dreams and posts the good ones', 'Gives compliments, but sarcastically'
+  ];
+  // A couple of plain, sensible Functions go into every hand, for Peddlers who want to play it straight.
+  C.boringFunctions = [
+    'Charges your phone', 'Tells the time', 'Keeps drinks cold', 'Has a built-in flashlight', 'Folds laundry',
+    'Counts your steps', 'Holds snacks', 'Has a USB port', 'Blocks spam calls', 'Doubles as a coaster',
+    'Waters your plants', 'Reminds you of birthdays', 'Purifies the air', 'Sorts the recycling'
   ];
 
   // Prospect profile pieces. Each Prospect gets a random combination.

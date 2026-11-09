@@ -26,6 +26,21 @@ function game(n, phase, setup) {
   return g;
 }
 
+section('Peddler hand');
+{
+  let boringCounts = new Set(), bad = 0;
+  for (let t = 0; t < 40; t++) {
+    const g = game(6, 'lab'), h = g.s.round.hand;
+    const boring = h.functions.filter((f) => C.boringFunctions.indexOf(f) >= 0).length;
+    boringCounts.add(boring);
+    if (h.items.length !== E.HAND_SIZE || h.functions.length !== E.HAND_SIZE || boring < 1 || boring > 2 || new Set(h.functions).size !== E.HAND_SIZE) bad++;
+  }
+  ok(bad === 0, 'every hand has ' + E.HAND_SIZE + ' Items and ' + E.HAND_SIZE + ' Functions, with 1-2 boring Functions');
+  ok(boringCounts.has(1) && boringCounts.has(2), 'some hands get 1 boring Function, some get 2');
+  const g = game(6, 'lab'), r = g.s.round;
+  ok(g.act(r.peddler, { type: 'invention', item: 5, func: 5 }).ok && r.invention.item === 5 && r.invention.func === 5, 'the 6th card can be picked');
+}
+
 section('Product-tied stories');
 {
   const g = game(7, 'lab'), s = g.s, r = s.round;
