@@ -5,12 +5,15 @@
 //   dist/pitch-artifact.html -> the Claude artifact copy (Practice mode only; artifacts block WebSockets)
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const SRC = path.join(__dirname, 'src');
 const ORDER = ['config.js', 'content.js', 'engine.js', 'net.js', 'ui-core.js', 'ui-tv.js', 'ui-phone.js', 'tutorial.js', 'app.js'];
 const read = f => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\n+$/, '') + '\n';
 // Images in src/assets are inlined as data URLs so each build stays one self-contained file.
 const asset = f => 'data:image/' + (f.endsWith('.webp') ? 'webp' : 'png') + ';base64,' + fs.readFileSync(path.join(SRC, 'assets', f)).toString('base64');
+// A fingerprint of the game code. The online page compares it with docs/version.json to spot a newer release.
+const BUILD = crypto.createHash('sha1').update(ORDER.map(read).join('') + read('style.css')).digest('hex').slice(0, 10);
 const ASSETS = { logo: asset('logo.webp'), wordmark: asset('wordmark.webp'), icon: asset('icon-64.png'), touchIcon: asset('icon-180.png') };
 
 function bundle(artifact) {
@@ -19,7 +22,7 @@ function bundle(artifact) {
     if (f === 'config.js' && artifact) code = code.replace('artifact: false', 'artifact: true');
     return `/* ===== ${f} ===== */\n${code}`;
   }).join('\n');
-  const assets = `/* ===== assets ===== */\nwindow.PITCH = window.PITCH || {};\nwindow.PITCH.assets = { logo: '${ASSETS.logo}', wordmark: '${ASSETS.wordmark}' };\n`;
+  const assets = `/* ===== assets ===== */\nwindow.PITCH = window.PITCH || {};\nwindow.PITCH.assets = { logo: '${ASSETS.logo}', wordmark: '${ASSETS.wordmark}' };\nwindow.PITCH.build = '${BUILD}';\n`;
   const head = [
     '<title>P!TCH Party Game</title>',
     '<meta name="claude:viewport-fit-sides" content="cover">',
@@ -47,3 +50,5 @@ for (const [file, artifact] of [['docs/index.html', false], ['dist/pitch-artifac
   fs.writeFileSync(out, bundle(artifact));
   console.log('built', file, (fs.statSync(out).size / 1024).toFixed(1) + ' KB');
 }
+fs.writeFileSync(path.join(__dirname, 'docs/version.json'), JSON.stringify({ build: BUILD }) + '\n');
+console.log('build', BUILD);

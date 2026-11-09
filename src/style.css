@@ -269,6 +269,7 @@ details summary { cursor: pointer; font-weight: 600; margin-top: 6px; }
 .learn-count { color: var(--sky); margin-top: 6px; }
 .hidden-lbl { color: var(--coral); margin-top: 6px; }
 .hint-btn { align-self: flex-start; }
+.hint-row { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; border-top: 1px solid var(--panel-2); }
 .hint-confirm { font-weight: 700; }
 .story-wait { margin-top: 8px; padding: 10px 12px; border-radius: 12px; border: 2px dashed var(--gold); color: var(--cream); font-size: 0.92rem; }
 .hint-list { margin: 6px 0 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 5px; }
@@ -687,6 +688,11 @@ input[type=text], input:not([type]), input[type=number], select, textarea { bord
 .tut-anchor b { font-family: var(--display); font-weight: 400; }
 .tut-anchor strong { display: block; }
 .tut-anchor.a0 { background: #ee7b6f; } .tut-anchor.a1 { background: #f3a26b; } .tut-anchor.a2 { background: #f0c35a; } .tut-anchor.a3 { background: #b9d77a; } .tut-anchor.a4 { background: #82d69c; }
+
+/* new-version banner */
+.update-bar { position: fixed; z-index: 90; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(560px, calc(100vw - 24px));
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; border-radius: 16px; background: var(--card); color: var(--card-ink); border: 2px solid var(--inkline); box-shadow: 4px 4px 0 var(--inkline); font-size: 0.92rem; }
+.update-bar span { flex: 1; }
 
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {

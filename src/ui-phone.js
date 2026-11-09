@@ -215,6 +215,14 @@
       if (st.confirm === 'hint-' + id) return '<div class="confirm hint-confirm"><span>Use a hint for −' + U.money(E.HINT_COST) + '?</span><button class="btn gold sm" data-act="hint" data-target="' + esc(id) + '">Yes, show it</button><button class="btn ghost sm" data-act="cancel">No</button></div>';
       return '<button class="btn ghost sm hint-btn" data-act="ask" data-ck="hint-' + esc(id) + '">💡 Hint · −' + U.money(E.HINT_COST) + '</button>';
     }
+    /** Hint buttons for every Prospect whose secret is still hidden (PITCH! and close; Fact-Finding has them on each card). */
+    function hintList() {
+      const r = st.pub.round;
+      const open = r.prospects.filter((id) => r.secrets[id] !== 'confirmed');
+      if (!open.length) return '';
+      return '<section class="hint-list-sec"><h3>Stuck? Hints</h3><p class="muted">A question to try on a Prospect. ' + U.money(E.HINT_COST) + ' off this round’s earnings.</p>' +
+        open.map((id) => '<div class="hint-row" data-key="hr-' + esc(id) + '"><b>' + esc(r.profiles[id].name) + '</b>' + hintBox(id, r.profiles[id]) + '</div>').join('') + '</section>';
+    }
     /** What the Peddler has learned about a Prospect so far: learned details filled in, the rest as "?". */
     function knownDetails(pr) {
       return '<p class="lbl learn-count">Learned ' + (pr.learned || 0) + ' of ' + C.detailFields.length + ' · +' + U.money((pr.learned || 0) * E.DETAIL_BONUS) + '</p><ul class="facts known">' +
@@ -278,7 +286,7 @@
         { t: 'Sell it to each Prospect using what you learned:<br>' + sellTo },
         { t: 'Got SCREW!ed? Answer it in 15 seconds, then tap “I’m done responding.”' },
         { t: 'Finished? Tap “I’m done pitching” below.' }
-      ]) + '<section><h2>' + esc(inv.name) + '</h2>' + (inv.slogan ? '<p class="slogan">“' + esc(inv.slogan) + '”</p>' : '') +
+      ]) + hintList() + '<section><h2>' + esc(inv.name) + '</h2>' + (inv.slogan ? '<p class="slogan">“' + esc(inv.slogan) + '”</p>' : '') +
         '<div class="hand">' + '<div class="deck deck-item"><span class="deck-k">Item</span><span class="deck-t">' + esc(inv.item) + '</span></div><div class="deck deck-func"><span class="deck-k">Function</span><span class="deck-t">' + esc(inv.func) + '</span></div></div>' +
         '<p class="hint">Show the drawing on the big screen, and connect the benefits to what you learned about each Prospect.</p>' +
         (!r.activeScrew ? confirmBtn('pdone', 'I’m done pitching', 'pitchDone', {}, 'ghost') : '') + '</section>' + daddyUse() + notes();
@@ -439,7 +447,7 @@
       if (ph === 'lab') return role === 'peddler' ? peddlerLab() + peddlerNext() : role === 'prospect' ? prospectLab() : philWait(esc((st.pub.players.find((x) => x.id === st.pub.round.peddler) || { name: 'The Peddler' }).name) + ' is inventing…');
       if (ph === 'fact') return role === 'peddler' ? peddlerNext() + peddlerFact() : role === 'prospect' ? prospectFact() : philWait('Fact-Finding');
       if (ph === 'pitch') return role === 'peddler' ? peddlerPitch() : role === 'prospect' ? prospectPitch() : philWait('PITCH!');
-      if (ph === 'close') return role === 'peddler' ? closeCoach() + peddlerNext() + notes()
+      if (ph === 'close') return role === 'peddler' ? closeCoach() + peddlerNext() + hintList() + notes()
         : role === 'prospect' ? prospectClose() : philWait('Objections + Close');
       if (ph === 'scoring') return role === 'phil' ? scorecard(true) : role === 'prospect' ? '<section class="hello"><h2>The Investors are scoring</h2></section>' + (p.verdict ? '' : verdictBlock())
         : '<section class="hello"><h2>The Investors are deciding your fate</h2><p>Sit tight.</p></section>';

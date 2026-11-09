@@ -341,8 +341,29 @@
 
   // ---------------------------------------------------------------- boot
   app_boot();
+  /** The online game checks every minute whether a newer version has been published, and offers a refresh. */
+  function watchForUpdates() {
+    if (P.config.artifact || !P.build || !/^https?:$/.test(location.protocol)) return;
+    let shown = false;
+    const check = () => {
+      if (shown) return;
+      fetch('version.json?t=' + Date.now(), { cache: 'no-store' }).then((r) => r.ok ? r.json() : null).then((v) => {
+        if (!v || !v.build || v.build === P.build) return;
+        shown = true;
+        const bar = document.createElement('div');
+        bar.className = 'update-bar';
+        bar.innerHTML = '<span><b>A newer version of P!TCH is out.</b> Refresh between rounds to get it.</span><button class="btn gold sm" type="button">Refresh</button>';
+        bar.querySelector('button').onclick = () => location.reload();
+        document.body.appendChild(bar);
+      }).catch(() => { /* offline or blocked: try again later */ });
+    };
+    setTimeout(check, 3000);
+    setInterval(check, 60000);
+  }
+
   function app_boot() {
     U.startTimerLoop({ beep: true });
+    watchForUpdates();
     const q = new URLSearchParams(location.search);
     const room = (q.get('room') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
     if (room && onlineAllowed()) joinScreen(room);
