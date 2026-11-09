@@ -228,7 +228,8 @@
         '<div class="bars">' + bars + '</div>' +
         '<div class="math"><div><span>Average scorecard</span><b>' + U.money2(res.base) + '</b><em>' + res.scorecards + ' scorecard' + (res.scorecards === 1 ? '' : 's') + '</em></div>' +
         '<div class="plus">+</div><div><span>Secrets found</span><b>' + U.money2(res.bonus) + '</b><em>' + res.secrets + ' × $25</em></div>' +
-        '<div class="plus">+</div><div><span>Details learned</span><b>' + U.money2(res.detailBonus || 0) + '</b><em>' + (res.details || 0) + ' × ' + U.money(E.DETAIL_BONUS) + '</em></div><div class="plus">=</div>' +
+        '<div class="plus">+</div><div><span>Details learned</span><b>' + U.money2(res.detailBonus || 0) + '</b><em>' + (res.details || 0) + ' × ' + U.money(E.DETAIL_BONUS) + '</em></div>' +
+        (res.hints ? '<div class="plus">−</div><div><span>Hints used</span><b>' + U.money2(res.hintCost) + '</b><em>' + res.hints + ' × ' + U.money(E.HINT_COST) + '</em></div>' : '') + '<div class="plus">=</div>' +
         '<div class="price-tag big-tag"><span>Peddler earns</span><b>' + U.money2(res.total) + '</b></div></div>' +
         (res.setAside && res.setAside.length ? '<p class="set-aside">' + res.setAside.map((x) => 'One ' + U.money(x.total) + ' scorecard was set aside for being way ' + (x.side === 'low' ? 'below' : 'above') + ' the rest of the room.').join(' ') + '</p>' : '') + '</div>' +
         '<div class="rv-side"><h3>Prospects</h3>' + r.prospects.map((id) => '<div class="rv-pro" data-key="rv-' + esc(id) + '">' + portrait(gr, id, 'sm') + '<div><span><b>' + esc(r.profiles[id].name) + '</b><span class="muted"> · ' + esc(player(id).name) + '</span></span>' +

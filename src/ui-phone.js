@@ -112,7 +112,7 @@
       const done = r.briefed && r.briefed[p.pid];
       const items = {
         peddler: ['<b>Creation Lab (' + mm(t.lab) + '):</b> pick one Item and one Function card, name your invention, and sketch how it works.',
-          '<b>Fact-Finding (' + mm(t.fact) + '):</b> ask every Prospect real questions and say your guesses out loud. You only see their first name and fun fact: each hidden detail you find out (age, family, job, what they want, what worries them) is <b>+$5</b>, and each secret is <b>$25</b>. No typing needed.',
+          '<b>Fact-Finding (' + mm(t.fact) + '):</b> ask every Prospect real questions and say your guesses out loud. You only see their first name and fun fact: each hidden detail you find out (age, family, job, what they want, what worries them) is <b>+$5</b>, and each secret is <b>$25</b>. Stuck? A 💡 hint costs <b>$10</b>. No typing needed.',
           '<b>PITCH! (' + mm(t.pitch) + '):</b> sell it using what you learned. Each Prospect can SCREW! you once; you get ' + t.screw + ' seconds to respond, then the table votes on how you did.',
           '<b>Objections + Close (' + mm(t.close) + '):</b> answer every objection, then clearly ask for the sale.',
           'Investors score you in six categories, $0–$50 each.'],
@@ -198,15 +198,22 @@
         { t: 'Talk to every Prospect. Their secret grows out of their fun fact, and it’s tied to your product.' },
         { t: 'Find out their age, relationship, family, job, what they want and what worries them. Each one they tick off is +' + U.money(E.DETAIL_BONUS) + '.' },
         { t: 'Ask follow-up questions until something sounds off. Then say your guess out loud.' },
+        { t: 'Stuck on someone? Tap their 💡 Hint for a question to try. It costs ' + U.money(E.HINT_COST) + ' of this round’s earnings.' },
         { t: 'They tap it in on their phone if you’re right. Each secret is +$25.' }
       ]) + r.prospects.map((id) => {
           const pr = r.profiles[id], found = r.secrets[id] === 'confirmed';
           return '<section class="pros-card' + (found ? ' done' : '') + '" data-key="pf-' + esc(id) + '"><h3>' + (found ? '✓ ' : '') + esc(pr.name) + ' <span class="muted played">' + esc(playerName(id)) + '</span></h3>' +
             '<p class="bg"><b>Fun fact:</b> ' + esc(pr.background) + '</p>' +
             (found ? '<div class="secret unlocked"><span class="lbl">Secret unlocked +$25</span>' + esc(pr.secret || '') + '</div>'
-              : (pr.ask ? '<p class="try-q"><b>Try:</b> “' + esc(pr.ask) + '”</p>' : '')) +
+              : hintBox(id, pr)) +
             knownDetails(pr) + '</section>';
         }).join('') + insiderUse() + daddyUse() + notes();
+    }
+    /** A paid hint: the Prospect's opening question, hidden behind a button that costs $10 of this round's earnings. */
+    function hintBox(id, pr) {
+      if (pr.ask) return '<p class="try-q"><b>Hint:</b> try asking “' + esc(pr.ask) + '”</p>';
+      if (st.confirm === 'hint-' + id) return '<div class="confirm hint-confirm"><span>Use a hint for −' + U.money(E.HINT_COST) + '?</span><button class="btn gold sm" data-act="hint" data-target="' + esc(id) + '">Yes, show it</button><button class="btn ghost sm" data-act="cancel">No</button></div>';
+      return '<button class="btn ghost sm hint-btn" data-act="ask" data-ck="hint-' + esc(id) + '">💡 Hint · −' + U.money(E.HINT_COST) + '</button>';
     }
     /** What the Peddler has learned about a Prospect so far: learned details filled in, the rest as "?". */
     function knownDetails(pr) {
@@ -576,6 +583,7 @@
       else if (a === 'screwVote') { (st.priv.screwVotes || []).forEach((x) => { if (x.by === d.by) x.mine = d.result; }); send({ type: 'screwVote', by: d.by, result: d.result }); U.toast('Vote in ✓'); }
       else if (a === 'answer') send({ type: 'secretAnswer', yes: d.yes === '1' });
       else if (a === 'learned') { st.priv.learned = Object.assign({}, st.priv.learned); if (d.on === '1') st.priv.learned[d.field] = true; else delete st.priv.learned[d.field]; send({ type: 'learned', field: d.field, on: d.on === '1' }); }
+      else if (a === 'hint') { send({ type: 'hint', target: d.target }); st.confirm = null; }
       else if (a === 'selfReveal') { send({ type: 'secretAnswer', yes: true }); st.confirm = null; }
       else if (a === 'vote') { st.priv.votes = Object.assign({}, st.priv.votes, { [d.cat]: d.key2 }); send({ type: 'vote', cat: d.cat, key: d.key2 }); }
       else if (a === 'briefed') { if (st.pub.round) { st.pub.round.briefed = Object.assign({}, st.pub.round.briefed, { [st.priv.pid]: true }); } send({ type: 'briefed' }); }

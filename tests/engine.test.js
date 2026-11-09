@@ -112,6 +112,28 @@ section('Hidden Prospect details');
   ok(g.publicView().round.profiles[pro].concern === pr.concern, 'everything is revealed at the Money Reveal');
 }
 
+section('Paid hints');
+{
+  const g = game(6, 'fact'), s = g.s, r = s.round, [a, b] = r.prospects;
+  const pub = (id) => g.publicView().round.profiles[id];
+  ok(pub(a).ask === undefined && !pub(a).hinted, 'the hint question is hidden until bought');
+  ok(!g.act(a, { type: 'hint', target: a }).ok, 'only the Peddler can buy hints');
+  ok(g.act(r.peddler, { type: 'hint', target: a }).ok && pub(a).ask === r.profiles[a].ask && pub(a).hinted, 'buying a hint reveals that Prospect’s question');
+  ok(pub(b).ask === undefined, 'other Prospects stay hidden');
+  g.act(r.peddler, { type: 'hint', target: a });
+  g.act(r.prospects[0], { type: 'learned', field: 'age' });
+  while (s.phase !== 'scoring') g.host('next');
+  r.phils.forEach((id) => g.act(id, { type: 'scorecard', cats: { invention: 40, ingenuity: 40, factFinding: 40, objections: 40, pitch: 40, close: 40 }, prospects: {} }));
+  if (s.phase === 'scoring') g.host('reveal');
+  ok(r.results.hints === 1 && r.results.hintCost === E.HINT_COST, 'one hint (bought twice) costs $' + E.HINT_COST + ' once');
+  ok(r.results.total === Math.round((r.results.base + r.results.bonus + r.results.detailBonus - r.results.hintCost) * 100) / 100, 'the hint comes off the Peddler’s total');
+  const g2 = game(6, 'fact'), r2 = g2.s.round;
+  r2.prospects.forEach((id) => g2.act(r2.peddler, { type: 'hint', target: id }));
+  while (g2.s.phase !== 'scoring') g2.host('next');
+  g2.host('reveal');
+  ok(r2.results.total === 0 && r2.results.hintCost === 0, 'hints never push earnings below $0');
+}
+
 section('SCREW! voting');
 {
   const g = game(7, 'pitch'), s = g.s, r = s.round;

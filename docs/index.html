@@ -281,6 +281,8 @@ details summary { cursor: pointer; font-weight: 600; margin-top: 6px; }
 .facts.known li.unknown { color: var(--muted); }
 .learn-count { color: var(--sky); margin-top: 6px; }
 .hidden-lbl { color: var(--coral); margin-top: 6px; }
+.hint-btn { align-self: flex-start; }
+.hint-confirm { font-weight: 700; }
 .story-wait { margin-top: 8px; padding: 10px 12px; border-radius: 12px; border: 2px dashed var(--gold); color: var(--cream); font-size: 0.92rem; }
 .hint-list { margin: 6px 0 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 5px; }
 .ph-body > section.found-sec { background: transparent; padding: 4px 0; align-items: stretch; }
@@ -1119,6 +1121,7 @@ window.PITCH.config = {
   E.SECRET_BONUS = 25;
   E.SLEUTH_BONUS = 10; // Secret Sleuth: per hidden secret an Investor picks correctly
   E.SLEUTH_OPTIONS = 4; // the real secret plus 3 decoys
+  E.HINT_COST = 10;            // a Peddler hint (the Prospect's "Try:" question) comes off their round earnings
   E.DETAIL_BONUS = 5;          // per hidden Prospect detail the Peddler learns
   E.OBJECT_MAX = 3;            // Investor objections sent per round
   E.OBJECT_COOLDOWN_MS = 20000; // at least this long between Investor objections
@@ -1547,6 +1550,7 @@ window.PITCH.config = {
         hand,
         invention: { item: null, func: null, name: '', slogan: '', sketch: null },
         profiles, screwHands, secrets, learned,
+        hints: {},
         claims: {},
         portraits: {},
         labDone: {},
@@ -1660,7 +1664,10 @@ window.PITCH.config = {
       // +$5 for every hidden detail the Prospects ticked off
       res.details = r.prospects.reduce((n, id) => n + Object.keys((r.learned || {})[id] || {}).length, 0);
       res.detailBonus = res.details * E.DETAIL_BONUS;
-      res.total = round2(res.total + res.detailBonus);
+      // −$10 for every hint the Peddler bought (earnings never go below $0)
+      res.hints = Object.keys(r.hints || {}).filter((id) => r.prospects.indexOf(id) >= 0).length;
+      res.hintCost = Math.min(res.hints * E.HINT_COST, round2(res.total + res.detailBonus));
+      res.total = round2(res.total + res.detailBonus - res.hintCost);
       r.results = res;
       const pay = (pid, amt) => {
         const p = s.players[pid];
@@ -1906,6 +1913,19 @@ window.PITCH.config = {
         mine[a.field] = true;
         this.log('learn', this.s.players[r.peddler].name + ' learned ' + r.profiles[p.id].name.split(' ')[0] + '’s ' + C.detailFields.find((f) => f.id === a.field).name.toLowerCase() + '. +$' + E.DETAIL_BONUS);
       }
+      return { ok: true };
+    }
+
+    /** The Peddler pays for a hint: the Prospect's opening question to try. $10 off this round's earnings. */
+    a_hint(p, a) {
+      const s = this.s, r = s.round;
+      if (!r || r.peddler !== p.id) return { ok: false, error: 'Only the Peddler can buy hints.' };
+      if (['fact', 'pitch', 'close'].indexOf(s.phase) < 0) return { ok: false, error: 'Hints are for Fact-Finding through the close.' };
+      if (r.prospects.indexOf(a.target) < 0) return { ok: false, error: 'Pick a Prospect.' };
+      r.hints = r.hints || {};
+      if (r.hints[a.target]) return { ok: true };
+      r.hints[a.target] = true;
+      this.log('hint', p.name + ' bought a hint about ' + r.profiles[a.target].name.split(' ')[0] + '. −$' + E.HINT_COST);
       return { ok: true };
     }
 
@@ -2340,7 +2360,9 @@ window.PITCH.config = {
           const pr = r.profiles[id];
           // public: first name and the general situation; hidden details appear once the Prospect ticks them off
           const known = (r.learned && r.learned[id]) || {};
-          profiles[id] = { name: pr.name.split(' ')[0], background: pr.background, ask: pr.ask, learned: Object.keys(known).length };
+          const hinted = !!(r.hints && r.hints[id]);
+          profiles[id] = { name: pr.name.split(' ')[0], background: pr.background, learned: Object.keys(known).length, hinted };
+          if (hinted) profiles[id].ask = pr.ask; // the Peddler paid for this one
           C.detailFields.forEach((f) => { if (known[f.id] || s.phase === 'reveal') profiles[id][f.id] = pr[f.id]; });
           if (r.secrets[id] === 'confirmed' || s.phase === 'reveal') profiles[id].secret = pr.secret;
         });
@@ -3405,7 +3427,8 @@ window.PITCH.config = {
         '<div class="bars">' + bars + '</div>' +
         '<div class="math"><div><span>Average scorecard</span><b>' + U.money2(res.base) + '</b><em>' + res.scorecards + ' scorecard' + (res.scorecards === 1 ? '' : 's') + '</em></div>' +
         '<div class="plus">+</div><div><span>Secrets found</span><b>' + U.money2(res.bonus) + '</b><em>' + res.secrets + ' × $25</em></div>' +
-        '<div class="plus">+</div><div><span>Details learned</span><b>' + U.money2(res.detailBonus || 0) + '</b><em>' + (res.details || 0) + ' × ' + U.money(E.DETAIL_BONUS) + '</em></div><div class="plus">=</div>' +
+        '<div class="plus">+</div><div><span>Details learned</span><b>' + U.money2(res.detailBonus || 0) + '</b><em>' + (res.details || 0) + ' × ' + U.money(E.DETAIL_BONUS) + '</em></div>' +
+        (res.hints ? '<div class="plus">−</div><div><span>Hints used</span><b>' + U.money2(res.hintCost) + '</b><em>' + res.hints + ' × ' + U.money(E.HINT_COST) + '</em></div>' : '') + '<div class="plus">=</div>' +
         '<div class="price-tag big-tag"><span>Peddler earns</span><b>' + U.money2(res.total) + '</b></div></div>' +
         (res.setAside && res.setAside.length ? '<p class="set-aside">' + res.setAside.map((x) => 'One ' + U.money(x.total) + ' scorecard was set aside for being way ' + (x.side === 'low' ? 'below' : 'above') + ' the rest of the room.').join(' ') + '</p>' : '') + '</div>' +
         '<div class="rv-side"><h3>Prospects</h3>' + r.prospects.map((id) => '<div class="rv-pro" data-key="rv-' + esc(id) + '">' + portrait(gr, id, 'sm') + '<div><span><b>' + esc(r.profiles[id].name) + '</b><span class="muted"> · ' + esc(player(id).name) + '</span></span>' +
@@ -3747,7 +3770,7 @@ window.PITCH.config = {
       const done = r.briefed && r.briefed[p.pid];
       const items = {
         peddler: ['<b>Creation Lab (' + mm(t.lab) + '):</b> pick one Item and one Function card, name your invention, and sketch how it works.',
-          '<b>Fact-Finding (' + mm(t.fact) + '):</b> ask every Prospect real questions and say your guesses out loud. You only see their first name and fun fact: each hidden detail you find out (age, family, job, what they want, what worries them) is <b>+$5</b>, and each secret is <b>$25</b>. No typing needed.',
+          '<b>Fact-Finding (' + mm(t.fact) + '):</b> ask every Prospect real questions and say your guesses out loud. You only see their first name and fun fact: each hidden detail you find out (age, family, job, what they want, what worries them) is <b>+$5</b>, and each secret is <b>$25</b>. Stuck? A 💡 hint costs <b>$10</b>. No typing needed.',
           '<b>PITCH! (' + mm(t.pitch) + '):</b> sell it using what you learned. Each Prospect can SCREW! you once; you get ' + t.screw + ' seconds to respond, then the table votes on how you did.',
           '<b>Objections + Close (' + mm(t.close) + '):</b> answer every objection, then clearly ask for the sale.',
           'Investors score you in six categories, $0–$50 each.'],
@@ -3833,15 +3856,22 @@ window.PITCH.config = {
         { t: 'Talk to every Prospect. Their secret grows out of their fun fact, and it’s tied to your product.' },
         { t: 'Find out their age, relationship, family, job, what they want and what worries them. Each one they tick off is +' + U.money(E.DETAIL_BONUS) + '.' },
         { t: 'Ask follow-up questions until something sounds off. Then say your guess out loud.' },
+        { t: 'Stuck on someone? Tap their 💡 Hint for a question to try. It costs ' + U.money(E.HINT_COST) + ' of this round’s earnings.' },
         { t: 'They tap it in on their phone if you’re right. Each secret is +$25.' }
       ]) + r.prospects.map((id) => {
           const pr = r.profiles[id], found = r.secrets[id] === 'confirmed';
           return '<section class="pros-card' + (found ? ' done' : '') + '" data-key="pf-' + esc(id) + '"><h3>' + (found ? '✓ ' : '') + esc(pr.name) + ' <span class="muted played">' + esc(playerName(id)) + '</span></h3>' +
             '<p class="bg"><b>Fun fact:</b> ' + esc(pr.background) + '</p>' +
             (found ? '<div class="secret unlocked"><span class="lbl">Secret unlocked +$25</span>' + esc(pr.secret || '') + '</div>'
-              : (pr.ask ? '<p class="try-q"><b>Try:</b> “' + esc(pr.ask) + '”</p>' : '')) +
+              : hintBox(id, pr)) +
             knownDetails(pr) + '</section>';
         }).join('') + insiderUse() + daddyUse() + notes();
+    }
+    /** A paid hint: the Prospect's opening question, hidden behind a button that costs $10 of this round's earnings. */
+    function hintBox(id, pr) {
+      if (pr.ask) return '<p class="try-q"><b>Hint:</b> try asking “' + esc(pr.ask) + '”</p>';
+      if (st.confirm === 'hint-' + id) return '<div class="confirm hint-confirm"><span>Use a hint for −' + U.money(E.HINT_COST) + '?</span><button class="btn gold sm" data-act="hint" data-target="' + esc(id) + '">Yes, show it</button><button class="btn ghost sm" data-act="cancel">No</button></div>';
+      return '<button class="btn ghost sm hint-btn" data-act="ask" data-ck="hint-' + esc(id) + '">💡 Hint · −' + U.money(E.HINT_COST) + '</button>';
     }
     /** What the Peddler has learned about a Prospect so far: learned details filled in, the rest as "?". */
     function knownDetails(pr) {
@@ -4211,6 +4241,7 @@ window.PITCH.config = {
       else if (a === 'screwVote') { (st.priv.screwVotes || []).forEach((x) => { if (x.by === d.by) x.mine = d.result; }); send({ type: 'screwVote', by: d.by, result: d.result }); U.toast('Vote in ✓'); }
       else if (a === 'answer') send({ type: 'secretAnswer', yes: d.yes === '1' });
       else if (a === 'learned') { st.priv.learned = Object.assign({}, st.priv.learned); if (d.on === '1') st.priv.learned[d.field] = true; else delete st.priv.learned[d.field]; send({ type: 'learned', field: d.field, on: d.on === '1' }); }
+      else if (a === 'hint') { send({ type: 'hint', target: d.target }); st.confirm = null; }
       else if (a === 'selfReveal') { send({ type: 'secretAnswer', yes: true }); st.confirm = null; }
       else if (a === 'vote') { st.priv.votes = Object.assign({}, st.priv.votes, { [d.cat]: d.key2 }); send({ type: 'vote', cat: d.cat, key: d.key2 }); }
       else if (a === 'briefed') { if (st.pub.round) { st.pub.round.briefed = Object.assign({}, st.pub.round.briefed, { [st.priv.pid]: true }); } send({ type: 'briefed' }); }
@@ -4273,7 +4304,7 @@ window.PITCH.config = {
     { title: '5 · Money Reveal', art: () => '<div class="tut-bars">' + ['Invention', 'Fact-Finding', 'The Close'].map((n, i) => '<div class="bar-row" style="--d:' + (0.2 * i) + 's"><span class="bar-name">' + n + '</span><span class="bar"><i style="--w:' + [80, 60, 90][i] + '%"></i></span></div>').join('') + '</div><div class="price-tag big-tag"><span>Peddler earns</span><b>$190</b></div>',
       lines: ['Investors score six categories, $0–$50 each.', 'The Peddler earns the average plus <b>$25 per secret</b>. Then a new Peddler steps up.'] },
     { title: 'Your phone shows the way', art: () => phone('<div class="tut-coach"><b>Fact-Finding game plan</b><ol><li>Talk to every Prospect</li><li>Ask follow-ups</li><li>Guess out loud</li></ol></div><div class="tut-btn gold">Start my PITCH! ›</div>'),
-      lines: ['Every phone shows <b>your next step</b>.', 'The Peddler gets a game plan, “Try:” questions and a <b>Move on</b> button.', 'Want to practice first? Try <b>Practice mode</b> with bots.'] }
+      lines: ['Every phone shows <b>your next step</b>.', 'The Peddler gets a game plan, paid <b>hints</b> (−$10) and a <b>Move on</b> button.', 'Want to practice first? Try <b>Practice mode</b> with bots.'] }
   ];
 
   let el = null, i = 0, startX = null;
@@ -4389,7 +4420,7 @@ window.PITCH.config = {
       '<div><h4>Each round</h4><ol><li>Creation Lab · 2:00</li><li>Fact-Finding · 2:30 · $25 per secret uncovered</li><li>PITCH! · 1:30 · each Prospect may SCREW! once (15 s, clock pauses, then the table votes)</li><li>Objections + Close · 0:45</li><li>Money Reveal</li></ol></div>' +
       '<div><h4>Money</h4><p>Each Investor awards $0–$50 in six categories: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close. ' +
       'Scoring guide: ' + P.content.scoreAnchors.map((a) => '<b>$' + a.min + '–$' + a.max + '</b> ' + U.esc(a.desc.replace(/\.$/, '').toLowerCase())).join('; ') + '. ' +
-      'The Peddler earns the average scorecard plus $25 per secret and $5 per hidden detail learned (with 4+ Investors, a scorecard more than $100 away from the rest of the room is set aside). Prospects earn the average of up to $25 each for role-play. ' +
+      'The Peddler earns the average scorecard plus $25 per secret and $5 per hidden detail learned, minus $10 per hint used (with 4+ Investors, a scorecard more than $100 away from the rest of the room is set aside). Prospects earn the average of up to $25 each for role-play. ' +
       '<b>Secret Sleuth:</b> during Fact-Finding, Investors guess each Prospect’s secret from 4 options, $10 per correct guess. The Peddler can buy <b>INSIDE TRADING</b> to peek at a guess. Most money tonight wins.</p>' +
       '<p>Spend cash between rounds on NEPO BABY! Power Cards: NOT TODAY! ($75), I KNOW PEOPLE ($100), INSIDE TRADING ($100), DADDY MADE A CALL ($125).</p></div></div>';
   }

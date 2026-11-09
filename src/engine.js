@@ -21,6 +21,7 @@
   E.SECRET_BONUS = 25;
   E.SLEUTH_BONUS = 10; // Secret Sleuth: per hidden secret an Investor picks correctly
   E.SLEUTH_OPTIONS = 4; // the real secret plus 3 decoys
+  E.HINT_COST = 10;            // a Peddler hint (the Prospect's "Try:" question) comes off their round earnings
   E.DETAIL_BONUS = 5;          // per hidden Prospect detail the Peddler learns
   E.OBJECT_MAX = 3;            // Investor objections sent per round
   E.OBJECT_COOLDOWN_MS = 20000; // at least this long between Investor objections
@@ -449,6 +450,7 @@
         hand,
         invention: { item: null, func: null, name: '', slogan: '', sketch: null },
         profiles, screwHands, secrets, learned,
+        hints: {},
         claims: {},
         portraits: {},
         labDone: {},
@@ -562,7 +564,10 @@
       // +$5 for every hidden detail the Prospects ticked off
       res.details = r.prospects.reduce((n, id) => n + Object.keys((r.learned || {})[id] || {}).length, 0);
       res.detailBonus = res.details * E.DETAIL_BONUS;
-      res.total = round2(res.total + res.detailBonus);
+      // −$10 for every hint the Peddler bought (earnings never go below $0)
+      res.hints = Object.keys(r.hints || {}).filter((id) => r.prospects.indexOf(id) >= 0).length;
+      res.hintCost = Math.min(res.hints * E.HINT_COST, round2(res.total + res.detailBonus));
+      res.total = round2(res.total + res.detailBonus - res.hintCost);
       r.results = res;
       const pay = (pid, amt) => {
         const p = s.players[pid];
@@ -808,6 +813,19 @@
         mine[a.field] = true;
         this.log('learn', this.s.players[r.peddler].name + ' learned ' + r.profiles[p.id].name.split(' ')[0] + '’s ' + C.detailFields.find((f) => f.id === a.field).name.toLowerCase() + '. +$' + E.DETAIL_BONUS);
       }
+      return { ok: true };
+    }
+
+    /** The Peddler pays for a hint: the Prospect's opening question to try. $10 off this round's earnings. */
+    a_hint(p, a) {
+      const s = this.s, r = s.round;
+      if (!r || r.peddler !== p.id) return { ok: false, error: 'Only the Peddler can buy hints.' };
+      if (['fact', 'pitch', 'close'].indexOf(s.phase) < 0) return { ok: false, error: 'Hints are for Fact-Finding through the close.' };
+      if (r.prospects.indexOf(a.target) < 0) return { ok: false, error: 'Pick a Prospect.' };
+      r.hints = r.hints || {};
+      if (r.hints[a.target]) return { ok: true };
+      r.hints[a.target] = true;
+      this.log('hint', p.name + ' bought a hint about ' + r.profiles[a.target].name.split(' ')[0] + '. −$' + E.HINT_COST);
       return { ok: true };
     }
 
@@ -1242,7 +1260,9 @@
           const pr = r.profiles[id];
           // public: first name and the general situation; hidden details appear once the Prospect ticks them off
           const known = (r.learned && r.learned[id]) || {};
-          profiles[id] = { name: pr.name.split(' ')[0], background: pr.background, ask: pr.ask, learned: Object.keys(known).length };
+          const hinted = !!(r.hints && r.hints[id]);
+          profiles[id] = { name: pr.name.split(' ')[0], background: pr.background, learned: Object.keys(known).length, hinted };
+          if (hinted) profiles[id].ask = pr.ask; // the Peddler paid for this one
           C.detailFields.forEach((f) => { if (known[f.id] || s.phase === 'reveal') profiles[id][f.id] = pr[f.id]; });
           if (r.secrets[id] === 'confirmed' || s.phase === 'reveal') profiles[id].secret = pr.secret;
         });

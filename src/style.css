@@ -268,6 +268,8 @@ details summary { cursor: pointer; font-weight: 600; margin-top: 6px; }
 .facts.known li.unknown { color: var(--muted); }
 .learn-count { color: var(--sky); margin-top: 6px; }
 .hidden-lbl { color: var(--coral); margin-top: 6px; }
+.hint-btn { align-self: flex-start; }
+.hint-confirm { font-weight: 700; }
 .story-wait { margin-top: 8px; padding: 10px 12px; border-radius: 12px; border: 2px dashed var(--gold); color: var(--cream); font-size: 0.92rem; }
 .hint-list { margin: 6px 0 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 5px; }
 .ph-body > section.found-sec { background: transparent; padding: 4px 0; align-items: stretch; }
