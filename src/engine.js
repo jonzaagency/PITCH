@@ -383,18 +383,16 @@
     }
 
     // ---------- round lifecycle ----------
-    /** Gives every Prospect a fun fact + secret from the theme of the Peddler's Item (all different),
-     *  avoiding stories used earlier in the session until the theme runs low. Runs whenever the Peddler
-     *  picks an Item, so Prospects can read their story while they draw. */
+    /** Gives every Prospect one of the Peddler's Item's own stories (fun fact, opening line, secret, hints),
+     *  all different. Runs whenever the Peddler picks an Item, so Prospects can read their story while they draw. */
     assignStories() {
       const s = this.s, r = s.round, item = r && r.invention.item != null ? r.hand.items[r.invention.item] : null;
       if (!item || r.storyItem === item) return;
-      const theme = C.themeOf(item), used = s.used.secrets;
-      let pool = theme.stories.map((_, i) => i).filter((i) => used.indexOf(theme.id + i) < 0);
-      if (pool.length < r.prospects.length) pool = theme.stories.map((_, i) => i);
-      pool = this.shuffle(pool);
+      let pool = this.shuffle(C.storiesFor(item));
+      // more Prospects than stories (not possible today with 3 each, but safe): borrow from similar products
+      if (pool.length < r.prospects.length) pool = pool.concat(this.shuffle(C.themeOf(item).items.filter((x) => x !== item)).reduce((all, x) => all.concat(C.storiesFor(x)), []));
       r.prospects.forEach((id, k) => {
-        const t = C.tell(theme, pool[k % pool.length], item);
+        const t = pool[k % pool.length];
         Object.assign(r.profiles[id], { background: t.fact, opener: t.open, ask: t.ask, secret: t.secret, secretTopic: t.topic, secretKey: t.key, secretHints: t.hints });
       });
       r.storyItem = item;
@@ -505,16 +503,15 @@
       const options = {}, answer = {};
       targets.forEach((id) => {
         const real = r.profiles[id].secret;
-        // two decoys from the same product theme (rewards listening to the details) + one from another theme
-        const theme = C.themes.find((t) => t.id === r.profiles[id].secretTopic) || C.themes[0];
-        const item = r.storyItem;
-        const same = this.shuffle(theme.stories.map((_, i) => C.tell(theme, i, item).secret)
-          .filter((x) => roundSecrets.indexOf(x) < 0 && x !== real)).slice(0, 2);
+        // two decoys from similar products (rewards listening to the details) + one from a different kind of product
+        const theme = C.themeOf(r.storyItem);
+        const fromItems = (items) => items.reduce((all, x) => all.concat(C.storiesFor(x).map((t) => t.secret)), []);
+        const ok = (x) => roundSecrets.indexOf(x) < 0 && x !== real;
+        const decoys = this.shuffle(fromItems(theme.items.filter((x) => x !== r.storyItem)).filter(ok)).slice(0, 2);
         const others = C.themes.filter((t) => t !== theme);
-        const decoys = same.slice();
         while (decoys.length < E.SLEUTH_OPTIONS - 1) {
-          const t = this.pick(others), d = C.tell(t, Math.floor(this.rand() * t.stories.length), this.pick(t.items)).secret;
-          if (decoys.indexOf(d) < 0 && d !== real) decoys.push(d);
+          const d = this.pick(fromItems(this.pick(others).items));
+          if (decoys.indexOf(d) < 0 && ok(d)) decoys.push(d);
         }
         options[id] = this.shuffle([real].concat(decoys));
         answer[id] = options[id].indexOf(real);

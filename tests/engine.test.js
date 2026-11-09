@@ -46,27 +46,33 @@ section('Product-tied stories');
   const g = game(7, 'lab'), s = g.s, r = s.round;
   ok(r.prospects.every((id) => !r.profiles[id].secret), 'no story before the Peddler picks an Item');
   g.act(r.peddler, { type: 'invention', item: 0 });
+  const mine = (item, pr) => C.storiesFor(item).some((t) => t.secret === pr.secret && t.fact === pr.background);
   const first = r.prospects.map((id) => r.profiles[id].secret);
   ok(first.every(Boolean) && new Set(first).size === first.length, 'picking an Item gives every Prospect a different story');
+  ok(r.prospects.every((id) => mine(r.hand.items[0], r.profiles[id])), 'every story belongs to that exact Item');
   g.act(r.peddler, { type: 'invention', item: 1 });
-  ok(r.prospects.every((id) => r.profiles[id].secretTopic === C.themeOf(r.hand.items[1]).id), 'switching the Item re-deals from the new theme');
-  ok(C.items.every((i) => C.themes.filter((t) => t.items.indexOf(i) >= 0).length === 1), 'every Item belongs to exactly one theme');
+  ok(r.prospects.every((id) => mine(r.hand.items[1], r.profiles[id])), 'switching the Item re-deals that Item’s stories');
+  ok(C.items.every((i) => C.storiesFor(i).length === 3), 'every Item has 3 stories of its own');
+  ok(C.items.every((i) => C.themes.filter((t) => t.items.indexOf(i) >= 0).length === 1), 'every Item belongs to exactly one category');
+  const secrets = C.items.reduce((all, i) => all.concat(C.storiesFor(i).map((t) => t.secret)), []);
+  ok(new Set(secrets).size === secrets.length, 'no two stories share a secret');
   let bad = 0, sleuthBad = 0;
   for (let t = 0; t < 30; t++) {
     const g2 = game(7, 'lab'), r2 = g2.s.round;
     if (t % 2) g2.act(r2.peddler, { type: 'invention', item: 2 }); // half the time the Peddler never picks
     g2.host('next');
     const item = r2.hand.items[r2.invention.item], theme = C.themeOf(item);
+    const similar = theme.items.filter((x) => x !== item).reduce((all, x) => all.concat(C.storiesFor(x).map((st) => st.secret)), []);
     r2.prospects.forEach((id) => {
       const pr = r2.profiles[id];
-      if (pr.secretTopic !== theme.id || !pr.background || !pr.secret || !pr.opener || !pr.ask || pr.secretHints.length !== 3) bad++;
+      if (!mine(item, pr) || !pr.opener || !pr.ask || pr.secretHints.length !== 3) bad++;
       const opts = r2.sleuth.options[id];
-      const same = opts.filter((o) => o !== pr.secret && theme.stories.some((_, i) => C.tell(theme, i, item).secret === o)).length;
-      if (!(opts.length === 4 && opts.indexOf(pr.secret) >= 0 && same === 2)) sleuthBad++;
+      const same = opts.filter((o) => o !== pr.secret && similar.indexOf(o) >= 0).length;
+      if (!(opts.length === 4 && opts.indexOf(pr.secret) >= 0 && new Set(opts).size === 4 && same === 2)) sleuthBad++;
     });
   }
-  ok(bad === 0, 'every story matches the final product theme');
-  ok(sleuthBad === 0, 'Secret Sleuth: real secret + 2 same-theme decoys + 1 other');
+  ok(bad === 0, 'every Prospect’s story comes from the final product');
+  ok(sleuthBad === 0, 'Secret Sleuth: real secret + 2 from similar products + 1 other');
 }
 
 section('Secret Sleuth + INSIDE TRADING');
