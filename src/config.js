@@ -2,11 +2,11 @@
 window.PITCH = window.PITCH || {};
 window.PITCH.config = {
   version: '1.0.0',
-  // Where the online game lives (GitHub Pages). Phones join here.
+  // Where the online game lives (Netlify; GitHub Pages copy at jonzaagency.github.io/PITCH). Phones join here.
   // Practice mode is hidden from guests. Open the game once with ?owner=<your code> on a device to unlock it there
   // (?owner=off locks it again). This is a fingerprint of the code, not the code itself.
   ownerKey: 'ced680d6',
-  pagesUrl: 'https://jonzaagency.github.io/PITCH/',
+  pagesUrl: 'https://playpitch.netlify.app/',
   // Free public MQTT brokers (secure WebSockets). The Host uses the first one that answers;
   // phones try them all and find the room. Add or reorder freely.
   brokers: [

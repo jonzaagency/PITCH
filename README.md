@@ -2,7 +2,7 @@
 
 A Jackbox-style party game for 3 to 20+ players, in the same room or online. One browser (TV or laptop) is the Host and runs the game; everyone else plays on their phone.
 
-**Play online:** https://jonzaagency.github.io/PITCH/ (after GitHub Pages is turned on, see below)
+**Play online:** https://playpitch.netlify.app (also at https://jonzaagency.github.io/PITCH/)
 
 ## How it's built
 
