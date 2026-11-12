@@ -17,6 +17,9 @@
     return view;
   }
   const onlineAllowed = () => !P.config.artifact;
+  // Practice mode is for the owner only: unlocked per device with ?owner=<code>. The offline artifact copy keeps it.
+  const fingerprint = (str) => { let x = 0x811c9dc5; for (const ch of String(str).trim().toLowerCase()) { x ^= ch.charCodeAt(0); x = Math.imul(x, 0x01000193) >>> 0; } return x.toString(16); };
+  const isOwner = () => !onlineAllowed() || location.protocol === 'file:' || U.store.get('pitch.owner', false) === true;
   function siteUrl() {
     if (P.config.artifact || location.protocol === 'file:') return P.config.pagesUrl;
     return location.origin + location.pathname;
@@ -40,7 +43,7 @@
           '<button class="choice c-join" data-go="join"><span class="c-k">On your phone</span><b>Join a game</b><span>Enter the code from the big screen.</span></button>'
         : '<div class="choice c-online"><span class="c-k">Play with friends</span><b>Open the game online</b><span>Phones can’t connect from inside this preview. Open the game link on your TV or laptop, and everyone joins from their phones:</span>' +
           '<code class="link">' + esc(P.config.pagesUrl) + '</code><a class="btn gold" href="' + esc(P.config.pagesUrl) + '" target="_blank" rel="noopener">Open the online game</a></div>') +
-      '<button class="choice c-prac" data-go="practice"><span class="c-k">One screen</span><b>Practice mode</b><span>See the TV and every phone side by side. Bots can play the other seats.</span></button></div>' +
+      (isOwner() ? '<button class="choice c-prac" data-go="practice"><span class="c-k">One screen</span><b>Practice mode</b><span>See the TV and every phone side by side. Bots can play the other seats.</span></button>' : '') + '</div>' +
       (canResume ? '<div class="resume"><span>Your room <b>' + esc(saved.state.code) + '</b> is still open on this device.</span><button class="btn gold" data-go="resume">Resume hosting</button><button class="btn ghost" data-go="forget">Forget it</button></div>' : '') +
       (canRejoin ? '<div class="resume"><span>Rejoin room <b>' + esc(last.code) + '</b> as ' + esc(last.name) + '?</span><button class="btn gold" data-go="rejoin">Rejoin</button></div>' : '') +
       '<div class="tut-cta"><button class="btn gold big" data-go="tutorial">▶ How to play</button><span class="muted">8 quick picture cards. About 2 minutes.</span></div>' +
@@ -56,7 +59,7 @@
       else if (go === 'forget') { U.store.del('pitch.host'); home(); }
       else if (go === 'join') joinScreen('');
       else if (go === 'rejoin') doJoin(last.code, last.name, U.profile.load().prefs);
-      else if (go === 'practice') practiceSetup();
+      else if (go === 'practice' && isOwner()) practiceSetup();
       else if (go === 'hof') hofScreen();
       else if (go === 'tutorial') P.tutorial.open();
     };
@@ -365,9 +368,15 @@
     U.startTimerLoop({ beep: true });
     watchForUpdates();
     const q = new URLSearchParams(location.search);
+    if (q.get('owner') != null) {
+      const key = q.get('owner');
+      if (key.toLowerCase() === 'off') U.store.del('pitch.owner');
+      else if (fingerprint(key) === P.config.ownerKey) U.store.set('pitch.owner', true);
+      history.replaceState(null, '', location.pathname); // keep the code out of the address bar
+    }
     const room = (q.get('room') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
     if (room && onlineAllowed()) joinScreen(room);
-    else if (q.get('practice') != null) startPractice(Number(q.get('practice')) || 5);
+    else if (q.get('practice') != null && isOwner()) startPractice(Number(q.get('practice')) || 5);
     else home();
   }
   P.app = { home, startPractice };

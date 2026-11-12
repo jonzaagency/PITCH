@@ -45,3 +45,5 @@ GitHub repo > Settings > Pages > Source: **Deploy from a branch**, Branch: **mai
 ## Try it locally
 
 Open `docs/index.html?practice=5` in a browser to play Practice mode against 5 bots.
+
+Online, Practice mode is hidden from guests. To unlock it on one of your devices, open the game once with `?owner=<your code>` (`?owner=off` locks it again). The code's fingerprint is `ownerKey` in `src/config.js`.

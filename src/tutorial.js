@@ -29,7 +29,7 @@
     { title: '5 · Money Reveal', art: () => '<div class="tut-bars">' + ['Invention', 'Fact-Finding', 'The Close'].map((n, i) => '<div class="bar-row" style="--d:' + (0.2 * i) + 's"><span class="bar-name">' + n + '</span><span class="bar"><i style="--w:' + [80, 60, 90][i] + '%"></i></span></div>').join('') + '</div><div class="price-tag big-tag"><span>Peddler earns</span><b>$190</b></div>',
       lines: ['Investors score six categories, $0–$50 each.', 'The Peddler earns the average plus <b>$25 per secret</b>. Then a new Peddler steps up.'] },
     { title: 'Your phone shows the way', art: () => phone('<div class="tut-coach"><b>Fact-Finding game plan</b><ol><li>Talk to every Prospect</li><li>Ask follow-ups</li><li>Guess out loud</li></ol></div><div class="tut-btn gold">Start my PITCH! ›</div>'),
-      lines: ['Every phone shows <b>your next step</b>.', 'The Peddler gets a game plan, paid <b>hints</b> (−$10) and a <b>Move on</b> button.', 'Want to practice first? Try <b>Practice mode</b> with bots.'] }
+      lines: ['Every phone shows <b>your next step</b>.', 'The Peddler gets a game plan, paid <b>hints</b> (−$10) and a <b>Move on</b> button.'] }
   ];
 
   let el = null, i = 0, startX = null;
