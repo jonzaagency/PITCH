@@ -46,4 +46,14 @@ GitHub repo > Settings > Pages > Source: **Deploy from a branch**, Branch: **mai
 
 Open `docs/index.html?practice=5` in a browser to play Practice mode against 5 bots.
 
+## Publish to Netlify
+
+The live site is https://playpitch.netlify.app. After `node build.js`, publish with:
+
+```
+~/.netlify-cli/node_modules/.bin/netlify deploy --prod --dir docs
+```
+
+(Netlify CLI 16.9.3, the newest that runs on this Mac's Node 16. The folder is already linked to the playpitch site.)
+
 Online, Practice mode is hidden from guests. To unlock it on one of your devices, open the game once with `?owner=<your code>` (`?owner=off` locks it again). The code's fingerprint is `ownerKey` in `src/config.js`.
