@@ -1,0 +1,4 @@
+# Netlify settings: the finished site is already built into docs/ by `node build.js`
+[build]
+  publish = "docs"
+  command = ""

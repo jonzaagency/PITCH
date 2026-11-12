@@ -1,0 +1,7 @@
+# Netlify: always check for the newest version of the game
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/version.json
+  Cache-Control: no-cache
