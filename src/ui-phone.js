@@ -53,10 +53,12 @@
       return '<button class="deck deck-' + kind + (on ? ' on' : '') + '" data-act="' + act + '" data-deck="' + kind + '" data-idx="' + idx + '"><span class="deck-k">' + label + '</span><span class="deck-t">' + esc(text) + '</span>' + (on ? '<span class="pick">Picked</span>' : '') + '</button>';
     }
     /** The Prospect's own character card. Hidden details are listed here until the checklist takes over (Fact-Finding on). */
-    function profileCard(pr, withSecret, checklistShown) {
+    /** The Prospect's character sheet. `learned` (during play) marks the details the Peddler already knows. */
+    function profileCard(pr, withSecret, learned) {
       const head = '<div class="profile"><div class="eyebrow">Your character</div><h3>' + esc(pr.name) + '</h3>' +
-        (checklistShown ? '' : '<p class="lbl hidden-lbl">Hidden from the Peddler until they find out</p><ul class="facts">' +
-          C.detailFields.filter((f) => pr[f.id] != null).map((f) => '<li><b>' + esc(f.name) + '</b> ' + esc(C.detailText(f.id, pr)) + '</li>').join('') + '</ul>');
+        '<p class="lbl hidden-lbl">Hidden from the Peddler until they find out</p><ul class="facts">' +
+          C.detailFields.filter((f) => pr[f.id] != null).map((f) => '<li' + (learned && learned[f.id] ? ' class="known"' : '') + '><b>' + esc(f.name) + '</b> ' + esc(C.detailText(f.id, pr)) +
+            (learned && learned[f.id] ? ' <em class="known-tag">✓ Peddler knows</em>' : '') + '</li>').join('') + '</ul>';
       // the fun fact and secret are tied to the Peddler's product, so they arrive once an Item is picked
       if (!pr.secret) return head + '<p class="story-wait"><b>Your fun fact and secret are on the way.</b> They’re tied to the product, so they appear the moment the Peddler picks an Item.</p></div>';
       return head + '<p class="bg"><b>Fun fact (everyone sees this):</b> ' + esc(pr.background) + '</p>' +
@@ -66,13 +68,14 @@
           '<p class="hint">Stay in character and leave clues, but don’t just say it. Tap “They found my secret!” at the bottom of your screen only when they figure it out.</p>' : '') + '</div>';
     }
     /** The Prospect ticks off each hidden detail as the Peddler learns it: it shows on the TV and earns them $5. */
+    const myCard = () => profileCard(st.priv.profile, true, st.priv.learned || {});
     function detailChecklist() {
       const p = st.priv, pr = p.profile, got = p.learned || {};
       const n = C.detailFields.filter((f) => got[f.id]).length;
       return '<section class="learn-list"><div class="sec-head"><h3>What has the Peddler learned?</h3><span class="muted">' + n + ' of ' + C.detailFields.length + ' · +' + U.money(n * E.DETAIL_BONUS) + '</span></div>' +
-        '<p class="muted">The Peddler can’t see these. Tick each one they find out: it appears on the big screen and earns them ' + U.money(E.DETAIL_BONUS) + '.</p>' +
+        '<p class="muted">Tap each detail the Peddler finds out: it appears on the big screen and earns them ' + U.money(E.DETAIL_BONUS) + '.</p>' +
         C.detailFields.map((f) => '<button type="button" class="learn-row' + (got[f.id] ? ' on' : '') + '" data-act="learned" data-field="' + f.id + '" data-on="' + (got[f.id] ? '0' : '1') + '" aria-pressed="' + !!got[f.id] + '">' +
-          '<span><b>' + esc(f.name) + '</b>' + esc(C.detailText(f.id, pr)) + '</span><em>' + (got[f.id] ? '✓ Learned' : '+' + U.money(E.DETAIL_BONUS)) + '</em></button>').join('') + '</section>';
+          '<span><b>' + esc(f.name) + '</b></span><em>' + (got[f.id] ? '✓ Learned' : '+' + U.money(E.DETAIL_BONUS)) + '</em></button>').join('') + '</section>';
     }
     function confirmBtn(key, label, act, data, cls) {
       const attrs = Object.keys(data || {}).map((k) => ' data-' + k + '="' + esc(data[k]) + '"').join('');
@@ -269,7 +272,7 @@
     }
 
     function prospectFact() {
-      return foundSecret() + detailChecklist() + profileCard(st.priv.profile, true, true);
+      return foundSecret() + myCard() + detailChecklist();
     }
 
     function peddlerPitch() {
@@ -303,23 +306,23 @@
       const remaining = t ? (t.running ? t.remaining - (Date.now() - st.recvAt) : t.remaining) : 0;
       if (p.screwPlayed) {
         const sv = (r.screwVotes || {})[p.pid], t = p.screwPlayed.tally;
-        return foundSecret() + detailChecklist() + '<section class="screw-live">' + U.screwIcon() + '<div class="screw-word">SCREW!</div><h3>You played ' + esc(p.screwPlayed.card.t) + '</h3><p>' + esc(p.screwPlayed.card.d) + '</p>' +
+        return foundSecret() + myCard() + '<section class="screw-live">' + U.screwIcon() + '<div class="screw-word">SCREW!</div><h3>You played ' + esc(p.screwPlayed.card.t) + '</h3><p>' + esc(p.screwPlayed.card.d) + '</p>' +
           (p.screwPlayed.result ? '<p class="muted">The table says: ' + esc({ done: 'they nailed it', missed: 'they missed it', split: 'split decision', cancelled: 'cancelled with NOT TODAY!' }[p.screwPlayed.result]) + (t ? ' (' + t.done + '–' + t.missed + ')' : '') + '</p>'
-            : sv && sv.open ? '<p class="muted">The table is voting… ' + sv.n + ' of ' + sv.of + ' in</p>' : '') + '</section>' + profileCard(p.profile, true, true);
+            : sv && sv.open ? '<p class="muted">The table is voting… ' + sv.n + ' of ' + sv.of + ' in</p>' : '') + '</section>' + detailChecklist();
       }
       let why = '';
       if (r.activeScrew) why = 'Another SCREW! is in progress.';
       else if (v.hostPaused) why = 'The game is paused.';
       else if (remaining <= E.SCREW_LOCKOUT_MS) why = 'Too late: no SCREW! in the final 10 seconds.';
-      return foundSecret() + detailChecklist() + '<section><h2>Your SCREW! cards</h2><p class="muted">Interrupt the pitch once with one of these. The other two are discarded.</p>' + (why ? '<p class="warn-text">' + esc(why) + '</p>' : '') +
+      return foundSecret() + myCard() + '<section><h2>Your SCREW! cards</h2><p class="muted">Interrupt the pitch once with one of these. The other two are discarded.</p>' + (why ? '<p class="warn-text">' + esc(why) + '</p>' : '') +
         '<div class="screws">' + p.screws.map((c, i) => '<div class="screw-c" data-key="sc-' + i + '"><b>' + esc(c.t) + '</b><p>' + esc(c.d) + '</p>' +
-          (why ? '' : confirmBtn('screw-' + i, 'Play this SCREW!', 'screw', { idx: i }, 'red')) + '</div>').join('') + '</div></section>' + profileCard(p.profile, true, true);
+          (why ? '' : confirmBtn('screw-' + i, 'Play this SCREW!', 'screw', { idx: i }, 'red')) + '</div>').join('') + '</div></section>' + detailChecklist();
     }
 
     function prospectClose() {
       const p = st.priv, r = st.pub.round;
       const raised = !!r.objections[p.pid];
-      return foundSecret() + detailChecklist() + '<section><h2>Objections + Close</h2>' + (raised ? '<p class="ok">You raised your objection ✓</p>' : '<p class="muted">Raise one final objection. The Peddler has to address it and ask for the sale.</p><button class="btn red big" data-act="objection">I have an objection!</button>') + '</section>' + verdictBlock() + profileCard(p.profile, true, true);
+      return foundSecret() + myCard() + '<section><h2>Objections + Close</h2>' + (raised ? '<p class="ok">You raised your objection ✓</p>' : '<p class="muted">Raise one final objection. The Peddler has to address it and ask for the sale.</p><button class="btn red big" data-act="objection">I have an objection!</button>') + '</section>' + verdictBlock() + detailChecklist();
     }
     function verdictBlock() {
       const p = st.priv;

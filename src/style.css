@@ -262,11 +262,13 @@ details summary { cursor: pointer; font-weight: 600; margin-top: 6px; }
 .learn-list { border-left: 6px solid var(--sky) !important; }
 .learn-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; min-height: 50px; padding: 8px 12px; border-radius: 12px; border: 2px solid var(--inkline); background: var(--ink); cursor: pointer; color: var(--cream); }
 .learn-row span { display: flex; flex-direction: column; min-width: 0; }
-.learn-row span b { font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.learn-row span b { font-size: 0.98rem; font-weight: 700; color: var(--cream); }
 .learn-row em { flex: none; font-style: normal; font-weight: 800; color: var(--gold); }
 .learn-row.on { background: rgba(130, 214, 156, 0.16); border-color: var(--mint); }
 .learn-row.on em { color: var(--mint); }
 .facts.known li.unknown { color: var(--muted); }
+.profile .facts li.known { color: var(--mint); }
+.known-tag { display: block; font-style: normal; font-size: 0.75rem; font-weight: 700; color: var(--mint); }
 .learn-count { color: var(--sky); margin-top: 6px; }
 .hidden-lbl { color: var(--coral); margin-top: 6px; }
 .hint-btn { align-self: flex-start; }
