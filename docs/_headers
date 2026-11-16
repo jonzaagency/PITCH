@@ -5,3 +5,5 @@
   Cache-Control: no-cache
 /version.json
   Cache-Control: no-cache
+/music/*
+  Cache-Control: public, max-age=604800

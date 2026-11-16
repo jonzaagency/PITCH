@@ -51,4 +51,8 @@ for (const [file, artifact] of [['docs/index.html', false], ['dist/pitch-artifac
   console.log('built', file, (fs.statSync(out).size / 1024).toFixed(1) + ' KB');
 }
 fs.writeFileSync(path.join(__dirname, 'docs/version.json'), JSON.stringify({ build: BUILD }) + '\n');
+// background music tracks are served next to the page (too big to inline)
+const musicSrc = path.join(__dirname, 'src/music'), musicOut = path.join(__dirname, 'docs/music');
+fs.mkdirSync(musicOut, { recursive: true });
+fs.readdirSync(musicSrc).filter((f) => f.endsWith('.m4a')).forEach((f) => fs.copyFileSync(path.join(musicSrc, f), path.join(musicOut, f)));
 console.log('build', BUILD);
