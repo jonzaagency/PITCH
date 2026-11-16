@@ -11,7 +11,7 @@
 
   const SLIDES = [
     { title: 'Welcome to P!TCH', art: () => U.logo('tut-logo'),
-      lines: ['One player is the <b>Peddler</b>. They invent a ridiculous product and try to sell it.', 'Everyone else plays along on their phone. <b>Most money at the end wins.</b>'] },
+      lines: ['One player is the <b>Peddler</b>. You have a brilliant product design, but before you can bring it to market, the <b>Investors</b> say you have to <b>P!TCH</b> it to randomly chosen <b>Prospects</b> and win them over.', 'Everyone else plays on their phone as either a <b>Prospect</b>, the person being sold to, or an <b>Investor</b>, the person giving their money away. <b>Most money at the end wins.</b>'] },
     { title: 'Who’s who', art: () => '<div class="tut-row">' + av('Peddler', '#f0c35a', 'peddler') + av('Prospect', '#8d98f2', 'prospect') + av('Investor', '#82d69c', 'phil') + '</div>',
       lines: ['<b>Peddler:</b> invents, asks questions, pitches.', '<b>Prospects (1–3):</b> play a character with a secret.', '<b>Investors (everyone else):</b> heckle, guess and score.'] },
     { title: '1 · Creation Lab', art: () => '<div class="tut-row tut-cards"><div class="deck deck-item"><span class="deck-k">Item</span><span class="deck-t">Hot tub</span></div><span class="tut-plus">+</span><div class="deck deck-func"><span class="deck-k">Function</span><span class="deck-t">Plays smooth jazz</span></div></div><p class="tut-result">= The Jazz-uzzi 3000</p>',

@@ -67,7 +67,9 @@
   }
 
   function howTo() {
-    return '<div class="howto-body"><div><h4>Roles</h4><ul><li><b>Peddler</b> invents a product from an Item card and a Function card, interviews the Prospects, pitches, and closes.</li>' +
+    return '<div class="howto-body"><div><h4>The idea</h4><p>One player is the <b>Peddler</b>. You have a brilliant product design, but before you can bring it to market, the <b>Investors</b> say you have to <b>P!TCH</b> it to randomly chosen <b>Prospects</b> and win them over.</p>' +
+      '<p>Everyone else plays on their phone as either a <b>Prospect</b>, the person being sold to, or an <b>Investor</b>, the person giving their money away.</p></div>' +
+      '<div><h4>Roles</h4><ul><li><b>Peddler</b> invents a product from an Item card and a Function card, interviews the Prospects, pitches, and closes.</li>' +
       '<li><b>Prospects</b> (1–3) play fictional characters whose fun fact and secret are tied to the product, draw a portrait, and each play one SCREW! card.</li>' +
       '<li><b>Investors</b> (everyone else) vote on SCREW!s, send funny objections to the Prospects, guess secrets, and score the Peddler with game money.</li></ul></div>' +
       '<div><h4>Each round</h4><ol><li>Creation Lab · 2:00</li><li>Fact-Finding · 2:30 · $25 per secret uncovered</li><li>PITCH! · 1:30 · each Prospect may SCREW! once (15 s, clock pauses, then the table votes)</li><li>Objections + Close · 0:45</li><li>Money Reveal</li></ol></div>' +
