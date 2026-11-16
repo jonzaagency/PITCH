@@ -23,6 +23,7 @@
       return res;
     }
     function saveHof() { saveHofList(game.hofEntries()); }
+    game.on('roundOver', saveHof); // the automatic next round
     function saveHofList(add) {
       if (!add.length) return;
       const list = U.store.get('pitch.hof', []);
@@ -109,6 +110,7 @@
         '<label class="set-row toggle"><span>Move on automatically when time runs out or everyone is done</span><input type="checkbox" id="set-auto" data-set="autoAdvance"' + (st.autoAdvance ? ' checked' : '') + '></label>' +
         '<label class="set-row toggle"><span>Secret Sleuth: during Fact-Finding, Investors earn ' + U.money(E.SLEUTH_BONUS) + ' for each secret they guess right</span><input type="checkbox" id="set-sleuth" data-set="sleuth"' + (st.sleuth ? ' checked' : '') + '></label>' +
         '<label class="set-row toggle"><span>Set aside a scorecard that is way out of line (more than ' + U.money(E.OUTLIER_GAP) + ' from the middle, with 4+ Investors)</span><input type="checkbox" id="set-trim" data-set="trimOutliers"' + (st.trimOutliers ? ' checked' : '') + '></label>' +
+        '<label class="set-row toggle"><span>Start the next round automatically ' + E.AUTO_NEXT_SEC + ' seconds after the Money Reveal</span><input type="checkbox" id="set-autonext" data-set="autoNext"' + (st.autoNext !== false ? ' checked' : '') + '></label>' +
         '<label class="set-row toggle"><span>Role briefing at the start of each round (turn off for veteran players)</span><input type="checkbox" id="set-brief" data-set="briefing"' + (st.briefing ? ' checked' : '') + '></label>' +
         '<label class="set-row toggle"><span>End-of-night awards vote before the final results</span><input type="checkbox" id="set-awards" data-set="awards"' + (st.awards ? ' checked' : '') + '></label>' +
         '<label class="set-row toggle"><span>Sound effects on this screen</span><input type="checkbox" id="set-sound" data-set="sound"' + (!U.muted ? ' checked' : '') + '></label></div>';
@@ -353,7 +355,10 @@
         (v.phase === 'scoring' ? '<button class="btn gold" data-act="reveal">Reveal the money</button>' : '') +
         (v.phase === 'awards' ? '<button class="btn gold" data-act="finishAwards">Reveal the winners (' + v.awards.voted.length + ' voted)</button>' : '') +
         (v.phase === 'reveal' ? (v.roundsDone ? '<button class="btn ghost" data-act="nextRound">One more round</button><button class="btn gold" data-act="end">Final results</button>'
-          : '<button class="btn ghost" data-act="end">End game now</button><button class="btn gold" data-act="nextRound">Next round</button>') : '') +
+          : v.timer.main
+            ? '<button class="btn ghost" data-act="end">End game now</button>' + (v.hostPaused ? '<button class="btn ghost" data-act="resume">Resume countdown</button>' : '<button class="btn ghost" data-act="pause">Hold</button>') +
+              '<button class="btn ghost" data-act="nextRound">Change roles first</button><button class="btn gold" data-act="startNow">Start next round now ›</button>'
+            : '<button class="btn ghost" data-act="end">End game now</button><button class="btn gold" data-act="nextRound">Next round</button>') : '') +
         '<button class="btn ghost icon" data-act="mute" aria-label="' + (U.muted ? 'Turn sound on' : 'Mute') + '">' + (U.muted ? 'Sound off' : 'Sound on') + '</button>' +
         '<button class="btn ghost" data-act="menu">Menu</button></div>';
     }
@@ -412,7 +417,7 @@
       if (el.tagName === 'INPUT') return; // handled on change
       U.unlockAudio();
       const d = el.dataset, a = d.act;
-      const simple = ['start', 'shuffle', 'begin', 'next', 'pause', 'resume', 'reveal', 'nextRound', 'end', 'newGame', 'daddyDone', 'finishAwards', 'screwEnd'];
+      const simple = ['start', 'shuffle', 'begin', 'next', 'pause', 'resume', 'reveal', 'nextRound', 'end', 'newGame', 'daddyDone', 'finishAwards', 'screwEnd', 'startNow'];
       if (simple.indexOf(a) >= 0) { host(a); if (a === 'end' || a === 'newGame') ui.menu = false; }
       else if (a === 'tutorial') { P.tutorial.open(); return; }
       else if (a === 'addTime') host('addTime', { sec: 30 });
@@ -446,6 +451,7 @@
       else if (k === 'trimOutliers') host('settings', { trimOutliers: el.checked });
       else if (k === 'briefing') host('settings', { briefing: el.checked });
       else if (k === 'awards') host('settings', { awards: el.checked });
+      else if (k === 'autoNext') host('settings', { autoNext: el.checked });
       else if (k.indexOf('timers.') === 0) host('settings', { timers: { [k.slice(7)]: Number(el.value) } });
       render();
     });

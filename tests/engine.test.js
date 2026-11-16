@@ -208,5 +208,38 @@ if (typeof E.Game.prototype.a_objectVote === 'function') {
   ok(Math.max.apply(null, counts) - Math.min.apply(null, counts) <= 1, 'objections are spread across the Prospects');
 } else console.log('  (not built yet)');
 
+section('Next round starts by itself');
+if (E.AUTO_NEXT_SEC) {
+  const toReveal = (g) => {
+    const s = g.s;
+    while (s.phase !== 'scoring') g.host('next');
+    s.round.phils.forEach((id) => g.act(id, { type: 'scorecard', cats: { invention: 30, ingenuity: 30, factFinding: 30, objections: 30, pitch: 30, close: 30 }, prospects: {} }));
+    if (s.phase === 'scoring') g.host('reveal');
+  };
+  let clock = Date.now();
+  const g = game(6, 'fact', (g) => { g.now = () => clock; });
+  const s = g.s;
+  toReveal(g);
+  ok(s.phase === 'reveal' && s.timer.main && g.remaining(s.timer.main) === E.AUTO_NEXT_SEC * 1000, 'the Money Reveal shows a ' + E.AUTO_NEXT_SEC + '-second countdown');
+  let saved = 0; g.on('roundOver', () => { saved++; });
+  const n = s.round.n, oldPeddler = s.round.peddler;
+  clock += 15000; g.tick();
+  ok(s.phase === 'reveal', 'nothing happens before the countdown ends');
+  g.host('pause'); clock += 60000; g.tick();
+  ok(s.phase === 'reveal', 'Hold stops the countdown');
+  g.host('resume'); clock += 15001; g.tick();
+  ok(s.round.n === n + 1 && s.round.peddler !== oldPeddler && ['brief', 'lab'].indexOf(s.phase) >= 0, 'the next round starts by itself with a new Peddler');
+  ok(saved === 1, 'Hall of Fame votes are saved before the round is replaced');
+  const g2 = game(6, 'fact');
+  toReveal(g2);
+  ok(g2.host('startNow').ok && g2.s.round.n === 2, 'the Host can start the next round right away');
+  const g3 = game(6, 'fact', (g) => g.host('settings', { autoNext: false }));
+  toReveal(g3);
+  ok(!g3.s.timer.main, 'the countdown can be turned off in Settings');
+  const g4 = game(6, 'fact', (g) => g.host('settings', { rounds: 1 }));
+  toReveal(g4);
+  ok(!g4.s.timer.main && g4.s.phase === 'reveal', 'no countdown after the last planned round');
+} else console.log('  (not built yet)');
+
 console.log(`${passed} passed, ${failed} failed`);
 process.exitCode = failed ? 1 : 0;

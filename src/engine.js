@@ -16,9 +16,11 @@
     sleuth: true,     // Secret Sleuth: Investors pick hidden secrets for bonus money
     trimOutliers: true, // set aside a scorecard that is dramatically out of line (4+ scorecards)
     briefing: true,     // Role briefing at the start of each round (veterans can turn it off)
-    awards: true        // End-of-night awards vote before the final results
+    awards: true,       // End-of-night awards vote before the final results
+    autoNext: true      // start the next round by itself 30 seconds after the Money Reveal
   };
   E.SECRET_BONUS = 25;
+  E.AUTO_NEXT_SEC = 30; // Money Reveal countdown before the next round starts by itself
   E.SLEUTH_BONUS = 10; // Secret Sleuth: per hidden secret an Investor picks correctly
   E.SLEUTH_OPTIONS = 4; // the real secret plus 3 decoys
   E.HAND_SIZE = 6;             // Item and Function cards the Peddler chooses from
@@ -117,7 +119,7 @@
       opts = opts || {};
       this.now = opts.now || (() => Date.now());
       this.rand = opts.rand || Math.random;
-      this.listeners = { change: [], asset: [] };
+      this.listeners = { change: [], asset: [], roundOver: [] };
       this.assets = {}; // id -> data URL
       if (opts.saved) {
         this.s = opts.saved.state;
@@ -209,7 +211,8 @@
         s.expired = true;
         m.remaining = 0; m.endsAt = null;
         this.log('time', "Time's up!");
-        if (s.settings.autoAdvance) this.advance();
+        if (s.phase === 'reveal') this.autoNextRound();
+        else if (s.settings.autoAdvance) this.advance();
         this.changed();
         return true;
       }
@@ -611,9 +614,26 @@
         hof: {}
       });
       s.phase = 'reveal';
-      s.timer.main = null; s.timer.screw = null;
+      s.expired = false;
+      s.timer.screw = null;
+      // the next round starts by itself, unless this was the last planned round
+      s.timer.main = s.settings.autoNext !== false && !this.roundsDone() ? this.newTimer(E.AUTO_NEXT_SEC) : null;
       this.log('money', s.players[r.peddler].name + ' earned $' + res.total.toFixed(2) + '!');
       return { ok: true };
+    }
+
+    /** Money Reveal countdown ran out: deal the next round. If the roles need a volunteer
+     *  or the Host's help, stop on the roles screen instead. */
+    autoNextRound() {
+      this.emit('roundOver'); // let the TV save Hall of Fame votes before the round is replaced
+      const res = this.nextRound();
+      if (!res.ok) return res;
+      if (!this.s.need && this.s.proposal && !this.validateProposal(this.s.proposal)) {
+        const go = this.beginRound();
+        if (go.ok) this.log('info', 'Next round started automatically.');
+        return go;
+      }
+      return res;
     }
 
     nextRound() {
@@ -1153,6 +1173,11 @@
       if (a.trimOutliers != null) st.trimOutliers = !!a.trimOutliers;
       if (a.briefing != null) st.briefing = !!a.briefing;
       if (a.awards != null) st.awards = !!a.awards;
+      if (a.autoNext != null) {
+        st.autoNext = !!a.autoNext;
+        const s = this.s;
+        if (s.phase === 'reveal') s.timer.main = st.autoNext && !this.roundsDone() ? this.newTimer(E.AUTO_NEXT_SEC) : null;
+      }
       if (this.s.phase === 'roles' && a.maxProspects != null) this.proposeRoles();
       return { ok: true };
     }
@@ -1221,6 +1246,7 @@
     h_reveal() { return this.reveal(); }
     h_finishAwards() { return this.finishAwards(); }
     h_nextRound() { return this.nextRound(); }
+    h_startNow() { return this.autoNextRound(); }
     h_end() {
       const s = this.s;
       if (s.round && ['brief', 'lab', 'fact', 'pitch', 'close', 'scoring'].indexOf(s.phase) >= 0) return { ok: false, error: 'Finish the round (or reveal the money) first.' };
