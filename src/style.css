@@ -189,6 +189,7 @@ fieldset.prefs legend { font-weight: 600; font-size: 0.9rem; margin-bottom: 6px;
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; flex-wrap: wrap; }
 .set-row.toggle { cursor: pointer; flex-wrap: nowrap; }
 .set-row.dim { opacity: 0.55; }
+.set-row input[type=range] { width: 200px; max-width: 100%; accent-color: var(--gold); }
 .set-row input[type=checkbox] { appearance: none; -webkit-appearance: none; flex: none; width: 52px; height: 30px; border-radius: 999px; background: var(--panel-2); position: relative; cursor: pointer; border: 2px solid var(--line); transition: background 0.15s; }
 .set-row input[type=checkbox]::after { content: ''; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 50%; background: var(--muted); transition: transform 0.15s, background 0.15s; }
 .set-row input[type=checkbox]:checked { background: rgba(126, 224, 138, 0.3); border-color: var(--mint); }

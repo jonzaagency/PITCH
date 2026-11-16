@@ -8,6 +8,7 @@
   function reset(cls) {
     if (cleanup) { try { cleanup(); } catch (e) { /* ignore */ } cleanup = null; }
     root.className = cls || '';
+    if (U.music) U.music.stop(); // the TV starts it again for its own phase
     root.onclick = null;
     root.innerHTML = '';
     window.scrollTo(0, 0);

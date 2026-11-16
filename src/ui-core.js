@@ -134,6 +134,7 @@
   let actx = null;
   U.muted = U.store.get('pitch.muted', false);
   U.unlockAudio = () => { try { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch (e) { /* no audio */ } };
+  U.audioCtx = () => actx;
   U.sound = function (kind) {
     if (U.muted || !actx) return;
     const notes = {

@@ -113,6 +113,7 @@
         '<label class="set-row toggle"><span>Start the next round automatically ' + E.AUTO_NEXT_SEC + ' seconds after the Money Reveal</span><input type="checkbox" id="set-autonext" data-set="autoNext"' + (st.autoNext !== false ? ' checked' : '') + '></label>' +
         '<label class="set-row toggle"><span>Role briefing at the start of each round (turn off for veteran players)</span><input type="checkbox" id="set-brief" data-set="briefing"' + (st.briefing ? ' checked' : '') + '></label>' +
         '<label class="set-row toggle"><span>End-of-night awards vote before the final results</span><input type="checkbox" id="set-awards" data-set="awards"' + (st.awards ? ' checked' : '') + '></label>' +
+        '<label class="set-row"><span>Background music volume</span><input type="range" min="0" max="100" step="5" id="set-musicvol" data-set="musicVol" value="' + U.music.volume() + '"></label>' +
         '<label class="set-row toggle"><span>Sound effects on this screen</span><input type="checkbox" id="set-sound" data-set="sound"' + (!U.muted ? ' checked' : '') + '></label></div>';
     }
 
@@ -359,6 +360,7 @@
             ? '<button class="btn ghost" data-act="end">End game now</button>' + (v.hostPaused ? '<button class="btn ghost" data-act="resume">Resume countdown</button>' : '<button class="btn ghost" data-act="pause">Hold</button>') +
               '<button class="btn ghost" data-act="nextRound">Change roles first</button><button class="btn gold" data-act="startNow">Start next round now ›</button>'
             : '<button class="btn ghost" data-act="end">End game now</button><button class="btn gold" data-act="nextRound">Next round</button>') : '') +
+        '<button class="btn ghost icon" data-act="music" aria-label="' + (U.music.isOn() ? 'Turn music off' : 'Turn music on') + '">' + (U.music.isOn() && !U.muted ? '♪ Music on' : '♪ Music off') + '</button>' +
         '<button class="btn ghost icon" data-act="mute" aria-label="' + (U.muted ? 'Turn sound on' : 'Mute') + '">' + (U.muted ? 'Sound off' : 'Sound on') + '</button>' +
         '<button class="btn ghost" data-act="menu">Menu</button></div>';
     }
@@ -393,6 +395,9 @@
         lastPhase = v.phase;
       }
       const sc = v.round && v.round.activeScrew ? v.round.activeScrew.by + v.round.activeScrew.card.t : null;
+      // background music: a mood per phase, quieter during SCREW! and while paused
+      U.music.setMood(U.music.moodFor(v.phase));
+      U.music.duck(!!sc || !!v.hostPaused);
       if (sc && sc !== lastScrew) U.sound('buzz');
       lastScrew = sc;
       const maxId = v.feed.length ? v.feed[v.feed.length - 1].id : 0;
@@ -427,7 +432,7 @@
       else if (a === 'askKick') ui.confirm = 'kick-' + d.pid;
       else if (a === 'askClose') ui.confirm = 'close';
       else if (a === 'cancelConfirm') ui.confirm = null;
-      else if (a === 'closeRoom') { ui.confirm = null; opts.onExit && opts.onExit(); return; }
+      else if (a === 'closeRoom') { ui.confirm = null; U.music.stop(); opts.onExit && opts.onExit(); return; }
       else if (a === 'manage') { ui.manage = d.pid; ui.confirm = null; }
       else if (a === 'closeManage') { ui.manage = null; ui.confirm = null; }
       else if (a === 'settings') { ui.settings = !ui.settings; ui.menu = false; }
@@ -435,17 +440,20 @@
       else if (a === 'menu') { ui.menu = !ui.menu; ui.confirm = null; }
       else if (a === 'hof') { ui.hof = !ui.hof; ui.menu = false; }
       else if (a === 'peek') ui.peek[d.pid] = true;
-      else if (a === 'mute') { U.muted = !U.muted; U.store.set('pitch.muted', U.muted); }
+      else if (a === 'mute') { U.muted = !U.muted; U.store.set('pitch.muted', U.muted); U.music.refresh(); }
+      else if (a === 'music') U.music.setOn(!U.music.isOn());
       else if (a === 'setProspects') host('settings', { maxProspects: Number(d.n) });
       else if (a === 'setRounds') host('settings', { rounds: Number(d.n) });
       render();
     });
+    root.addEventListener('input', (e) => { if (e.target.dataset.set === 'musicVol') U.music.setVolume(Number(e.target.value)); });
     root.addEventListener('change', (e) => {
       const el = e.target;
       if (el.dataset.act === 'exclude') { host('exclude', { pid: el.dataset.pid, role: el.dataset.role, excluded: !el.checked }); render(); return; }
       const k = el.dataset.set;
       if (!k) return;
-      if (k === 'sound') { U.muted = !el.checked; U.store.set('pitch.muted', U.muted); }
+      if (k === 'sound') { U.muted = !el.checked; U.store.set('pitch.muted', U.muted); U.music.refresh(); }
+      else if (k === 'musicVol') { U.music.setVolume(Number(el.value)); if (!U.music.isOn() && Number(el.value) > 0) U.music.setOn(true); }
       else if (k === 'autoAdvance') host('settings', { autoAdvance: el.checked });
       else if (k === 'sleuth') host('settings', { sleuth: el.checked });
       else if (k === 'trimOutliers') host('settings', { trimOutliers: el.checked });

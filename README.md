@@ -17,6 +17,7 @@ A Jackbox-style party game for 3 to 20+ players, in the same room or online. One
 | `src/engine.js` | The rulebook: roles, rounds, SCREW! cards, scoring, NEPO BABY! shop |
 | `src/net.js` | Small MQTT 3.1.1 client and room messaging |
 | `src/ui-core.js`, `ui-tv.js`, `ui-phone.js` | Screens for the TV and the phones |
+| `src/music.js` | Quiet background music on the TV, generated live with a different mood for each phase |
 | `src/tutorial.js` | The "How to play" picture walkthrough |
 | `src/app.js` | Home screen, Practice mode with bots, startup |
 | `src/style.css` | The look |
