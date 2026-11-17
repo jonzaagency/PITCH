@@ -38,7 +38,7 @@
     const s = SLIDES[i];
     el.innerHTML = '<div class="tut" role="dialog" aria-modal="true" aria-label="How to play P!TCH">' +
       '<button class="tut-x" data-tut="close" aria-label="Close">✕</button>' +
-      '<div class="tut-step">' + (i + 1) + ' / ' + SLIDES.length + '</div>' +
+      '<div class="tut-step">' + (i + 1) + ' / ' + SLIDES.length + '<button class="tut-vid" data-tut="video">▶ Watch the video</button></div>' +
       '<div class="tut-slide"><div class="tut-art">' + s.art() + '</div><h2>' + esc(s.title) + '</h2><ul class="tut-lines">' + s.lines.map((l) => '<li>' + l + '</li>').join('') + '</ul></div>' +
       '<div class="tut-dots">' + SLIDES.map((_, k) => '<button class="' + (k === i ? 'on' : '') + '" data-tut="go" data-k="' + k + '" aria-label="Card ' + (k + 1) + '"></button>').join('') + '</div>' +
       '<div class="tut-nav"><button class="btn ghost" data-tut="prev"' + (i === 0 ? ' disabled' : '') + '>‹ Back</button>' +
@@ -47,6 +47,7 @@
   function go(k) { i = Math.max(0, Math.min(SLIDES.length - 1, k)); render(); }
   function close() { if (el) { el.remove(); el = null; document.removeEventListener('keydown', onKey); } }
   function onKey(e) {
+    if (el && el.classList.contains('vid-ov')) { if (e.key === 'Escape') close(); return; }
     if (e.key === 'ArrowRight') go(i + 1); else if (e.key === 'ArrowLeft') go(i - 1); else if (e.key === 'Escape') close();
   }
 
@@ -61,7 +62,7 @@
         const b = e.target.closest('[data-tut]');
         if (!b) { if (e.target === el) close(); return; }
         const a = b.dataset.tut;
-        if (a === 'next') go(i + 1); else if (a === 'prev') go(i - 1); else if (a === 'go') go(Number(b.dataset.k)); else if (a === 'close') close();
+        if (a === 'video') { close(); P.tutorial.video(); } else if (a === 'next') go(i + 1); else if (a === 'prev') go(i - 1); else if (a === 'go') go(Number(b.dataset.k)); else if (a === 'close') close();
       });
       // swipe left/right on phones
       el.addEventListener('pointerdown', (e) => { startX = e.clientX; });
@@ -69,6 +70,26 @@
       document.addEventListener('keydown', onKey);
       render();
     },
-    close
+    close,
+    /** The 1:40 How to Play video, full screen with controls. */
+    video() {
+      close();
+      const local = location.protocol.startsWith('http') && !P.config.artifact;
+      const src = (local ? '' : P.config.pagesUrl) + 'media/how-to-play.mp4';
+      el = document.createElement('div');
+      el.className = 'overlay tut-ov vid-ov';
+      el.innerHTML = '<div class="vid-box" role="dialog" aria-modal="true" aria-label="How to play P!TCH video">' +
+        '<button class="tut-x" data-tut="close" aria-label="Close">✕</button>' +
+        '<video src="' + esc(src) + '" controls autoplay playsinline preload="auto"></video>' +
+        '<div class="vid-foot"><button class="btn ghost" data-tut="cards">See the picture cards</button><button class="btn gold" data-tut="close">Let’s play!</button></div></div>';
+      document.body.appendChild(el);
+      if (U.music) U.music.stop();
+      el.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-tut]');
+        if (!b) { if (e.target === el) close(); return; }
+        if (b.dataset.tut === 'cards') P.tutorial.open(); else close();
+      });
+      document.addEventListener('keydown', onKey);
+    }
   };
 })(window.PITCH = window.PITCH || {});

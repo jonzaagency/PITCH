@@ -50,7 +50,7 @@
       (isOwner() ? '<button class="choice c-prac" data-go="practice"><span class="c-k">One screen</span><b>Practice mode</b><span>See the TV and every phone side by side. Bots can play the other seats.</span></button>' : '') + '</div>' +
       (canResume ? '<div class="resume"><span>Your room <b>' + esc(saved.state.code) + '</b> is still open on this device.</span><button class="btn gold" data-go="resume">Resume hosting</button><button class="btn ghost" data-go="forget">Forget it</button></div>' : '') +
       (canRejoin ? '<div class="resume"><span>Rejoin room <b>' + esc(last.code) + '</b> as ' + esc(last.name) + '?</span><button class="btn gold" data-go="rejoin">Rejoin</button></div>' : '') +
-      '<div class="tut-cta"><button class="btn gold big" data-go="tutorial">▶ How to play</button><span class="muted">8 quick picture cards. About 2 minutes.</span></div>' +
+      '<div class="tut-cta"><button class="btn gold big" data-go="video">▶ Watch how to play</button><button class="btn ghost" data-go="tutorial">Picture cards</button><span class="muted">A 1:40 video, or 8 quick cards.</span></div>' +
       '<details class="howto"><summary>Full written rules</summary>' + howTo() + '</details>' +
       '<footer class="home-foot"><button class="btn ghost sm" data-go="hof">Hall of Fame (' + hofCount + ')</button><span class="muted">Official rules, Investor Edition v4.0</span></footer></div>';
     root.onclick = (e) => {
@@ -66,6 +66,7 @@
       else if (go === 'practice' && isOwner()) practiceSetup();
       else if (go === 'hof') hofScreen();
       else if (go === 'tutorial') P.tutorial.open();
+      else if (go === 'video') P.tutorial.video();
     };
   }
 

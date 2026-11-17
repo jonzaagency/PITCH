@@ -740,6 +740,10 @@ input[type=text], input:not([type]), input[type=number], select, textarea { bord
 .tut { position: relative; width: min(560px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--stage); border: 3px solid var(--inkline); box-shadow: 8px 8px 0 var(--inkline); border-radius: 24px; padding: 20px 18px 16px; display: flex; flex-direction: column; gap: 12px; font-size: 16px; touch-action: pan-y; }
 .tut-x { position: absolute; top: 10px; right: 12px; width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--inkline); background: var(--panel); color: var(--cream); cursor: pointer; font-size: 1rem; }
 .tut-step { color: var(--muted); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.1em; }
+.tut-vid { margin-left: 12px; padding: 4px 12px; border-radius: 999px; border: 2px solid var(--inkline); background: var(--gold); color: var(--gold-ink); font-weight: 800; font-size: 0.75rem; letter-spacing: 0.04em; cursor: pointer; }
+.vid-box { position: relative; width: min(1100px, 100%); background: var(--stage); border: 3px solid var(--inkline); box-shadow: 8px 8px 0 var(--inkline); border-radius: 18px; padding: 52px 14px 14px; }
+.vid-box video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 10px; border: 2px solid var(--inkline); }
+.vid-foot { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-top: 12px; }
 .tut-slide { display: flex; flex-direction: column; gap: 10px; animation: rise 0.35s ease both; }
 .tut-slide h2 { font-family: var(--display); font-weight: 400; color: var(--cream); text-shadow: 2px 2px 0 rgba(238, 123, 111, 0.85); text-align: center; }
 .tut-art { min-height: 190px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 14px; border-radius: 18px; background: var(--panel); border: 2px solid var(--inkline); }

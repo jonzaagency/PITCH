@@ -1,0 +1,338 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>P!TCH How to Play</title>
+<!-- Source for the How to Play video. Recorded to docs/media/how-to-play.mp4 by video/record.sh. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Rubik:wght@400;500;600;700;800&display=swap">
+<style>
+:root { --ink:#140b30; --panel:#271a5e; --panel2:#322474; --line:#0c0620; --cream:#f6ecd6; --muted:#b8b0d8; --gold:#f0c35a; --red:#e2584c; --sky:#8d98f2; --mint:#82d69c; --coral:#ee7b6f; --violet:#cfa5f0; --card-ink:#1a1230;
+  --display:'Archivo Black','Arial Black',sans-serif; --body:'Rubik',system-ui,sans-serif; }
+* { box-sizing:border-box; }
+html,body { margin:0; width:1920px; height:1080px; overflow:hidden; background:var(--ink); }
+#stage { position:relative; width:1920px; height:1080px; overflow:hidden; color:var(--cream); font-family:var(--body);
+  background-image: radial-gradient(rgba(246,236,214,.05) 2px, transparent 2.4px), radial-gradient(1600px 900px at 50% -10%, rgba(94,24,234,.38), transparent 65%), radial-gradient(1200px 800px at 100% 110%, rgba(238,123,111,.12), transparent 60%);
+  background-size:30px 30px, auto, auto; }
+section { position:absolute; inset:0; display:none; padding:90px 120px 0; }
+section.on { display:block; }
+/* animation helpers: everything inside a scene waits for its --d delay */
+.on .pop { opacity:0; animation:pop .55s cubic-bezier(.2,1.6,.4,1) forwards; animation-delay:var(--d,0s); }
+.on .rise { opacity:0; animation:rise .6s ease-out forwards; animation-delay:var(--d,0s); }
+.on .fade { opacity:0; animation:fade .6s ease-out forwards; animation-delay:var(--d,0s); }
+.on .slideL { opacity:0; animation:slideL .6s cubic-bezier(.2,1.2,.4,1) forwards; animation-delay:var(--d,0s); }
+.on .slideR { opacity:0; animation:slideR .6s cubic-bezier(.2,1.2,.4,1) forwards; animation-delay:var(--d,0s); }
+.on .gone { animation:gone .4s ease-in forwards; animation-delay:var(--out); }
+@keyframes pop { 0%{opacity:0;transform:scale(.4)} 100%{opacity:1;transform:none} }
+@keyframes rise { 0%{opacity:0;transform:translateY(50px)} 100%{opacity:1;transform:none} }
+@keyframes fade { to{opacity:1} }
+@keyframes slideL { 0%{opacity:0;transform:translateX(-160px)} 100%{opacity:1;transform:none} }
+@keyframes slideR { 0%{opacity:0;transform:translateX(160px)} 100%{opacity:1;transform:none} }
+@keyframes gone { to{opacity:0;transform:scale(.9)} }
+@keyframes wob { 0%,100%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)} }
+@keyframes spin { 0%{transform:rotate(-200deg) scale(.2);opacity:0} 70%{transform:rotate(15deg) scale(1.1);opacity:1} 100%{transform:rotate(0) scale(1);opacity:1} }
+@keyframes flip { 0%{transform:rotateY(90deg)} 100%{transform:none} }
+@keyframes grow { from{width:0} to{width:var(--w)} }
+@keyframes draw { to{stroke-dashoffset:0} }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+
+.eyebrow { font-weight:800; font-size:30px; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); }
+h1,h2 { font-family:var(--display); font-weight:400; margin:0; line-height:1.05; }
+h2 { font-size:96px; text-shadow:0 6px 0 var(--line); }
+h2 small { display:block; font-family:var(--body); font-weight:700; font-size:36px; color:var(--muted); margin-top:14px; text-shadow:none; }
+.timer { display:inline-block; font-family:var(--display); font-size:40px; background:var(--gold); color:var(--card-ink); border:4px solid var(--line); box-shadow:6px 6px 0 var(--line); border-radius:16px; padding:6px 20px; margin-left:24px; vertical-align:middle; }
+.box { background:var(--panel); border:5px solid var(--line); box-shadow:10px 10px 0 var(--line); border-radius:28px; }
+.card { background:var(--cream); color:var(--card-ink); border:5px solid var(--line); box-shadow:10px 10px 0 var(--line); border-radius:24px; }
+/* captions */
+.cap { position:absolute; left:120px; right:120px; bottom:70px; font-size:46px; font-weight:600; line-height:1.3; text-align:center; }
+.cap b { color:var(--gold); }
+.cap span { position:absolute; left:0; right:0; bottom:0; opacity:0; }
+.on .cap span { animation:capIn .5s ease-out forwards, capOut .4s ease-in forwards; animation-delay:var(--d), var(--o, 999s); }
+@keyframes capIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+@keyframes capOut { to{opacity:0} }
+
+/* 1 title */
+#s1 { text-align:center; padding-top:120px; }
+#s1 .logo { width:760px; animation-name:pop; }
+#s1 .tag { font-size:56px; font-weight:700; max-width:1450px; margin:40px auto 0; line-height:1.25; }
+#s1 .tag b { color:var(--gold); }
+/* 2 setup */
+.tv { position:absolute; left:140px; top:300px; width:900px; height:520px; padding:30px; text-align:center; }
+.tv .url { font-size:34px; color:var(--muted); font-weight:600; }
+.tv .code { font-family:var(--display); font-size:170px; letter-spacing:.12em; color:var(--gold); text-shadow:0 8px 0 var(--line); margin-top:30px; }
+.tv .lbl { font-size:30px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+.tv:after { content:''; position:absolute; left:50%; bottom:-70px; width:240px; height:60px; margin-left:-120px; background:var(--panel2); border:5px solid var(--line); border-radius:0 0 20px 20px; }
+.phone { position:absolute; width:250px; height:470px; border-radius:44px; background:#0e0826; border:6px solid var(--line); box-shadow:10px 10px 0 var(--line); padding:44px 18px 18px; }
+.phone:before { content:''; position:absolute; top:14px; left:50%; margin-left:-40px; width:80px; height:14px; border-radius:10px; background:#2a1d5c; }
+.phone .scr { height:100%; border-radius:22px; background:var(--panel); padding:16px; text-align:center; font-weight:700; font-size:26px; }
+.phone .in { font-family:var(--display); font-size:46px; letter-spacing:.1em; background:var(--cream); color:var(--card-ink); border-radius:14px; padding:10px 0; margin:18px 0; border:4px solid var(--line); }
+.phone .go { background:var(--gold); color:var(--card-ink); border-radius:14px; padding:12px 0; border:4px solid var(--line); font-family:var(--display); font-size:26px; }
+.av { display:inline-flex; width:84px; height:84px; border-radius:50%; align-items:center; justify-content:center; font-family:var(--display); font-size:44px; color:var(--card-ink); background:var(--c); border:5px solid var(--line); margin-top:20px; }
+.players { position:absolute; right:150px; top:300px; font-family:var(--display); font-size:44px; color:var(--mint); }
+/* 3 roles */
+.roles { display:flex; gap:56px; margin-top:70px; }
+.role { flex:1; padding:40px 36px; text-align:center; border-top:18px solid var(--c); }
+.role .av { width:130px; height:130px; font-size:70px; margin:0 0 20px; }
+.role h3 { font-family:var(--display); font-weight:400; font-size:58px; margin:0 0 6px; color:var(--c); }
+.role .n { font-size:28px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:18px; }
+.role p { font-size:34px; line-height:1.35; margin:0; font-weight:500; }
+/* 4 lab */
+.deckrow { display:flex; align-items:center; gap:50px; margin-top:80px; }
+.deck { width:380px; height:250px; padding:30px; text-align:center; display:flex; flex-direction:column; justify-content:center; }
+.deck .k { font-size:28px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; opacity:.7; }
+.deck .t { font-family:var(--display); font-size:58px; margin-top:12px; }
+.on .deck { animation:flip .6s ease-out both; animation-delay:var(--d); }
+.plus { font-family:var(--display); font-size:100px; color:var(--gold); }
+.result { width:560px; padding:24px; text-align:center; }
+.result .name { font-family:var(--display); font-size:52px; color:var(--gold); margin-top:10px; }
+.sketch path { fill:none; stroke:var(--cream); stroke-width:7; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1400; stroke-dashoffset:1400; }
+.on .sketch path { animation:draw 2.2s ease-in-out forwards; animation-delay:var(--d); }
+/* 5 pitch */
+.duo { display:flex; gap:44px; margin-top:44px; height:640px; }
+.pf { flex:1.05; padding:30px 34px; }
+.pf .top { display:flex; gap:28px; align-items:center; }
+.portrait { width:190px; height:190px; border-radius:22px; background:var(--cream); border:5px solid var(--line); flex:none; }
+.pf .nm { font-family:var(--display); font-size:54px; }
+.pf .ff { font-size:30px; color:var(--muted); margin-top:6px; font-weight:500; }
+.facts { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-top:28px; }
+.fact { height:124px; border-radius:18px; border:4px solid var(--line); background:var(--panel2); display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:800; font-size:30px; position:relative; }
+.fact i { font-style:normal; font-family:var(--display); font-size:44px; color:var(--muted); }
+.fact em { font-style:normal; font-size:24px; color:var(--gold); }
+.fact .open { position:absolute; inset:-4px; border-radius:18px; border:4px solid var(--line); background:var(--mint); color:var(--card-ink); display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; }
+.fact .open small { font-size:22px; letter-spacing:.1em; text-transform:uppercase; opacity:.7; }
+.on .fact .open { animation:fopen .5s ease-out forwards; animation-delay:var(--d); }
+@keyframes fopen { 0%{opacity:0;transform:rotateY(90deg)} 100%{opacity:1;transform:none} }
+.secret { margin-top:22px; border:4px dashed var(--violet); border-radius:18px; padding:14px 22px; font-size:30px; font-weight:700; color:var(--violet); position:relative; }
+.secret .open { position:absolute; inset:-4px; border-radius:18px; background:var(--violet); color:var(--card-ink); border:4px solid var(--line); display:flex; align-items:center; justify-content:center; opacity:0; }
+.on .secret .open { animation:fopen .5s ease-out forwards; animation-delay:var(--d); }
+.prod { flex:.95; padding:30px 34px; text-align:center; }
+.prod .name { font-family:var(--display); font-size:58px; color:var(--gold); }
+.prod .lbl { font-size:26px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+.money { position:absolute; font-family:var(--display); font-size:64px; color:var(--mint); text-shadow:0 5px 0 var(--line); opacity:0; }
+.on .money { animation:money 1.3s ease-out forwards; animation-delay:var(--d); }
+@keyframes money { 0%{opacity:0;transform:translateY(20px) scale(.6)} 25%{opacity:1;transform:scale(1.15)} 80%{opacity:1} 100%{opacity:0;transform:translateY(-90px)} }
+.bub { position:absolute; max-width:620px; padding:20px 28px; font-size:32px; font-weight:600; border-radius:26px; border:4px solid var(--line); box-shadow:6px 6px 0 var(--line); }
+.bub b { display:block; font-size:22px; letter-spacing:.12em; text-transform:uppercase; opacity:.75; }
+.chat { display:flex; flex-direction:column; gap:14px; margin-top:22px; text-align:left; }
+.chat .bub { position:relative; font-size:28px; padding:14px 22px; max-width:none; }
+.chat .pr { margin-left:60px; }
+.chat .pe { margin-right:60px; }
+.bub.pe { background:var(--gold); color:var(--card-ink); }
+.bub.pr { background:var(--sky); color:var(--card-ink); }
+/* 6 screw */
+.screw { width:300px; height:300px; }
+.on .screw { animation:spin 1s cubic-bezier(.2,1.3,.4,1) both; animation-delay:var(--d); }
+.scard { width:640px; padding:36px 40px; }
+.scard .k { font-family:var(--display); font-size:36px; color:var(--red); }
+.scard .t { font-family:var(--display); font-size:54px; margin:8px 0; }
+.scard p { font-size:34px; margin:0; font-weight:500; }
+.votes { display:flex; gap:16px; margin-top:20px; }
+.votes .av { width:70px; height:70px; font-size:34px; margin:0; }
+.ccard { width:640px; padding:36px 40px; background:var(--violet); color:var(--card-ink); }
+.ccard .k { font-family:var(--display); font-size:34px; }
+.ccard p { font-size:40px; font-weight:700; margin:10px 0 0; }
+.stamp { display:inline-block; font-family:var(--display); font-size:44px; color:var(--card-ink); background:var(--mint); padding:10px 26px; border:5px solid var(--line); border-radius:16px; transform:rotate(-6deg); box-shadow:6px 6px 0 var(--line); }
+/* 7 close */
+.objection { width:1100px; margin:70px auto 0; padding:40px; text-align:center; background:var(--coral); color:var(--card-ink); }
+.objection .k { font-family:var(--display); font-size:40px; }
+.objection p { font-size:58px; font-weight:800; margin:10px 0 0; }
+.ask { font-family:var(--display); font-size:70px; text-align:center; color:var(--gold); margin-top:40px; }
+.on .ask { animation:pop .55s cubic-bezier(.2,1.6,.4,1) both, pulse 1.2s ease-in-out 1.2s infinite; animation-delay:var(--d), calc(var(--d) + .6s); }
+/* 8 reveal */
+.bars { width:1100px; margin-top:50px; }
+.bar-row { display:flex; align-items:center; gap:26px; margin:16px 0; font-size:34px; font-weight:700; }
+.bar-row .n { width:380px; text-align:right; }
+.bar { flex:1; height:46px; background:var(--panel2); border:4px solid var(--line); border-radius:14px; overflow:hidden; }
+.bar i { display:block; height:100%; width:0; background:var(--gold); }
+.on .bar i { animation:grow 1s ease-out forwards; animation-delay:var(--d); }
+.bar-row .v { width:90px; font-family:var(--display); color:var(--gold); }
+.total { position:absolute; right:130px; top:330px; width:520px; padding:40px; text-align:center; }
+.total .k { font-size:30px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+.total .v { font-family:var(--display); font-size:150px; color:var(--card-ink); line-height:1; margin-top:10px; }
+.total .x { font-size:28px; font-weight:600; margin-top:10px; }
+/* 9 end */
+#s9 { text-align:center; padding-top:110px; }
+#s9 .logo { width:620px; }
+#s9 .big { font-family:var(--display); font-size:74px; margin-top:30px; }
+#s9 .url { display:inline-block; font-family:var(--display); font-size:58px; color:var(--card-ink); background:var(--gold); border:5px solid var(--line); box-shadow:10px 10px 0 var(--line); border-radius:20px; padding:16px 40px; margin-top:44px; }
+.prog { position:absolute; left:0; bottom:0; height:10px; background:var(--gold); width:0; }
+</style></head>
+<body><div id="stage">
+
+<section id="s1" data-t="0" data-len="8">
+  <img class="logo pop" style="--d:.2s" src="../src/assets/logo.webp" alt="P!TCH">
+  <div class="eyebrow rise" style="--d:1s;margin-top:20px">The party game of impossible sales</div>
+  <p class="tag rise" style="--d:2s">Do you have what it takes to <b>sell the impossible</b>, learn about your prospect, and <b>survive their objections</b>?</p>
+</section>
+
+<section id="s2" data-t="8" data-len="9">
+  <div class="eyebrow rise">How to play</div>
+  <h2 class="rise" style="--d:.2s">One screen. Everyone’s phones.</h2>
+  <div class="players pop" style="--d:4.2s">3 to 20+ players</div>
+  <div class="tv box pop" style="--d:.8s"><div class="url">playpitch.netlify.app → Host a game</div><div class="lbl" style="margin-top:40px">Room code</div><div class="code">JAZZ</div></div>
+  <div class="phone slideR" style="left:1130px;top:420px;--d:1.8s"><div class="scr">Join a game<div class="in">JAZZ</div><div class="go">Join</div><span class="av" style="--c:var(--gold)">S</span></div></div>
+  <div class="phone slideR" style="left:1410px;top:460px;--d:2.3s"><div class="scr">Join a game<div class="in">JAZZ</div><div class="go">Join</div><span class="av" style="--c:var(--sky)">A</span></div></div>
+  <div class="phone slideR" style="left:1660px;top:500px;--d:2.8s"><div class="scr">Join a game<div class="in">JAZZ</div><div class="go">Join</div><span class="av" style="--c:var(--mint)">B</span></div></div>
+  <div class="cap"><span style="--d:1s;--o:4.6s">Host on a <b>TV or laptop</b>. It shows a 4-letter room code.</span><span style="--d:5s">Everyone joins on their <b>phone</b>. No app to download.</span></div>
+</section>
+
+<section id="s3" data-t="17" data-len="11">
+  <div class="eyebrow rise">Every round</div>
+  <h2 class="rise" style="--d:.2s">Who’s who</h2>
+  <div class="roles">
+    <div class="role box rise" style="--c:var(--gold);--d:.8s"><span class="av" style="--c:var(--gold)">📣</span><h3>Peddler</h3><div class="n">1 player</div><p>Invents a ridiculous product, gets to know the Prospect, and sells it.</p></div>
+    <div class="role box rise" style="--c:var(--sky);--d:2.6s"><span class="av" style="--c:var(--sky)">🤔</span><h3>Prospect</h3><div class="n">1 player</div><p>Plays a character with hidden facts and one big secret.</p></div>
+    <div class="role box rise" style="--c:var(--mint);--d:4.4s"><span class="av" style="--c:var(--mint)">💰</span><h3>Investors</h3><div class="n">Everyone else</div><p>Award money, send SCREW!s and challenges, and score the pitch.</p></div>
+  </div>
+  <div class="cap" style="bottom:50px"><span style="--d:6.4s">Everyone takes a turn as the <b>Peddler</b>. Most money at the end wins.</span></div>
+</section>
+
+<section id="s4" data-t="28" data-len="11">
+  <div class="eyebrow rise">Stage 1</div>
+  <h2 class="rise" style="--d:.2s">Creation Lab <span class="timer">2:00</span></h2>
+  <div class="deckrow">
+    <div class="deck card" style="--d:.9s"><div class="k">Item</div><div class="t">Hot tub</div></div>
+    <div class="plus pop" style="--d:1.6s">+</div>
+    <div class="deck card" style="--d:2s"><div class="k">Function</div><div class="t">Plays smooth jazz</div></div>
+    <div class="plus pop" style="--d:2.8s">=</div>
+    <div class="result box pop" style="--d:3.2s">
+      <svg class="sketch" viewBox="0 0 400 220" width="420" height="230">
+        <path style="--d:3.6s" d="M40 120 Q40 190 120 195 L290 195 Q360 190 360 120 Z M30 120 L370 120"/>
+        <path style="--d:4.4s" d="M110 100 Q120 80 110 60 Q100 40 115 20 M200 100 Q210 80 200 60 Q190 40 205 20 M290 100 Q300 80 290 60 Q280 40 295 20"/>
+        <path style="--d:5s" d="M330 40 L330 95 M330 40 L370 30 L370 85"/>
+      </svg>
+      <div class="name">The Jazz-uzzi 3000</div>
+    </div>
+  </div>
+  <div class="cap"><span style="--d:1s;--o:5.6s">The Peddler picks an <b>Item</b> and a <b>Function</b>, then names and sketches it.</span><span style="--d:6s">Meanwhile, the Prospect <b>draws their character</b> on their phone.</span></div>
+</section>
+
+<section id="s5" data-t="39" data-len="19">
+  <div class="eyebrow rise">Stage 2</div>
+  <h2 class="rise" style="--d:.2s">The Pitch <span class="timer">5:00</span></h2>
+  <div class="duo">
+    <div class="pf box slideL" style="--d:.7s">
+      <div class="top">
+        <svg class="portrait" viewBox="0 0 190 190"><circle cx="95" cy="80" r="46" fill="#f2c9a0" stroke="#1a1230" stroke-width="5"/><path d="M50 60 Q95 10 140 60" fill="#a0522d" stroke="#1a1230" stroke-width="5"/><circle cx="78" cy="78" r="5"/><circle cx="112" cy="78" r="5"/><path d="M78 102 Q95 114 112 102" fill="none" stroke="#1a1230" stroke-width="5"/><path d="M40 190 Q50 135 95 132 Q140 135 150 190" fill="#e2584c" stroke="#1a1230" stroke-width="5"/><path d="M30 34 L150 34" stroke="#1a1230" stroke-width="0"/></svg>
+        <div><div class="eyebrow" style="font-size:22px">Prospect portfolio</div><div class="nm">Linda</div><div class="ff">Fun fact: “I was a lifeguard, summer of ’94.”</div></div>
+      </div>
+      <div class="facts">
+        <div class="fact"><i>?</i><em>+$5</em><div class="open" style="--d:5.4s"><small>Age</small>52</div></div>
+        <div class="fact"><i>?</i><em>+$5</em><div class="open" style="--d:7.6s"><small>Status</small>Recently divorced</div></div>
+        <div class="fact"><i>?</i><em>+$5</em></div>
+        <div class="fact"><i>?</i><em>+$5</em><div class="open" style="--d:9.4s"><small>Job</small>Dentist</div></div>
+        <div class="fact"><i>?</i><em>+$5</em></div>
+        <div class="fact"><i>?</i><em>+$5</em></div>
+      </div>
+      <div class="secret">🔒 Secret · $25<div class="open" style="--d:15.2s">🔓 Naps near water!</div></div>
+    </div>
+    <div class="prod box slideR" style="--d:1s">
+      <div class="lbl">The product</div>
+      <svg class="sketch" viewBox="0 0 400 220" width="360" height="200" style="margin-top:10px">
+        <path style="--d:0s" d="M40 120 Q40 190 120 195 L290 195 Q360 190 360 120 Z M30 120 L370 120"/>
+        <path style="--d:0s" d="M110 100 Q120 80 110 60 Q100 40 115 20 M200 100 Q210 80 200 60 Q190 40 205 20 M290 100 Q300 80 290 60 Q280 40 295 20"/>
+        <path style="--d:0s" d="M330 40 L330 95 M330 40 L370 30 L370 85"/>
+      </svg>
+      <div class="name">The Jazz-uzzi 3000</div>
+      <div style="font-size:30px;color:var(--muted);margin-top:6px">A hot tub that plays smooth jazz</div>
+      <div class="chat"><div class="bub pr pop" style="--d:12.4s"><b>Prospect</b>Oh, I just… rest my eyes near water.</div><div class="bub pe pop" style="--d:13.4s"><b>Peddler</b>I bet you napped on the job!</div></div>
+    </div>
+  </div>
+  <div class="money" style="left:420px;top:560px;--d:5.6s">+$5</div>
+  <div class="money" style="left:700px;top:560px;--d:7.8s">+$5</div>
+  <div class="money" style="left:420px;top:700px;--d:9.6s">+$5</div>
+  <div class="money" style="left:560px;top:800px;--d:15.4s;color:var(--violet)">+$25</div>
+  <div class="cap" style="bottom:36px"><span style="--d:2s;--o:5s">Get to know the Prospect <b>and</b> sell to them, all at once.</span><span style="--d:5.2s;--o:11.6s">The <b>Investors</b> tick off every hidden fact the Peddler finds out: <b>+$5</b> each.</span><span style="--d:15.4s">Figure out the <b>secret</b>? The Prospect confirms it: <b>+$25</b>.</span></div>
+</section>
+
+<section id="s6" data-t="58" data-len="13">
+  <div class="eyebrow rise" style="color:var(--red)">Anytime in the pitch</div>
+  <h2 class="rise" style="--d:.2s">SCREW!</h2>
+  <div style="display:flex;gap:60px;align-items:center;margin-top:50px">
+    <svg class="screw" style="--d:.6s" viewBox="-4 -2 128 130"><g transform="rotate(40 60 62)"><path d="M52 36 H68 V98 L60 120 L52 98 Z" fill="#e2584c" stroke="#3a0805" stroke-width="2.5"/><path d="M45 45 L75 35 M45 55 L75 45 M45 65 L75 55 M45 75 L75 65 M45 85 L75 75 M45 95 L75 85" stroke="#ff7a6b" stroke-width="4"/><path d="M31 16 Q60 26 89 16 L68 38 Q60 41 52 38 Z" fill="#ef4b3f" stroke="#3a0805" stroke-width="2.5"/><ellipse cx="60" cy="15" rx="29" ry="8.5" fill="#ff8f84" stroke="#3a0805" stroke-width="2.5"/><path d="M47 15 H73 M60 9.5 V20.5" stroke="#3a0805" stroke-width="3"/></g></svg>
+    <div class="scard card rise" style="--d:1.2s"><div class="k">SCREW! from the Investors</div><div class="t">Sticker Shock</div><p>It costs $10,000. Justify the price.</p>
+      <div class="votes"><span class="av pop" style="--c:var(--mint);--d:1.8s">B</span><span class="av pop" style="--c:var(--mint);--d:2.1s">C</span><span class="av pop" style="--c:var(--mint);--d:2.4s">D</span><span class="fade" style="font-size:30px;font-weight:700;align-self:center;--d:2.6s">voted it in</span></div></div>
+  </div>
+  <div class="ccard card rise" style="position:absolute;right:120px;top:560px;--d:6.4s"><div class="k">🎭 Prospect challenge</div><p>Answer your next question in a British accent.</p></div>
+  <div class="stamp pop" style="position:absolute;right:170px;top:440px;--d:9.6s">Pulled it off! +$10</div>
+  <div class="cap"><span style="--d:2.8s;--o:6.2s">Investors vote <b>SCREW!</b> cards onto the Peddler. 15 seconds to roll with it.</span><span style="--d:6.6s">They also slip the Prospect <b>secret challenges</b> and judge them.</span></div>
+</section>
+
+<section id="s7" data-t="71" data-len="10">
+  <div class="eyebrow rise">Stage 3</div>
+  <h2 class="rise" style="--d:.2s">Objections + Close <span class="timer">0:45</span></h2>
+  <div class="objection card pop" style="--d:1s"><div class="k">I object!</div><p>“My dog would hate this.”</p></div>
+  <div class="bub pe pop" style="left:520px;top:540px;--d:3.4s;max-width:900px"><b>Peddler</b>It has a dog-calming mode. Smooth jazz for Rex.</div>
+  <div class="ask" style="--d:5.6s;position:absolute;left:0;right:0;top:730px;margin:0">“So, can I count you in today?”</div>
+  <div class="cap"><span style="--d:1.4s;--o:5.2s">The Prospect raises one last objection. Investors send funny ones too.</span><span style="--d:5.8s">The Peddler answers every one and <b>asks for the sale</b>.</span></div>
+</section>
+
+<section id="s8" data-t="81" data-len="12">
+  <div class="eyebrow rise">Stage 4</div>
+  <h2 class="rise" style="--d:.2s">Money Reveal</h2>
+  <div class="bars">
+    <div class="bar-row rise" style="--d:.6s"><span class="n">Invention</span><span class="bar"><i style="--w:84%;--d:1s"></i></span><span class="v">$42</span></div>
+    <div class="bar-row rise" style="--d:.8s"><span class="n">Ingenuity</span><span class="bar"><i style="--w:70%;--d:1.3s"></i></span><span class="v">$35</span></div>
+    <div class="bar-row rise" style="--d:1s"><span class="n">Fact-Finding</span><span class="bar"><i style="--w:60%;--d:1.6s"></i></span><span class="v">$30</span></div>
+    <div class="bar-row rise" style="--d:1.2s"><span class="n">Objections</span><span class="bar"><i style="--w:76%;--d:1.9s"></i></span><span class="v">$38</span></div>
+    <div class="bar-row rise" style="--d:1.4s"><span class="n">Overall Pitch</span><span class="bar"><i style="--w:80%;--d:2.2s"></i></span><span class="v">$40</span></div>
+    <div class="bar-row rise" style="--d:1.6s"><span class="n">The Close</span><span class="bar"><i style="--w:90%;--d:2.5s"></i></span><span class="v">$45</span></div>
+  </div>
+  <div class="total card pop" style="--d:4.6s;background:var(--gold)"><div class="k">Peddler earns</div><div class="v">$270</div><div class="x">$230 scores + $15 facts + $25 secret</div></div>
+  <div class="cap"><span style="--d:1s;--o:4.6s">Investors score <b>six categories</b>, $0 to $50 each.</span><span style="--d:5s">The Peddler banks the scores plus every fact and secret. Then a <b>new Peddler</b> steps up.</span></div>
+</section>
+
+<section id="s9" data-t="93" data-len="8">
+  <img class="logo pop" style="--d:.2s" src="../src/assets/logo.webp" alt="P!TCH">
+  <div class="big rise" style="--d:1s">Grab a TV and some friends.</div>
+  <div class="url pop" style="--d:2s">playpitch.netlify.app</div>
+</section>
+
+<div class="prog" id="prog"></div>
+</div>
+<script>
+const scenes = [...document.querySelectorAll('section')];
+const END = Math.max(...scenes.map(s => +s.dataset.t + +s.dataset.len));
+window.VIDEO_LENGTH = END;
+let t0 = null, cur = null;
+function show(t) {
+  const s = scenes.find(x => t >= +x.dataset.t && t < +x.dataset.t + +x.dataset.len) || scenes[scenes.length - 1];
+  if (s !== cur) { if (cur) cur.classList.remove('on'); cur = s; void s.offsetWidth; s.classList.add('on'); }
+  document.getElementById('prog').style.width = Math.min(100, t / END * 100) + '%';
+  // drive every CSS animation from the video clock, so a hidden or busy tab still lands on the right frame
+  const local = (t - +cur.dataset.t) * 1000;
+  document.getAnimations().forEach(a => { if (a.playState !== 'paused') a.pause(); a.currentTime = local; });
+}
+function loop(now) { const t = (now - t0) / 1000; show(t); if (t < END + 0.5) { if (q.has('rec')) setTimeout(() => loop(performance.now()), 16); else requestAnimationFrame(loop); } else window.VIDEO_DONE = true; }
+// Music: loops under the whole video and fades out at the end.
+async function music(ctx, dest) {
+  const buf = await ctx.decodeAudioData(await (await fetch('../src/music/groovy-saturday.m4a')).arrayBuffer());
+  const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+  const g = ctx.createGain(); g.gain.value = 0.8;
+  g.gain.setValueAtTime(0.8, ctx.currentTime + END - 3); g.gain.linearRampToValueAtTime(0, ctx.currentTime + END);
+  src.connect(g); g.connect(dest); src.start();
+}
+window.play = async function (dest) {
+  const ctx = new AudioContext(); await music(ctx, dest ? dest(ctx) : ctx.destination);
+  await document.fonts.ready;
+  t0 = performance.now() - (+q.get('from') || 0) * 1000; loop(performance.now());
+};
+const q = new URLSearchParams(location.search);
+// ?at=T freezes the video at second T (for checking frames)
+if (q.has('at')) { const T = +q.get('at'); show(T); requestAnimationFrame(() => show(T)); }
+if (q.has('t')) { t0 = performance.now() - (+q.get('t')) * 1000; requestAnimationFrame(loop); }
+if (q.has('rec')) (async () => {
+  try {
+    await document.fonts.ready;
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30, width: 1920, height: 1080 }, audio: false, preferCurrentTab: true });
+    let audioDest;
+    await new Promise(r => setTimeout(r, 500));
+    const tracks = [...stream.getVideoTracks()];
+    await window.play((ctx) => { audioDest = ctx.createMediaStreamDestination(); tracks.push(...audioDest.stream.getAudioTracks()); return audioDest; });
+    const mt = ['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4'].find(m => MediaRecorder.isTypeSupported(m));
+    const rec = new MediaRecorder(new MediaStream(tracks), { mimeType: mt, videoBitsPerSecond: 10e6, audioBitsPerSecond: 192e3 });
+    const chunks = []; rec.ondataavailable = e => chunks.push(e.data);
+    rec.onstop = async () => { await fetch('/raw.mp4', { method: 'POST', body: new Blob(chunks) }); await fetch('/log.txt', { method: 'POST', body: 'done ' + mt }); };
+    rec.start(1000);
+    const stopAt = q.has('len') ? performance.now() + +q.get('len') * 1000 : Infinity;
+    const wait = () => (window.VIDEO_DONE || performance.now() > stopAt) ? (rec.stop(), fetch('/dbg.txt', { method: 'POST', body: JSON.stringify({ cur: cur && cur.id, w: innerWidth, h: innerHeight, vis: document.visibilityState, set: tracks[0].getSettings() }) })) : setTimeout(wait, 100); wait();
+  } catch (e) { fetch('/log.txt', { method: 'POST', body: 'ERR ' + e }); }
+})();
+</script>
+</body></html>
