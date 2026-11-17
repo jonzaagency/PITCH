@@ -618,10 +618,84 @@ input[type=range] { width: 100%; accent-color: var(--gold); height: 34px; }
 .pr-phone .phone { padding-bottom: 8px; }
 .pr-phone .ph-top { top: 0; }
 
+/* the pitch + close: Prospect portfolio left, product right */
+.duo { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 1.6em; align-items: start; }
+.duo-left, .duo-right { display: flex; flex-direction: column; gap: 1em; min-width: 0; }
+.duo .showcase { grid-template-columns: minmax(0, 1fr); gap: 1em; }
+.duo .showcase .sketch { width: min(100%, calc(44vh * 4 / 3)); }
+.duo .showcase.compact { font-size: 0.85em; margin-bottom: 0; }
+.duo .prod { font-size: 2.4em; }
+.duo-call { background: var(--panel); border-radius: 16px; padding: 0.8em 1.1em; font-size: 1em; }
+.duo-call b { color: var(--gold); }
+.portfolio { background: var(--panel); border-radius: 24px; padding: 1em 1.2em 1.2em; border-top: 6px solid var(--sky); display: flex; flex-direction: column; gap: 0.6em; min-width: 0; }
+.portfolio > .eyebrow { color: var(--sky); }
+.pf-top { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr); gap: 1em; align-items: center; }
+.pf-id h2 { font-family: var(--display); font-weight: 400; font-size: 1.8em; line-height: 1.05; overflow-wrap: anywhere; }
+.pf-id .bg { margin-top: 0.4em; }
+.pf-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1em; margin-top: 0.2em; }
+.pf-head h3 { font-family: var(--display); font-weight: 400; font-size: 1.1em; }
+.pf-count { color: var(--gold); font-weight: 800; font-variant-numeric: tabular-nums; }
+.pf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5em; }
+.pf-fact { position: relative; display: flex; flex-direction: column; gap: 0.1em; padding: 0.55em 0.75em; border-radius: 12px; background: var(--ink); border: 2px solid var(--inkline); min-width: 0; }
+.pf-fact span { color: var(--muted); font-size: 0.8em; font-weight: 600; }
+.pf-fact b { font-size: 1.1em; overflow-wrap: anywhere; }
+.pf-fact:not(.open) b { color: var(--muted); font-family: var(--display); font-weight: 400; }
+.pf-fact em { position: absolute; top: 0.45em; right: 0.6em; font-style: normal; font-weight: 800; color: var(--gold); font-size: 0.85em; }
+.pf-fact.open { background: rgba(130, 214, 156, 0.16); border-color: var(--mint); animation: flip 0.5s ease both; }
+.pf-fact.open b { color: var(--cream); }
+@keyframes flip { 0% { transform: rotateX(90deg); } 100% { transform: none; } }
+.pf-tags { display: flex; flex-wrap: wrap; gap: 0.4em; }
+
+/* the Prospect's swipeable character cards */
+.cards-wrap { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.cards-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 2px; }
+.cards-head .eyebrow { color: var(--sky); }
+.cards-count { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
+.swipe { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; scrollbar-width: none; overscroll-behavior-x: contain; border-radius: 20px; }
+.swipe::-webkit-scrollbar { display: none; }
+.ccard { flex: 0 0 100%; scroll-snap-align: start; scroll-snap-stop: always; min-height: 300px; display: flex; flex-direction: column; gap: 10px; padding: 18px 18px 20px;
+  background: var(--panel); border: 2px solid var(--inkline); border-radius: 20px; border-top: 6px solid var(--sky); }
+.ccard h2 { font-family: var(--display); font-weight: 400; font-size: 1.8rem; line-height: 1.05; color: var(--cream); text-shadow: 2px 2px 0 rgba(238, 123, 111, 0.85); }
+.cc-fun { font-size: 1.02rem; }
+.cc-fun b { color: var(--gold); }
+.cc-next { margin-top: auto; color: var(--sky); font-weight: 700; font-size: 0.92rem; }
+.cc-big { font-family: var(--display); font-weight: 400; font-size: 1.9rem; line-height: 1.1; color: var(--cream); overflow-wrap: anywhere; }
+.cc-worth { color: var(--gold); font-weight: 700; font-size: 0.92rem; }
+.cc-known { color: var(--mint); font-weight: 800; }
+.cc-q { font-size: 0.98rem; }
+.cc-q i { color: var(--sky); font-style: normal; font-weight: 700; }
+.cc-tips { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; font-size: 0.95rem; }
+.cc-tips li::marker { color: var(--gold); }
+.cc-tips.big { font-size: 1.02rem; gap: 10px; }
+.ccard.known { border-top-color: var(--mint); }
+.cc-secret { border-top-color: var(--coral); background: repeating-linear-gradient(-45deg, rgba(239, 75, 63, 0.14) 0 12px, rgba(239, 75, 63, 0.06) 12px 24px), var(--panel); }
+.cc-secret .eyebrow { color: #ff9b92; }
+.cc-secret .cc-big { font-size: 1.45rem; }
+.cc-rule { margin-top: auto; padding: 10px 12px; border-radius: 12px; background: var(--ink); font-size: 0.92rem; }
+.cc-rule b { color: var(--mint); }
+.cc-tipsc { border-top-color: var(--gold); }
+.cards-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cards-nav .btn { min-width: 48px; font-size: 1.3rem; line-height: 1; }
+.cards-nav .btn:disabled { opacity: 0.3; }
+.dots { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--panel-2); border: 1.5px solid var(--inkline); transition: transform 0.2s; }
+.dots i.on { background: var(--sky); transform: scale(1.3); }
+.learned-ro { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.learned-ro li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 10px; border-radius: 10px; background: var(--ink); }
+.learned-ro em { font-style: normal; color: var(--muted); font-weight: 700; }
+.learned-ro li.on { background: rgba(130, 214, 156, 0.16); }
+.learned-ro li.on em { color: var(--mint); }
+/* the Investor's Prospect file */
+.pfile { border-left: 6px solid var(--mint) !important; }
+.learn-row small { color: var(--muted); font-size: 0.78rem; font-weight: 600; }
+.learn-row:disabled { opacity: 0.6; cursor: default; }
+.secret-clue { font-size: 0.9rem; padding: 8px 10px; border-radius: 10px; background: var(--panel-2); }
+.secret-clue b { color: #ff9b92; }
+
 /* ---------- comic ink ---------- */
 /* ink outlines + small offset shadows on panels */
 .choice, .join-card, .ph-body > section:not(.hello):not(.found-sec), .rcol, .pro, .settings, .lab-ped, .lab-p, .phil, .rv-main, .rv-pro,
-.side-board, .howto, .setup, .mini-pro, .obj, .dispute, .brief-steps li, .pcard, .pr-phone, .award-cat, .trophy, .hist-card, .sleuth, .nepo {
+.side-board, .howto, .setup, .mini-pro, .obj, .dispute, .brief-steps li, .pcard, .pr-phone, .award-cat, .trophy, .hist-card, .sleuth, .nepo, .portfolio, .duo-call {
   border: 2px solid var(--inkline) !important;
   box-shadow: 4px 4px 0 var(--inkline) !important;
 }
@@ -714,7 +788,8 @@ input[type=text], input:not([type]), input[type=number], select, textarea { bord
   .tv { font-size: 14px; }
   .tv-top { flex-wrap: wrap; }
   .tv-phase { order: 3; flex-basis: 100%; }
-  .lobby, .reveal, .showcase, .showcase.compact { grid-template-columns: minmax(0, 1fr); }
+  .lobby, .reveal, .showcase, .showcase.compact, .duo { grid-template-columns: minmax(0, 1fr); }
+  .pf-top { grid-template-columns: minmax(0, 1fr); }
   .code-tag { font-size: 3.6em; }
   .prod { font-size: 2.2em; }
   .bar-row { grid-template-columns: 7.5em minmax(0, 1fr) 3.6em; }

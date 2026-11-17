@@ -5,11 +5,11 @@
   const esc = U.esc;
 
   const PHASE_TITLE = {
-    lobby: 'Lobby', roles: 'Up Next', brief: 'Role Briefing', lab: 'Creation Lab', fact: 'Fact-Finding', pitch: 'PITCH!',
+    lobby: 'Lobby', roles: 'Up Next', brief: 'Role Briefing', lab: 'Creation Lab', pitch: 'The Pitch',
     close: 'Objections + Close', scoring: 'Scoring', reveal: 'Money Reveal', awards: 'Awards', final: 'Final Results'
   };
-  // the rulebook's numbered round sequence (section 5)
-  const STEPS = [['lab', 'Creation Lab'], ['fact', 'Fact-Finding'], ['pitch', 'PITCH! + SCREW!'], ['close', 'Objections + Close'], ['scoring', 'Money Reveal']];
+  // the numbered round sequence (fact-finding happens inside the pitch)
+  const STEPS = [['lab', 'Creation Lab'], ['pitch', 'The Pitch'], ['close', 'Objections + Close'], ['scoring', 'Money Reveal']];
 
   function create(root, opts) {
     const game = opts.game;
@@ -51,18 +51,24 @@
       const img = asset(r.portraits[id]);
       return '<div class="portrait ' + (size || '') + '">' + (img ? '<img alt="Portrait of ' + esc(r.profiles[id].name) + '" src="' + img + '">' : '<span class="portrait-empty">?</span>') + '</div>';
     }
-    /** A Prospect on the big screen: the general situation, plus only the details the Peddler has learned. */
-    function profileFacts(pr) {
-      return '<p class="bg"><b>Fun fact:</b> ' + esc(pr.background) + '</p>' +
-        '<p class="lbl learn-count">Learned ' + (pr.learned || 0) + ' of ' + C.detailFields.length + ' · +' + U.money((pr.learned || 0) * E.DETAIL_BONUS) + '</p><ul class="facts known">' +
-        C.detailFields.map((f) => pr[f.id] != null ? '<li><b>' + esc(f.name) + '</b> ' + esc(C.detailText(f.id, pr)) + '</li>' : '<li class="unknown"><b>' + esc(f.name) + '</b> ?</li>').join('') + '</ul>';
+    /** The Prospect portfolio: portrait, fun fact, and the hidden details. Each detail flips open when an Investor awards it. */
+    function portfolio(v, id, extra) {
+      const r = v.round, pr = r.profiles[id], n = pr.learned || 0;
+      return '<article class="portfolio" data-key="pf-' + esc(id) + '"><div class="eyebrow">Prospect portfolio</div>' +
+        '<div class="pf-top">' + portrait(game.s.round, id) + '<div class="pf-id"><h2>' + esc(pr.name) + '</h2><p class="played-by">played by ' + esc(player(id).name) + '</p>' +
+        '<p class="bg"><b>Fun fact:</b> ' + esc(pr.background) + '</p></div></div>' +
+        '<div class="pf-head"><h3>Hidden facts</h3><span class="pf-count">' + n + ' of ' + C.detailFields.length + ' found · +' + U.money(n * E.DETAIL_BONUS) + '</span></div>' +
+        '<div class="pf-grid">' + C.detailFields.map((f) => pr[f.id] != null
+          ? '<div class="pf-fact open" data-key="pff-' + f.id + '"><span>' + esc(f.name) + '</span><b>' + esc(C.detailText(f.id, pr)) + '</b></div>'
+          : '<div class="pf-fact" data-key="pff-' + f.id + '"><span>' + esc(f.name) + '</span><b>?</b><em>+' + U.money(E.DETAIL_BONUS) + '</em></div>').join('') + '</div>' +
+        secretChip(r, id) + (extra || '') + '</article>';
     }
     function secretChip(r, id) {
       const st = r.secrets[id];
       if (st === 'confirmed') return '<div class="secret unlocked"><span class="lbl">Secret unlocked +$25</span>' + esc((game.s.round.profiles[id] || {}).secret) + '</div>';
       if (st === 'claimed') return '<div class="secret claimed"><span class="lbl">Secret claimed</span>Waiting for the Prospect to answer…</div>';
       if (st === 'denied') return '<div class="secret denied"><span class="lbl">Disputed</span>The Host will settle it.</div>';
-      return '<div class="secret hidden-s"><span class="lbl">Secret</span>Still hidden</div>';
+      return '<div class="secret hidden-s"><span class="lbl">🔒 Secret · $25</span>Still hidden. It grows out of the fun fact and ties to the product.</div>';
     }
     function leaderboard(v, limit) {
       const list = v.standings.slice(0, limit || 8);
@@ -104,11 +110,10 @@
       const st = v.settings;
       const num = (k, label) => '<label class="set-num"><span>' + label + '</span><input type="number" min="5" max="900" step="5" id="set-' + k + '" data-set="timers.' + k + '" value="' + st.timers[k] + '"><em>sec</em></label>';
       return '<div class="settings' + (inline ? ' inline' : ' panel') + '"><div class="set-head"><h3>Game settings</h3>' + (inline ? '' : '<button class="btn ghost sm" data-act="settings">Close</button>') + '</div>' +
-        '<div class="set-grid">' + num('brief', 'Role briefing') + num('lab', 'Creation Lab') + num('fact', 'Fact-Finding') + num('pitch', 'Pitch') + num('close', 'Objections + Close') + num('screw', 'SCREW! response') + '</div>' +
-        '<div class="set-row"><span>Prospects per round (max)</span><div class="seg">' + [1, 2, 3].map((n) => '<button data-act="setProspects" data-n="' + n + '" class="' + (st.maxProspects === n ? 'on' : '') + '">' + n + '</button>').join('') + '</div></div>' +
+        '<div class="set-grid">' + num('brief', 'Role briefing') + num('lab', 'Creation Lab') + num('pitch', 'The Pitch') + num('close', 'Objections + Close') + num('screw', 'SCREW! response') + '</div>' +
         '<div class="set-row"><span>Rounds</span><div class="seg">' + [0, 3, 5, 8].map((n) => '<button data-act="setRounds" data-n="' + n + '" class="' + (st.rounds === n ? 'on' : '') + '">' + (n ? n : 'Everyone pitches once') + '</button>').join('') + '</div></div>' +
         '<label class="set-row toggle"><span>Move on automatically when time runs out or everyone is done</span><input type="checkbox" id="set-auto" data-set="autoAdvance"' + (st.autoAdvance ? ' checked' : '') + '></label>' +
-        '<label class="set-row toggle"><span>Secret Sleuth: during Fact-Finding, Investors earn ' + U.money(E.SLEUTH_BONUS) + ' for each secret they guess right</span><input type="checkbox" id="set-sleuth" data-set="sleuth"' + (st.sleuth ? ' checked' : '') + '></label>' +
+        '<label class="set-row toggle"><span>Secret Sleuth: during the pitch, Investors earn ' + U.money(E.SLEUTH_BONUS) + ' for each secret they guess right</span><input type="checkbox" id="set-sleuth" data-set="sleuth"' + (st.sleuth ? ' checked' : '') + '></label>' +
         '<label class="set-row toggle"><span>Set aside a scorecard that is way out of line (more than ' + U.money(E.OUTLIER_GAP) + ' from the middle, with 4+ Investors)</span><input type="checkbox" id="set-trim" data-set="trimOutliers"' + (st.trimOutliers ? ' checked' : '') + '></label>' +
         '<label class="set-row toggle"><span>Start the next round automatically ' + E.AUTO_NEXT_SEC + ' seconds after the Money Reveal</span><input type="checkbox" id="set-autonext" data-set="autoNext"' + (st.autoNext !== false ? ' checked' : '') + '></label>' +
         '<label class="set-row toggle"><span>Role briefing at the start of each round (turn off for veteran players)</span><input type="checkbox" id="set-brief" data-set="briefing"' + (st.briefing ? ' checked' : '') + '></label>' +
@@ -130,7 +135,7 @@
         '<button class="rplayer" data-key="rp-' + esc(id) + '" data-act="manage" data-pid="' + esc(id) + '">' + U.avatar(player(id), role === 'peddler' ? 'xl' : 'lg') + '<span>' + esc(player(id).name) + '</span></button>').join('') : '<p class="muted">Nobody</p>') + '</div>';
       return '<section class="roles">' + banner +
         '<div class="round-title"><div class="eyebrow">Round ' + (v.roundNo + 1) + '</div><h2>Here is the table</h2><p class="muted">Tap a player to move them. Roles respect everyone’s opt-outs.</p></div>' +
-        (pr ? '<div class="rcols">' + col('Peddler', [pr.peddler], 'peddler') + col('Prospects', pr.prospects, 'prospect') + col('Investors', pr.phils, 'phil') + (pr.sitOut.length ? col('Sitting out', pr.sitOut, 'sitout') : '') + '</div>' : '') +
+        (pr ? '<div class="rcols">' + col('Peddler', [pr.peddler], 'peddler') + col('Prospect', pr.prospects, 'prospect') + col('Investors', pr.phils, 'phil') + (pr.sitOut.length ? col('Sitting out', pr.sitOut, 'sitout') : '') + '</div>' : '') +
         '<div class="actions">' + '<button class="btn ghost" data-act="shuffle">Shuffle roles</button>' +
         '<button class="btn gold big" data-act="begin"' + (v.proposalError ? ' disabled' : '') + '>Start the round</button></div>' +
         (v.proposalError && pr ? '<p class="err center">' + esc(v.proposalError) + '</p>' : '') +
@@ -140,15 +145,14 @@
 
     function brief(v) {
       const r = v.round, st = v.settings.timers;
-      const who = (ids, role) => '<div class="rcol rcol-' + role + '"><h3>' + (role === 'peddler' ? 'Peddler' : role === 'prospect' ? 'Prospects' : 'Investors') + '</h3>' +
+      const who = (ids, role) => '<div class="rcol rcol-' + role + '"><h3>' + (role === 'peddler' ? 'Peddler' : role === 'prospect' ? 'Prospect' : 'Investors') + '</h3>' +
         ids.map((id) => '<div class="rplayer" data-key="br-' + esc(id) + '">' + U.avatar(player(id), 'lg') + '<span>' + esc(player(id).name) + '</span>' + (r.briefed[id] ? '<span class="ok">Ready ✓</span>' : '') + '</div>').join('') + '</div>';
       const mm = (sec) => U.fmtTime(sec * 1000);
       return '<section class="brief"><div class="round-title"><h2>Check your phone for your role</h2><p class="muted">Read it, then tap “Got it.”</p></div>' +
         '<div class="rcols">' + who([r.peddler], 'peddler') + who(r.prospects, 'prospect') + who(r.phils, 'phil') + '</div>' +
-        '<ol class="brief-steps"><li><b>Creation Lab</b> ' + mm(st.lab) + '<span>The Peddler invents; Prospects draw their characters.</span></li>' +
-        '<li><b>Fact-Finding</b> ' + mm(st.fact) + '<span>The Peddler interviews every Prospect. +$25 per secret uncovered.' + (v.settings.sleuth ? ' Investors play Secret Sleuth.' : '') + '</span></li>' +
-        '<li><b>PITCH!</b> ' + mm(st.pitch) + '<span>Each Prospect may SCREW! the Peddler once. Everyone else votes: nailed it or missed it?</span></li>' +
-        '<li><b>Objections + Close</b> ' + mm(st.close) + '<span>Final objections, then ask for the sale. Investors send funny objections to the Prospects.</span></li>' +
+        '<ol class="brief-steps"><li><b>Creation Lab</b> ' + mm(st.lab) + '<span>The Peddler invents; the Prospect draws their character.</span></li>' +
+        '<li><b>The Pitch</b> ' + mm(st.pitch) + '<span>The Peddler gets to know the Prospect and sells to them. Investors award ' + U.money(E.DETAIL_BONUS) + ' for every hidden fact learned; the secret is $25. The Prospect can SCREW! once.' + (v.settings.sleuth ? ' Investors also guess the secret.' : '') + '</span></li>' +
+        '<li><b>Objections + Close</b> ' + mm(st.close) + '<span>Final objections, then ask for the sale. Investors send funny objections to the Prospect.</span></li>' +
         '<li><b>Money Reveal</b><span>Investors score six categories, $0–$50 each.</span></li></ol></section>';
     }
 
@@ -156,19 +160,9 @@
       const r = v.round;
       return '<section class="lab"><div class="lab-ped">' + U.avatar(player(r.peddler), 'xl') + '<div><div class="eyebrow">Peddler</div><h2>' + esc(player(r.peddler).name) + ' is inventing' + '</h2>' +
         '<p>' + (r.labDone[r.peddler] ? '<span class="ok">Ready ✓</span>' : 'Choosing an Item and a Function, then sketching it.') + '</p></div></div>' +
-        '<div class="lab-pros"><h3>Prospects are drawing their characters</h3><div class="lab-grid">' + r.prospects.map((id) =>
+        '<div class="lab-pros"><h3>The Prospect is drawing their character</h3><div class="lab-grid">' + r.prospects.map((id) =>
           '<div class="lab-p" data-key="lp-' + esc(id) + '">' + U.avatar(player(id), 'lg') + '<span>' + esc(player(id).name) + '</span>' + (r.labDone[id] ? '<span class="ok">Ready ✓</span>' : '<span class="muted">Drawing…</span>') + '</div>').join('') + '</div></div>' +
         '<p class="center muted">Investors: you will score six categories, $0 to $50 each. Watch closely.</p></section>';
-    }
-
-    function fact(v) {
-      const r = v.round;
-      return '<section class="fact"><p class="lead">' + esc(player(r.peddler).name) + ', ask every Prospect at least one real question. Each hidden detail you learn earns <b>' + U.money(E.DETAIL_BONUS) + '</b>; each secret earns <b>$25</b>.</p>' +
-        (v.settings.sleuth ? '<p class="sleuth-call center"><b>Investors:</b> play Secret Sleuth on your phone. Guess each secret before the Peddler finds it for <b>+' + U.money(E.SLEUTH_BONUS) + '</b> apiece.</p>' : '') +
-        '<div class="pros">' + r.prospects.map((id) => '<article class="pro" data-key="pro-' + esc(id) + '">' + portrait(game.s.round, id) +
-          '<div class="pro-body"><h3>' + esc(r.profiles[id].name) + '</h3><p class="played-by">played by ' + esc(player(id).name) + '</p>' + profileFacts(r.profiles[id]) +
-          secretChip(r, id) + '</div></article>').join('') + '</div>' +
-        disputes(v) + '</section>';
     }
 
     function disputes(v) {
@@ -182,33 +176,34 @@
       }).join('') + '</div>';
     }
 
-    function screwRow(v) {
-      const r = v.round;
-      return '<div class="screw-row">' + r.prospects.map((id) => {
-        const pl = r.screwPlayed[id];
-        let st = '<span class="tag">SCREW! in hand</span>';
-        const sv = (r.screwVotes || {})[id], t = pl && pl.tally;
-        if (pl) st = '<span class="tag red">' + esc(pl.card.t) + ({ done: ' · nailed it', missed: ' · missed it', split: ' · split decision', cancelled: ' · NOT TODAY!' }[pl.result] || '') + (t ? ' (' + t.done + '–' + t.missed + ')' : '') + '</span>' +
-          (sv && sv.open && !(r.activeScrew && r.activeScrew.by === id) ? '<span class="tag">Table voting · ' + sv.n + ' of ' + sv.of + '</span>' : '');
-        return '<div class="mini-pro" data-key="mp-' + esc(id) + '">' + portrait(game.s.round, id, 'sm') + '<div><b>' + esc(r.profiles[id].name) + '</b>' + st + '</div></div>';
-      }).join('') + '</div>';
+    /** SCREW! status for a Prospect, shown under their portfolio. */
+    function screwTag(v, id) {
+      const r = v.round, pl = r.screwPlayed[id];
+      if (!pl) return '<div class="pf-tags"><span class="tag">SCREW! in hand</span></div>';
+      const sv = (r.screwVotes || {})[id], t = pl.tally;
+      return '<div class="pf-tags"><span class="tag red">' + esc(pl.card.t) + ({ done: ' · nailed it', missed: ' · missed it', split: ' · split decision', cancelled: ' · NOT TODAY!' }[pl.result] || '') + (t ? ' (' + t.done + '–' + t.missed + ')' : '') + '</span>' +
+        (sv && sv.open && !(r.activeScrew && r.activeScrew.by === id) ? '<span class="tag">Investors voting · ' + sv.n + ' of ' + sv.of + '</span>' : '') + '</div>';
     }
 
+    /** The Pitch: Prospect portfolio on the left, the Peddler's product on the right. */
     function pitch(v) {
-      return '<section class="pitch">' + inventionShow(v) + screwRow(v) + '</section>';
+      const r = v.round;
+      return '<section class="pitch duo">' +
+        '<div class="duo-left">' + r.prospects.map((id) => portfolio(v, id, screwTag(v, id))).join('') + '</div>' +
+        '<div class="duo-right">' + inventionShow(v) +
+        '<p class="duo-call"><b>' + esc(player(r.peddler).name) + ':</b> get to know ' + esc(r.prospects.map((id) => r.profiles[id].name).join(', ')) + ', then sell it to them. ' +
+        '<b>Investors:</b> tap each fact on your phone the moment the Peddler learns it (+' + U.money(E.DETAIL_BONUS) + ').' + (v.settings.sleuth ? ' And guess the secret!' : '') + '</p>' +
+        disputes(v) + '</div></section>';
     }
 
     function close(v) {
       const r = v.round;
-      const order = Object.keys(r.objections).sort((a, b) => r.objections[a] - r.objections[b]);
-      return '<section class="close">' + inventionShow(v, true) +
-        '<p class="lead">Prospects: raise one final objection each. ' + esc(player(r.peddler).name) + ': answer it and <b>ask for the sale</b>.</p>' +
-        '<div class="obj-row">' + r.prospects.map((id) => {
-          const n = order.indexOf(id);
-          return '<div class="obj' + (n >= 0 ? ' raised' : '') + '" data-key="ob-' + esc(id) + '">' + portrait(game.s.round, id, 'sm') + '<div><b>' + esc(r.profiles[id].name) + '</b>' +
-            (n >= 0 ? '<span class="tag red">Objection #' + (n + 1) + '</span>' : '<span class="tag">No objection yet</span>') +
-            (r.verdicts[id] ? '<span class="tag ok">Decided</span>' : '') + '</div></div>';
-        }).join('') + '</div></section>';
+      const tags = (id) => '<div class="pf-tags">' + (r.objections[id] ? '<span class="tag red">Objection raised</span>' : '<span class="tag">No objection yet</span>') +
+        (r.verdicts[id] ? '<span class="tag ok">Decided</span>' : '') + '</div>';
+      return '<section class="close duo">' +
+        '<div class="duo-left">' + r.prospects.map((id) => portfolio(v, id, tags(id))).join('') + '</div>' +
+        '<div class="duo-right">' + inventionShow(v, true) +
+        '<p class="duo-call">Prospect: raise one final objection. ' + esc(player(r.peddler).name) + ': answer it and <b>ask for the sale</b>.</p>' + disputes(v) + '</div></section>';
     }
 
     function scoring(v) {
@@ -218,7 +213,7 @@
         '</div>' +
         '<div class="phil-grid">' + r.phils.map((id) => '<div class="phil' + (r.scorecardsIn.indexOf(id) >= 0 ? ' in' : '') + '" data-key="ph-' + esc(id) + '">' + U.avatar(player(id), 'lg') + '<span>' + esc(player(id).name) + '</span>' +
           (r.scorecardsIn.indexOf(id) >= 0 ? '<span class="ok">Scored ✓</span>' : '<span class="muted">Scoring…</span>') + '</div>').join('') + '</div>' +
-        '<p class="center">Secrets discovered: <b>' + confirmed + ' of ' + r.prospects.length + '</b> (+' + U.money(confirmed * 25) + ' bonus)</p>' +
+        '<p class="center">' + (confirmed ? 'Secret discovered (+$25)' : 'The secret stayed hidden') + ' · Hidden facts found: <b>' + r.prospects.reduce((n, id) => n + (r.profiles[id].learned || 0), 0) + ' of ' + C.detailFields.length + '</b></p>' +
         disputes(v) +
         '<div class="actions"><button class="btn gold big" data-act="reveal">Reveal the money' + (r.scorecardsIn.length < r.phils.length ? ' now (' + r.scorecardsIn.length + '/' + r.phils.length + ' in)' : '') + '</button></div></section>';
     }
@@ -235,7 +230,7 @@
         (res.hints ? '<div class="plus">−</div><div><span>Hints used</span><b>' + U.money2(res.hintCost) + '</b><em>' + res.hints + ' × ' + U.money(E.HINT_COST) + '</em></div>' : '') + '<div class="plus">=</div>' +
         '<div class="price-tag big-tag"><span>Peddler earns</span><b>' + U.money2(res.total) + '</b></div></div>' +
         (res.setAside && res.setAside.length ? '<p class="set-aside">' + res.setAside.map((x) => 'One ' + U.money(x.total) + ' scorecard was set aside for being way ' + (x.side === 'low' ? 'below' : 'above') + ' the rest of the room.').join(' ') + '</p>' : '') + '</div>' +
-        '<div class="rv-side"><h3>Prospects</h3>' + r.prospects.map((id) => '<div class="rv-pro" data-key="rv-' + esc(id) + '">' + portrait(gr, id, 'sm') + '<div><span><b>' + esc(r.profiles[id].name) + '</b><span class="muted"> · ' + esc(player(id).name) + '</span></span>' +
+        '<div class="rv-side"><h3>The Prospect</h3>' + r.prospects.map((id) => '<div class="rv-pro" data-key="rv-' + esc(id) + '">' + portrait(gr, id, 'sm') + '<div><span><b>' + esc(r.profiles[id].name) + '</b><span class="muted"> · ' + esc(player(id).name) + '</span></span>' +
           '<p class="rv-secret">' + (r.secrets[id] === 'confirmed' ? '<span class="ok">Found:</span> ' : '<span class="muted">Hidden:</span> ') + esc(gr.profiles[id].secret) + '</p>' +
           '<span class="stamp ' + (r.verdicts[id] === 'buy' ? 'buy' : 'pass') + '">' + (r.verdicts[id] === 'buy' ? 'Would buy' : r.verdicts[id] === 'pass' ? 'Pass' : 'Undecided') + '</span>' +
           '<span class="award">Role-play award ' + U.money2(res.prospectAwards[id]) + '</span>' +
@@ -347,12 +342,12 @@
     }
 
     function dock(v) {
-      const timed = ['brief', 'lab', 'fact', 'pitch', 'close'].indexOf(v.phase) >= 0;
-      const nextLabel = { brief: 'Start the Creation Lab', lab: 'Skip to Fact-Finding', fact: 'Start the PITCH!', pitch: 'End pitch', close: 'Open scoring' }[v.phase];
+      const timed = ['brief', 'lab', 'pitch', 'close'].indexOf(v.phase) >= 0;
+      const nextLabel = { brief: 'Start the Creation Lab', lab: 'Start the Pitch', pitch: 'End pitch', close: 'Open scoring' }[v.phase];
       return '<div class="dock">' +
         (timed ? (v.hostPaused ? '<button class="btn gold" data-act="resume">Resume</button>' : '<button class="btn ghost" data-act="pause">Pause</button>') +
           '<button class="btn ghost" data-act="addTime">+30s</button><button class="btn ghost" data-act="next">' + nextLabel + ' ›</button>' : '') +
-        (v.round && ['fact', 'pitch', 'close', 'scoring'].indexOf(v.phase) >= 0 ? '<button class="btn ghost" data-act="rulings">Rulings</button>' : '') +
+        (v.round && ['pitch', 'close', 'scoring'].indexOf(v.phase) >= 0 ? '<button class="btn ghost" data-act="rulings">Rulings</button>' : '') +
         (v.phase === 'scoring' ? '<button class="btn gold" data-act="reveal">Reveal the money</button>' : '') +
         (v.phase === 'awards' ? '<button class="btn gold" data-act="finishAwards">Reveal the winners (' + v.awards.voted.length + ' voted)</button>' : '') +
         (v.phase === 'reveal' ? (v.roundsDone ? '<button class="btn ghost" data-act="nextRound">One more round</button><button class="btn gold" data-act="end">Final results</button>'
@@ -375,7 +370,7 @@
       const v = view = game.publicView();
       recvAt = Date.now();
       const ph = v.phase;
-      const body = { lobby, roles, brief, lab, fact, pitch, close, scoring, reveal, final, awards }[ph](v);
+      const body = { lobby, roles, brief, lab, pitch, close, scoring, reveal, final, awards }[ph](v);
       const timer = v.timer.main && !v.round?.activeScrew ? U.timerHTML(v.timer.main, recvAt, 'main-timer', true) : (v.timer.main ? U.timerHTML(v.timer.main, recvAt, 'main-timer paused-by-screw') : '');
       const html = '<div class="tv phase-' + ph + '">' +
         '<header class="tv-top">' + U.wordmark() +
@@ -442,7 +437,6 @@
       else if (a === 'peek') ui.peek[d.pid] = true;
       else if (a === 'mute') { U.muted = !U.muted; U.store.set('pitch.muted', U.muted); U.music.refresh(); }
       else if (a === 'music') U.music.setOn(!U.music.isOn());
-      else if (a === 'setProspects') host('settings', { maxProspects: Number(d.n) });
       else if (a === 'setRounds') host('settings', { rounds: Number(d.n) });
       render();
     });

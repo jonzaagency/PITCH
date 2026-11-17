@@ -75,6 +75,42 @@ section('Product-tied stories');
   ok(sleuthBad === 0, 'Secret Sleuth: real secret + 2 from similar products + 1 other');
 }
 
+section('One Prospect, everyone else invests');
+{
+  [3, 4, 6, 10, 20].forEach((n) => {
+    const g = game(n, 'lab'), r = g.s.round;
+    ok(r.prospects.length === 1 && r.phils.length === n - 2, n + ' players: 1 Peddler, 1 Prospect, ' + (n - 2) + ' Investors');
+  });
+  const g = new E.Game({ code: 'TEST' });
+  for (let i = 0; i < 6; i++) g.act('p' + i, { type: 'join', name: 'N' + i });
+  g.host('start');
+  const pr = g.s.proposal, extra = pr.phils[0];
+  g.host('setRole', { pid: extra, role: 'prospect' });
+  ok(g.s.proposal.prospects.length === 1 && g.s.proposal.prospects[0] === extra, 'making someone the Prospect swaps out the old one');
+  ok(!g.validateProposal(g.s.proposal), 'the table is still valid');
+}
+
+section('Fact-Finding is part of the pitch');
+{
+  const g = game(5, 'lab'), s = g.s;
+  g.host('next');
+  ok(s.phase === 'pitch' && s.timer.main.total === 300000, 'the Creation Lab goes straight to a 5-minute pitch');
+  g.host('next');
+  ok(s.phase === 'close', 'then Objections + Close');
+  const sv = JSON.parse(JSON.stringify(game(5, 'lab').s));
+  sv.settings.timers.fact = 150; sv.settings.timers.pitch = 90; sv.settings.maxProspects = 3; sv.phase = 'fact';
+  const g2 = new E.Game({ saved: { state: sv, assets: {} } });
+  ok(g2.s.phase === 'pitch' && g2.s.settings.timers.pitch === 300 && g2.s.settings.timers.fact === undefined && g2.s.settings.maxProspects === 1, 'an older saved game moves to the new pitch');
+}
+
+section('Relationship status variety');
+{
+  const g = new E.Game({ code: 'TEST' }), seen = [];
+  for (let i = 0; i < C.marital.length; i++) seen.push(g.makeProfile([]).marital);
+  ok(new Set(seen).size === C.marital.length, 'no repeats until every status has been dealt (' + C.marital.length + ')');
+  ok(!C.marital.some((m) => /third/i.test(m)) && C.marital.indexOf('Engaged') >= 0 && C.marital.indexOf('Recently divorced') >= 0 && C.marital.indexOf('Second marriage') >= 0, 'married, engaged, recently divorced, second marriage…');
+}
+
 section('Secret Sleuth + INSIDE TRADING');
 {
   const g = new E.Game({ code: 'TEST' }), s = g.s;
@@ -84,20 +120,20 @@ section('Secret Sleuth + INSIDE TRADING');
   ok(g.act('p0', { type: 'buy', card: 'insider' }).ok, 'buy INSIDE TRADING');
   let guard = 0; while (s.proposal.peddler !== 'p0' && guard++ < 200) g.host('shuffle');
   g.host('begin'); while (s.phase !== 'lab') g.host('next');
-  const r = s.round, phil = r.phils[0], pro = r.prospects[0], pro2 = r.prospects[1];
+  const r = s.round, phil = r.phils[0], phil2 = r.phils[1], pro = r.prospects[0];
   ok(!g.act(phil, { type: 'sleuthPick', target: pro, idx: 0 }).ok, 'no guessing during the Creation Lab');
   g.host('next');
-  ok(s.phase === 'fact' && g.privateView(phil).sleuth.length === r.prospects.length, 'Investors see options for every Prospect');
-  ok(!g.privateView('p0').sleuth && !g.privateView(pro).sleuth, 'Peddler and Prospects do not see the options');
+  ok(s.phase === 'pitch' && g.privateView(phil).sleuth.length === 1, 'Investors see the options during the pitch');
+  ok(!g.privateView('p0').sleuth && !g.privateView(pro).sleuth, 'Peddler and Prospect do not see the options');
   ok(!g.act('p0', { type: 'nepo', card: 'insider', phil, target: pro }).ok && s.players.p0.wallet.inventory.insider === 1, 'peek fails before a guess, card kept');
   const right = r.sleuth.answer[pro];
   g.act(phil, { type: 'sleuthPick', target: pro, idx: (right + 1) % 4 });
   ok(g.act(phil, { type: 'sleuthPick', target: pro, idx: right }).ok, 'a guess can be changed');
   ok(g.act('p0', { type: 'nepo', card: 'insider', phil, target: pro }).ok && g.privateView('p0').insider.text === r.profiles[pro].secret, 'INSIDE TRADING shows the guess to the Peddler');
-  g.act(pro2, { type: 'secretAnswer', yes: true });
-  ok(!g.act(phil, { type: 'sleuthPick', target: pro2, idx: 0 }).ok, 'no guessing a secret that is already out');
+  g.act(pro, { type: 'secretAnswer', yes: true });
+  ok(!g.act(phil2, { type: 'sleuthPick', target: pro, idx: 0 }).ok, 'no guessing a secret that is already out');
   g.host('next');
-  ok(!g.act(phil, { type: 'sleuthPick', target: pro, idx: 0 }).ok, 'guesses lock after Fact-Finding');
+  ok(!g.act(phil, { type: 'sleuthPick', target: pro, idx: 0 }).ok, 'guesses lock when the pitch ends');
   while (s.phase !== 'scoring') g.host('next');
   const before = s.players[phil].session.earned;
   r.phils.forEach((id) => g.act(id, { type: 'scorecard', cats: {}, prospects: {} }));
@@ -113,17 +149,24 @@ section('Prospects award their own secret');
 
 section('Hidden Prospect details');
 {
-  const g = game(6, 'fact'), s = g.s, r = s.round, pro = r.prospects[0], pr = r.profiles[pro];
+  const g = game(6, 'pitch'), s = g.s, r = s.round, pro = r.prospects[0], pr = r.profiles[pro], inv = r.phils[0];
   const pub = () => g.publicView().round.profiles[pro];
   ok(pub().name === pr.name.split(' ')[0] && pub().background === pr.background, 'public: first name and general situation');
   ok(C.detailFields.every((f) => pub()[f.id] === undefined), 'public: age, status, family, job, motivation, objection all hidden');
   ok(pr.motive && pr.concern, 'every Prospect has a buying motivation and an objection');
-  ok(!g.act(r.peddler, { type: 'learned', field: 'age' }).ok, 'only the Prospect can tick off details');
-  ok(g.act(pro, { type: 'learned', field: 'age' }).ok && pub().age === pr.age && pub().learned === 1, 'ticking a detail reveals it on screen');
-  g.act(pro, { type: 'learned', field: 'job' }); g.act(pro, { type: 'learned', field: 'motive' });
-  g.act(pro, { type: 'learned', field: 'motive', on: false });
-  ok(pub().motive === undefined && pub().learned === 2, 'a mis-tap can be unticked');
-  ok(!g.act(pro, { type: 'learned', field: 'shoeSize' }).ok, 'unknown details are rejected');
+  ok(!g.act(r.peddler, { type: 'learned', field: 'age' }).ok && !g.act(pro, { type: 'learned', field: 'age' }).ok, 'the Peddler and the Prospect cannot award details');
+  const file = g.privateView(inv).prospectFiles;
+  ok(file && file.length === 1 && file[0].details.length === C.detailFields.length && file[0].details.find((d) => d.id === 'age').text === String(pr.age), 'Investors see the Prospect’s hidden facts');
+  ok(JSON.stringify(file).indexOf(pr.secret) < 0, '…but not the secret');
+  ok(!g.privateView(r.peddler).prospectFiles && !g.privateView(pro).prospectFiles, 'the Peddler and the Prospect do not get the file');
+  ok(g.act(inv, { type: 'learned', target: pro, field: 'age' }).ok && pub().age === pr.age && pub().learned === 1, 'an Investor awards a detail and it shows on screen');
+  g.act(r.phils[1], { type: 'learned', target: pro, field: 'age' });
+  ok(pub().learned === 1, 'two Investors tapping the same fact count it once');
+  g.act(inv, { type: 'learned', target: pro, field: 'job' }); g.act(inv, { type: 'learned', target: pro, field: 'motive' });
+  g.act(inv, { type: 'learned', target: pro, field: 'motive', on: false });
+  ok(pub().motive === undefined && pub().learned === 2, 'a mis-tap can be taken back');
+  ok(g.privateView(pro).learned.age && g.privateView(pro).learned.job, 'the Prospect sees what the Peddler has learned');
+  ok(!g.act(inv, { type: 'learned', target: pro, field: 'shoeSize' }).ok, 'unknown details are rejected');
   while (s.phase !== 'scoring') g.host('next');
   const before = s.players[r.peddler].session.earned;
   r.phils.forEach((id) => g.act(id, { type: 'scorecard', cats: {}, prospects: {} }));
@@ -135,20 +178,19 @@ section('Hidden Prospect details');
 
 section('Paid hints');
 {
-  const g = game(6, 'fact'), s = g.s, r = s.round, [a, b] = r.prospects;
+  const g = game(6, 'pitch'), s = g.s, r = s.round, [a] = r.prospects;
   const pub = (id) => g.publicView().round.profiles[id];
   ok(pub(a).ask === undefined && !pub(a).hinted, 'the hint question is hidden until bought');
   ok(!g.act(a, { type: 'hint', target: a }).ok, 'only the Peddler can buy hints');
   ok(g.act(r.peddler, { type: 'hint', target: a }).ok && pub(a).ask === r.profiles[a].ask && pub(a).hinted, 'buying a hint reveals that Prospect’s question');
-  ok(pub(b).ask === undefined, 'other Prospects stay hidden');
   g.act(r.peddler, { type: 'hint', target: a });
-  g.act(r.prospects[0], { type: 'learned', field: 'age' });
+  g.act(r.phils[0], { type: 'learned', target: a, field: 'age' });
   while (s.phase !== 'scoring') g.host('next');
   r.phils.forEach((id) => g.act(id, { type: 'scorecard', cats: { invention: 40, ingenuity: 40, factFinding: 40, objections: 40, pitch: 40, close: 40 }, prospects: {} }));
   if (s.phase === 'scoring') g.host('reveal');
   ok(r.results.hints === 1 && r.results.hintCost === E.HINT_COST, 'one hint (bought twice) costs $' + E.HINT_COST + ' once');
   ok(r.results.total === Math.round((r.results.base + r.results.bonus + r.results.detailBonus - r.results.hintCost) * 100) / 100, 'the hint comes off the Peddler’s total');
-  const g2 = game(6, 'fact'), r2 = g2.s.round;
+  const g2 = game(6, 'pitch'), r2 = g2.s.round;
   r2.prospects.forEach((id) => g2.act(r2.peddler, { type: 'hint', target: id }));
   while (g2.s.phase !== 'scoring') g2.host('next');
   g2.host('reveal');
@@ -158,29 +200,32 @@ section('Paid hints');
 section('SCREW! voting');
 {
   const g = game(7, 'pitch'), s = g.s, r = s.round;
-  const [a, b, c] = r.prospects;
-  ok(g.act(a, { type: 'screw', idx: 0 }).ok, 'a Prospect plays a SCREW!');
-  const voters = r.phils.concat(r.prospects).filter((id) => id !== a);
-  ok(voters.every((id) => (g.privateView(id).screwVotes || []).some((x) => x.by === a)), 'Investors and other Prospects get the vote');
-  ok(!(g.privateView(a).screwVotes || []).length && !g.privateView(r.peddler).screwVotes, 'the player who played it and the Peddler do not vote');
+  const [a] = r.prospects;
+  ok(g.act(a, { type: 'screw', idx: 0 }).ok, 'the Prospect plays a SCREW!');
+  ok(!g.act(a, { type: 'screw', idx: 1 }).ok, 'only one SCREW! per round');
+  const voters = r.phils;
+  ok(voters.every((id) => (g.privateView(id).screwVotes || []).some((x) => x.by === a)), 'the Investors get the vote');
+  ok(!(g.privateView(a).screwVotes || []).length && !g.privateView(r.peddler).screwVotes, 'the Prospect and the Peddler do not vote');
   ok(!g.act(voters[0], { type: 'screwVote', by: a, result: 'done' }).ok, 'no voting while the Peddler responds');
   ok(g.act(r.peddler, { type: 'screwDone' }).ok && !r.activeScrew, 'the Peddler can end the response early');
   voters.forEach((id, i) => g.act(id, { type: 'screwVote', by: a, result: i === 0 ? 'missed' : 'done' }));
   ok(r.screwPlayed[a].result === 'done' && r.screwPlayed[a].tally.done === voters.length - 1, 'majority decides');
-  g.act(b, { type: 'screw', idx: 0 }); g.host('screwEnd');
-  s.players[r.peddler].wallet.inventory.notToday = 1;
-  g.act(c, { type: 'screw', idx: 0 });
-  ok(g.act(r.peddler, { type: 'nepo', card: 'notToday' }).ok && r.screwPlayed[c].result === 'cancelled' && !r.screwVotes[c], 'NOT TODAY! cancels the vote');
-  g.host('next');
-  ok(!r.screwVotes[b].open, 'open votes close when the pitch ends');
   ok(!g.publicView().round.screwVotes[a].votes, 'the TV sees counts, not who voted what');
+  const g2 = game(7, 'pitch'), r2 = g2.s.round, [b] = r2.prospects;
+  g2.s.players[r2.peddler].wallet.inventory.notToday = 1;
+  g2.act(b, { type: 'screw', idx: 0 });
+  ok(g2.act(r2.peddler, { type: 'nepo', card: 'notToday' }).ok && r2.screwPlayed[b].result === 'cancelled' && !r2.screwVotes[b], 'NOT TODAY! cancels the vote');
+  const g3 = game(7, 'pitch'), r3 = g3.s.round, [c] = r3.prospects;
+  g3.act(c, { type: 'screw', idx: 0 }); g3.host('screwEnd');
+  g3.host('next');
+  ok(!r3.screwVotes[c].open, 'open votes close when the pitch ends');
 }
 
 section('Peddler moves the round on');
 {
   const g = game(6, 'brief'), s = g.s, r = s.round;
   ok(!g.act(r.prospects[0], { type: 'peddlerNext' }).ok, 'a Prospect cannot advance');
-  ['lab', 'fact', 'pitch', 'close', 'scoring'].forEach((want) => ok(g.act(r.peddler, { type: 'peddlerNext' }).ok && s.phase === want, 'Peddler advances to ' + want));
+  ['lab', 'pitch', 'close', 'scoring'].forEach((want) => ok(g.act(r.peddler, { type: 'peddlerNext' }).ok && s.phase === want, 'Peddler advances to ' + want));
   ok(!g.act(r.peddler, { type: 'peddlerNext' }).ok, 'the Peddler cannot reveal the money');
 }
 
@@ -217,7 +262,7 @@ if (E.AUTO_NEXT_SEC) {
     if (s.phase === 'scoring') g.host('reveal');
   };
   let clock = Date.now();
-  const g = game(6, 'fact', (g) => { g.now = () => clock; });
+  const g = game(6, 'pitch', (g) => { g.now = () => clock; });
   const s = g.s;
   toReveal(g);
   ok(s.phase === 'reveal' && s.timer.main && g.remaining(s.timer.main) === E.AUTO_NEXT_SEC * 1000, 'the Money Reveal shows a ' + E.AUTO_NEXT_SEC + '-second countdown');
@@ -230,13 +275,13 @@ if (E.AUTO_NEXT_SEC) {
   g.host('resume'); clock += 15001; g.tick();
   ok(s.round.n === n + 1 && s.round.peddler !== oldPeddler && ['brief', 'lab'].indexOf(s.phase) >= 0, 'the next round starts by itself with a new Peddler');
   ok(saved === 1, 'Hall of Fame votes are saved before the round is replaced');
-  const g2 = game(6, 'fact');
+  const g2 = game(6, 'pitch');
   toReveal(g2);
   ok(g2.host('startNow').ok && g2.s.round.n === 2, 'the Host can start the next round right away');
-  const g3 = game(6, 'fact', (g) => g.host('settings', { autoNext: false }));
+  const g3 = game(6, 'pitch', (g) => g.host('settings', { autoNext: false }));
   toReveal(g3);
   ok(!g3.s.timer.main, 'the countdown can be turned off in Settings');
-  const g4 = game(6, 'fact', (g) => g.host('settings', { rounds: 1 }));
+  const g4 = game(6, 'pitch', (g) => g.host('settings', { rounds: 1 }));
   toReveal(g4);
   ok(!g4.s.timer.main && g4.s.phase === 'reveal', 'no countdown after the last planned round');
 } else console.log('  (not built yet)');

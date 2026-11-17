@@ -9,8 +9,8 @@
   E.ROLES = ['peddler', 'prospect', 'phil'];
   E.ROLE_NAMES = { peddler: 'Peddler', prospect: 'Prospect', phil: 'Investor', sitout: 'Sitting out' };
   E.DEFAULT_SETTINGS = {
-    timers: { brief: 45, lab: 120, fact: 150, pitch: 90, close: 45, screw: 15 }, // seconds (rulebook section 5; brief = role briefing)
-    maxProspects: 3,  // Host may reduce to 1 or 2
+    timers: { brief: 45, lab: 120, pitch: 300, close: 45, screw: 15 }, // seconds (brief = role briefing; the pitch includes fact-finding)
+    maxProspects: 1,  // one Prospect per round: everyone else is an Investor
     rounds: 0,        // 0 = keep going until everyone who wants to has pitched once
     autoAdvance: true, // move on automatically when a timer runs out or everyone is done
     sleuth: true,     // Secret Sleuth: Investors pick hidden secrets for bonus money
@@ -25,7 +25,7 @@
   E.SLEUTH_OPTIONS = 4; // the real secret plus 3 decoys
   E.HAND_SIZE = 6;             // Item and Function cards the Peddler chooses from
   E.HINT_COST = 10;            // a Peddler hint (the Prospect's "Try:" question) comes off their round earnings
-  E.DETAIL_BONUS = 5;          // per hidden Prospect detail the Peddler learns
+  E.DETAIL_BONUS = 5;          // per hidden Prospect detail the Peddler learns (an Investor awards it)
   E.OBJECT_MAX = 3;            // Investor objections sent per round
   E.OBJECT_COOLDOWN_MS = 20000; // at least this long between Investor objections
   E.CATEGORY_MAX = 50;
@@ -36,8 +36,9 @@
     '#A3E048', '#6C9BFF', '#FFD166', '#E07AFF', '#3DDC97', '#FF6F91', '#8FD3FF', '#FFB4A2',
     '#B8F2E6', '#F9C80E', '#9EE493', '#FFA69E'];
 
-  const TIMED_PHASES = { brief: 'brief', lab: 'lab', fact: 'fact', pitch: 'pitch', close: 'close' };
-  const NEXT_PHASE = { brief: 'lab', lab: 'fact', fact: 'pitch', pitch: 'close', close: 'scoring' };
+  const TIMED_PHASES = { brief: 'brief', lab: 'lab', pitch: 'pitch', close: 'close' };
+  const NEXT_PHASE = { brief: 'lab', lab: 'pitch', pitch: 'close', close: 'scoring' };
+  E.MAX_PROSPECTS = 1;
 
   const round2 = (x) => Math.round(x * 100) / 100;
   const clampInt = (v, lo, hi) => { v = Math.round(Number(v) || 0); return Math.max(lo, Math.min(hi, v)); };
@@ -100,8 +101,8 @@
     return { scorecards: n, submitted: scorecards.length, setAside, totals, catAvg, base, bonus, secrets: secretsConfirmed, total: round2(base + bonus), prospectAwards };
   };
 
-  /** Default Prospect count from the rulebook table: 3 players -> 1, 4 -> 2, 5+ -> 3. */
-  E.defaultProspects = (n) => (n <= 3 ? 1 : n === 4 ? 2 : 3);
+  /** One Prospect per round, however many players: everyone else is an Investor. */
+  E.defaultProspects = () => E.MAX_PROSPECTS;
 
   function emptyWallet() { return { career: 0, cash: 0, inventory: { notToday: 0, knowPeople: 0, daddy: 0, insider: 0 } }; }
   function cleanWallet(w) {
@@ -129,6 +130,11 @@
         if (this.s.settings.briefing === undefined) this.s.settings.briefing = true;
         if (this.s.settings.awards === undefined) this.s.settings.awards = true;
         if (this.s.settings.timers.brief === undefined) this.s.settings.timers.brief = 45;
+        // older saves: Fact-Finding is now part of the pitch, and there is one Prospect per round
+        const tm = this.s.settings.timers;
+        if (tm.fact !== undefined) { delete tm.fact; tm.pitch = E.DEFAULT_SETTINGS.timers.pitch; }
+        this.s.settings.maxProspects = E.MAX_PROSPECTS;
+        if (this.s.phase === 'fact') this.s.phase = 'pitch';
         // timers were frozen when saved; leave them paused so the Host can resume
         this.s.hostPaused = this.s.timer && this.s.timer.main ? true : this.s.hostPaused;
         Object.values(this.s.players).forEach((p) => { p.connected = false; });
@@ -335,7 +341,7 @@
       if (!pr) return 'Not enough eligible players yet.';
       const live = (id) => s.players[id] && s.players[id].connected;
       if (!live(pr.peddler) || !this.eligible(s.players[pr.peddler], 'peddler')) return 'Choose a Peddler.';
-      if (pr.prospects.length < 1 || pr.prospects.length > 3) return 'You need 1 to 3 Prospects.';
+      if (pr.prospects.length !== E.MAX_PROSPECTS) return 'You need one Prospect.';
       if (pr.prospects.some((id) => !live(id) || !this.eligible(s.players[id], 'prospect'))) return 'A Prospect is not available.';
       if (pr.phils.filter(live).length < 1) return 'You need at least one Investor.';
       return null;
@@ -377,7 +383,7 @@
         if (old) { strip(old); (this.eligible(s.players[old], 'phil') ? pr.phils : pr.sitOut).push(old); }
         pr.peddler = pid;
       } else if (role === 'prospect') {
-        if (pr.prospects.length >= 3) { const bump = pr.prospects.shift(); (this.eligible(s.players[bump], 'phil') ? pr.phils : pr.sitOut).push(bump); }
+        if (pr.prospects.length >= E.MAX_PROSPECTS) { const bump = pr.prospects.shift(); (this.eligible(s.players[bump], 'phil') ? pr.phils : pr.sitOut).push(bump); }
         pr.prospects.push(pid);
       } else if (role === 'phil') pr.phils.push(pid);
       else pr.sitOut.push(pid);
@@ -408,7 +414,7 @@
         if (takenNames.indexOf(name) < 0) break;
       }
       takenNames.push(name);
-      const marital = this.pick(C.marital);
+      const marital = this.draw('marital', C.marital, 1)[0]; // no repeats until the list runs out
       return {
         name,
         age: 21 + Math.floor(this.rand() * 64),
@@ -484,15 +490,15 @@
       s.phase = phase;
       s.expired = false;
       s.timer.screw = null;
-      if (s.round) { s.round.activeScrew = null; if (phase !== 'fact' && phase !== 'pitch' && phase !== 'close') s.round.daddy = null; }
+      if (s.round) { s.round.activeScrew = null; if (phase !== 'pitch' && phase !== 'close') s.round.daddy = null; }
       if (s.round && phase !== 'pitch') this.closeScrewVotes();
       s.timer.main = TIMED_PHASES[phase] ? this.newTimer(s.settings.timers[TIMED_PHASES[phase]]) : null;
-      if (phase === 'fact') { this.finalizeInvention(); this.setupSleuth(); }
+      if (phase === 'pitch') { this.finalizeInvention(); this.setupSleuth(); }
       if (phase === 'close' && s.round && !s.round.objectBoard) this.newObjectBoard();
       if (phase === 'scoring') this.checkAllDone();
     }
 
-    /** Secret Sleuth (house rule): during Fact-Finding, each Investor sees 4 possible secrets
+    /** Secret Sleuth (house rule): during the pitch, each Investor sees 4 possible secrets
      *  for every Prospect and picks one while listening. A pick locks once that secret is uncovered. */
     setupSleuth() {
       const s = this.s, r = s.round;
@@ -550,7 +556,7 @@
         if (need.length && need.every((id) => r.briefed[id])) { this.log('info', 'Everyone is ready. Creation Lab!'); this.enterPhase('lab'); }
       } else if (s.phase === 'lab') {
         const need = [r.peddler].concat(r.prospects).filter((id) => s.players[id].connected);
-        if (need.length && need.every((id) => r.labDone[id])) { this.log('info', 'Everyone is ready.'); this.enterPhase('fact'); }
+        if (need.length && need.every((id) => r.labDone[id])) { this.log('info', 'Everyone is ready.'); this.enterPhase('pitch'); }
       } else if (s.phase === 'scoring') {
         const need = r.phils.filter((id) => s.players[id] && s.players[id].connected);
         if (need.length && need.every((id) => r.scorecards[id])) this.reveal();
@@ -563,7 +569,7 @@
       const cards = r.phils.map((id) => r.scorecards[id]).filter(Boolean);
       const confirmed = r.prospects.filter((id) => r.secrets[id] === 'confirmed').length;
       const res = E.computeEarnings(cards, confirmed, r.prospects, { trim: s.settings.trimOutliers });
-      // +$5 for every hidden detail the Prospects ticked off
+      // +$5 for every hidden detail the Investors ticked off
       res.details = r.prospects.reduce((n, id) => n + Object.keys((r.learned || {})[id] || {}).length, 0);
       res.detailBonus = res.details * E.DETAIL_BONUS;
       // −$10 for every hint the Peddler bought (earnings never go below $0)
@@ -580,7 +586,7 @@
       };
       pay(r.peddler, res.total);
       r.prospects.forEach((id) => pay(id, res.prospectAwards[id]));
-      // Secret Sleuth payouts: every pick made during Fact-Finding counts, even if the Peddler found that secret later.
+      // Secret Sleuth payouts: every pick made during the pitch counts, even if the Peddler found that secret later.
       if (r.sleuth) {
         const targets = r.sleuth.targets;
         const byPhil = {}, byTarget = {};
@@ -768,7 +774,7 @@
       const data = String(a.data || '');
       if (!/^data:image\/(png|jpeg|webp);base64,/.test(data) || data.length > 600000) return { ok: false, error: 'Drawing could not be saved.' };
       // accept drawings during the lab and a few seconds after it closes (late auto-submits)
-      const late = s.phase === 'fact' && s.timer.main && (s.timer.main.total - this.remaining(s.timer.main)) < 8000;
+      const late = s.phase === 'pitch' && s.timer.main && (s.timer.main.total - this.remaining(s.timer.main)) < 8000;
       if (s.phase !== 'lab' && !late) return { ok: false, error: 'The Creation Lab is closed.' };
       let id;
       if (r.peddler === p.id) {
@@ -805,12 +811,12 @@
       return { ok: true };
     }
 
-    secretPhase() { return ['fact', 'pitch', 'close'].indexOf(this.s.phase) >= 0; }
+    secretPhase() { return ['pitch', 'close'].indexOf(this.s.phase) >= 0; }
 
     a_secretClaim(p, a) {
       const s = this.s, r = s.round;
       if (!r || r.peddler !== p.id) return { ok: false, error: 'Only the Peddler can claim a secret.' };
-      if (!this.secretPhase()) return { ok: false, error: 'Claim secrets during fact-finding.' };
+      if (!this.secretPhase()) return { ok: false, error: 'Claim secrets during the pitch.' };
       const t = a.target;
       if (r.prospects.indexOf(t) < 0) return { ok: false, error: 'Pick a Prospect.' };
       if (r.secrets[t] === 'confirmed') return { ok: false, error: 'Already discovered.' };
@@ -820,17 +826,18 @@
       return { ok: true };
     }
 
-    /** The Prospect ticks off a hidden detail the Peddler found out. It appears on screen, +$5 each. */
+    /** An Investor ticks off a hidden Prospect detail the Peddler found out. It appears on screen, +$5 each. */
     a_learned(p, a) {
       const r = this.s.round;
-      if (!r || r.prospects.indexOf(p.id) < 0) return { ok: false, error: 'Only Prospects tick off details.' };
-      if (!this.secretPhase()) return { ok: false, error: 'Tick off details from Fact-Finding through the close.' };
+      if (!r || r.phils.indexOf(p.id) < 0) return { ok: false, error: 'Only Investors award details.' };
+      if (!this.secretPhase()) return { ok: false, error: 'Award details during the pitch and the close.' };
       if (!C.detailFields.some((f) => f.id === a.field)) return { ok: false, error: 'Unknown detail.' };
-      const mine = r.learned[p.id] = r.learned[p.id] || {};
+      const target = a.target && r.prospects.indexOf(a.target) >= 0 ? a.target : r.prospects[0];
+      const mine = r.learned[target] = r.learned[target] || {};
       if (a.on === false) delete mine[a.field];
       else if (!mine[a.field]) {
-        mine[a.field] = true;
-        this.log('learn', this.s.players[r.peddler].name + ' learned ' + r.profiles[p.id].name.split(' ')[0] + '’s ' + C.detailFields.find((f) => f.id === a.field).name.toLowerCase() + '. +$' + E.DETAIL_BONUS);
+        mine[a.field] = p.id; // who awarded it
+        this.log('learn', this.s.players[r.peddler].name + ' learned ' + r.profiles[target].name.split(' ')[0] + '’s ' + C.detailFields.find((f) => f.id === a.field).name.toLowerCase() + '! +$' + E.DETAIL_BONUS + ' from ' + p.name);
       }
       return { ok: true };
     }
@@ -839,7 +846,7 @@
     a_hint(p, a) {
       const s = this.s, r = s.round;
       if (!r || r.peddler !== p.id) return { ok: false, error: 'Only the Peddler can buy hints.' };
-      if (['fact', 'pitch', 'close'].indexOf(s.phase) < 0) return { ok: false, error: 'Hints are for Fact-Finding through the close.' };
+      if (['pitch', 'close'].indexOf(s.phase) < 0) return { ok: false, error: 'Hints are for the pitch and the close.' };
       if (r.prospects.indexOf(a.target) < 0) return { ok: false, error: 'Pick a Prospect.' };
       r.hints = r.hints || {};
       if (r.hints[a.target]) return { ok: true };
@@ -904,7 +911,7 @@
     a_peddlerNext(p) {
       const s = this.s, r = s.round;
       if (!r || r.peddler !== p.id) return { ok: false, error: 'Only the Peddler can do that.' };
-      if (['brief', 'lab', 'fact', 'pitch', 'close'].indexOf(s.phase) < 0) return { ok: false, error: 'The Host takes it from here.' };
+      if (['brief', 'lab', 'pitch', 'close'].indexOf(s.phase) < 0) return { ok: false, error: 'The Host takes it from here.' };
       if (r.activeScrew) return { ok: false, error: 'Finish the SCREW! first.' };
       this.log('info', p.name + ' moved the game on.');
       return this.advance();
@@ -994,7 +1001,7 @@
     a_sleuthPick(p, a) {
       const s = this.s, r = s.round;
       if (!r || r.phils.indexOf(p.id) < 0) return { ok: false, error: 'Only Investors play Secret Sleuth.' };
-      if (!r.sleuth || s.phase !== 'fact') return { ok: false, error: 'Secret Sleuth guesses close when Fact-Finding ends.' };
+      if (!r.sleuth || s.phase !== 'pitch') return { ok: false, error: 'Secret Sleuth guesses close when the pitch ends.' };
       if (r.sleuth.targets.indexOf(a.target) < 0) return { ok: false, error: 'Pick a Prospect.' };
       if (r.secrets[a.target] === 'confirmed') return { ok: false, error: 'That secret is already out.' };
       (r.sleuthPicks[p.id] = r.sleuthPicks[p.id] || {})[a.target] = clampInt(a.idx, 0, E.SLEUTH_OPTIONS - 1);
@@ -1014,7 +1021,7 @@
         this.endScrew('cancelled');
         this.log('nepo', 'NOT TODAY! ' + p.name + ' cancels the SCREW!', { big: true });
       } else if (card.id === 'knowPeople') {
-        if (s.phase !== 'lab') return { ok: false, error: 'I KNOW PEOPLE is used before fact-finding.' };
+        if (s.phase !== 'lab') return { ok: false, error: 'I KNOW PEOPLE is used during the Creation Lab.' };
         const out = a.target, inn = a.replacement;
         const idx = r.prospects.indexOf(out);
         const np = s.players[inn];
@@ -1039,13 +1046,13 @@
         r.nepoUsed = { card: card.id, target: out, replacement: inn };
         this.log('nepo', 'I KNOW PEOPLE! ' + np.name + ' replaces ' + s.players[out].name + ' as ' + r.profiles[inn].name + '.', { big: true });
       } else if (card.id === 'daddy') {
-        if (['fact', 'pitch', 'close'].indexOf(s.phase) < 0) return { ok: false, error: 'Use DADDY MADE A CALL between fact-finding and the close.' };
+        if (['pitch', 'close'].indexOf(s.phase) < 0) return { ok: false, error: 'Use DADDY MADE A CALL during the pitch or the close.' };
         if (r.prospects.indexOf(a.target) < 0) return { ok: false, error: 'Pick a Prospect.' };
         r.daddy = { target: a.target, text: this.pick(C.daddyChallenges), at: this.now() };
         r.nepoUsed = { card: card.id, target: a.target };
         this.log('nepo', 'DADDY MADE A CALL! ' + r.profiles[a.target].name + ': ' + r.daddy.text, { big: true });
       } else if (card.id === 'insider') {
-        if (s.phase !== 'fact') return { ok: false, error: 'Use INSIDE TRADING during Fact-Finding.' };
+        if (s.phase !== 'pitch') return { ok: false, error: 'Use INSIDE TRADING during the pitch.' };
         if (!r.sleuth) return { ok: false, error: 'Secret Sleuth is turned off this game.' };
         if (r.phils.indexOf(a.phil) < 0 || r.prospects.indexOf(a.target) < 0) return { ok: false, error: 'Pick an Investor and a Prospect.' };
         const pick = (r.sleuthPicks[a.phil] || {})[a.target];
@@ -1166,7 +1173,7 @@
     h_settings(a) {
       const st = this.s.settings;
       if (a.timers) Object.keys(st.timers).forEach((k) => { if (a.timers[k] != null) st.timers[k] = clampInt(a.timers[k], 5, 900); });
-      if (a.maxProspects != null) st.maxProspects = clampInt(a.maxProspects, 1, 3);
+      if (a.maxProspects != null) st.maxProspects = E.MAX_PROSPECTS;
       if (a.rounds != null) st.rounds = clampInt(a.rounds, 0, 50);
       if (a.autoAdvance != null) st.autoAdvance = !!a.autoAdvance;
       if (a.sleuth != null) st.sleuth = !!a.sleuth;
@@ -1249,7 +1256,7 @@
     h_startNow() { return this.autoNextRound(); }
     h_end() {
       const s = this.s;
-      if (s.round && ['brief', 'lab', 'fact', 'pitch', 'close', 'scoring'].indexOf(s.phase) >= 0) return { ok: false, error: 'Finish the round (or reveal the money) first.' };
+      if (s.round && ['brief', 'lab', 'pitch', 'close', 'scoring'].indexOf(s.phase) >= 0) return { ok: false, error: 'Finish the round (or reveal the money) first.' };
       if (s.phase === 'final') return { ok: true };
       s.timer.main = null; s.timer.screw = null;
       if (s.phase !== 'awards' && s.settings.awards && this.startAwards()) return { ok: true };
@@ -1377,8 +1384,15 @@
       }
       if (r && role === 'phil') {
         out.scorecard = r.scorecards[pid] || null;
-        if (r.sleuth && ['fact', 'pitch', 'close', 'scoring', 'reveal'].indexOf(s.phase) >= 0) {
-          out.sleuth = r.sleuth.targets.map((id) => ({ pid: id, name: r.profiles[id].name.split(' ')[0], options: r.sleuth.options[id], locked: s.phase !== 'fact' || r.secrets[id] === 'confirmed' }));
+        // the Investors hold the Prospect's file so they can award each detail the Peddler finds out (not the secret)
+        if (['pitch', 'close', 'scoring'].indexOf(s.phase) >= 0) {
+          out.prospectFiles = r.prospects.map((id) => {
+            const pr = r.profiles[id];
+            return { pid: id, name: pr.name, details: C.detailFields.map((f) => ({ id: f.id, name: f.name, text: C.detailText(f.id, pr) })), learned: Object.assign({}, r.learned[id] || {}) };
+          });
+        }
+        if (r.sleuth && ['pitch', 'close', 'scoring', 'reveal'].indexOf(s.phase) >= 0) {
+          out.sleuth = r.sleuth.targets.map((id) => ({ pid: id, name: r.profiles[id].name.split(' ')[0], options: r.sleuth.options[id], locked: s.phase !== 'pitch' || r.secrets[id] === 'confirmed' }));
           out.sleuthPicks = r.sleuthPicks[pid] || {};
           if (s.phase === 'reveal') {
             out.sleuthAnswers = r.sleuth.answer;

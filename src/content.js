@@ -58,7 +58,9 @@
     'Thistlewood', 'Underhill', 'Winterbottom', 'Zamora', 'Abernathy', 'Bellweather', 'Crumb',
     'Dumont', 'Esposito', 'Goldfarb', 'Honeycutt', 'Iyer', 'Jablonski', 'Krumholz', 'Larkspur'
   ];
-  C.marital = ['Single', 'Married', 'Divorced', 'Widowed', 'Engaged', "It's complicated", 'Recently remarried', 'Married (third time)'];
+  // dealt without repeats, so a night of Prospects gets a real mix
+  C.marital = ['Single', 'Married', 'Engaged', 'Recently divorced', 'Second marriage', 'Newlywed', 'Dating someone new',
+    'Happily single', 'Widowed', 'Separated', "It's complicated", 'Married 25 years'];
   C.occupations = [
     'Dental hygienist', 'Competitive eater', 'Middle school vice principal', 'Long-haul trucker',
     'Wedding DJ', 'Beekeeper', 'Accountant', 'Mall Santa (seasonal)', 'Park ranger', 'Night-shift nurse',
@@ -627,6 +629,15 @@
     { id: 'age', name: 'Exact age' }, { id: 'marital', name: 'Relationship status' }, { id: 'kids', name: 'Children and family' },
     { id: 'job', name: 'Occupation' }, { id: 'motive', name: 'Buying motivation' }, { id: 'concern', name: 'Biggest objection' }
   ];
+  // How a Prospect plays each hidden detail: shown on their swipe cards.
+  C.detailTips = {
+    age: { q: 'How old are you?', tips: ['Don’t just say the number. Hint at it: the year you graduated, your back pain, the music you love.', 'If they guess close, act flattered or offended.'] },
+    marital: { q: 'Are you married? Seeing anyone?', tips: ['Bring your partner, ex or love life into answers.', 'React big if they guess it: blush, sigh or groan.'] },
+    kids: { q: 'Any kids? Who’s at home?', tips: ['Mention the chaos at home (or the peace and quiet).', 'Kids are great for the Peddler’s pitch: “Will it keep them busy?”'] },
+    job: { q: 'What do you do for work?', tips: ['Talk like someone in your job. Use its lingo.', 'Complain about a normal workday.'] },
+    motive: { q: 'What are you looking for?', tips: ['This is what makes you buy. Give it up only to good questions.', 'If the pitch speaks to it, get excited.'] },
+    concern: { q: 'What’s holding you back?', tips: ['This is your biggest objection. Bring it up again and again.', 'Make the Peddler work to get past it.'] }
+  };
   C.detailText = (field, pr) => field === 'kids' ? (pr.kids ? pr.kids + (pr.kids === 1 ? ' kid' : ' kids') : 'No kids') : String(pr[field]);
 
   // Investor objections: during the pitch, Investors vote one of these onto a Prospect's phone,
@@ -678,16 +689,16 @@
   // NEPO BABY! Power Cards (rulebook section 11).
   C.nepo = {
     notToday: { id: 'notToday', name: 'NOT TODAY!', price: 75, when: 'During a SCREW!', effect: 'Cancel one SCREW! challenge played against you.' },
-    knowPeople: { id: 'knowPeople', name: 'I KNOW PEOPLE', price: 100, when: 'Creation Lab', effect: 'Before fact-finding, replace one Prospect with an eligible player.' },
-    daddy: { id: 'daddy', name: 'DADDY MADE A CALL', price: 125, when: 'Fact-Finding through the Close', effect: 'Require a Prospect to complete a brief, funny challenge.' },
-    insider: { id: 'insider', name: 'INSIDE TRADING', price: 100, when: 'Fact-Finding', effect: 'Secretly peek at one Investor’s Secret Sleuth guess for any Prospect.' }
+    knowPeople: { id: 'knowPeople', name: 'I KNOW PEOPLE', price: 100, when: 'Creation Lab', effect: 'Before the pitch, replace the Prospect with another player.' },
+    daddy: { id: 'daddy', name: 'DADDY MADE A CALL', price: 125, when: 'The pitch or the Close', effect: 'Require the Prospect to complete a brief, funny challenge.' },
+    insider: { id: 'insider', name: 'INSIDE TRADING', price: 100, when: 'The pitch', effect: 'Secretly peek at one Investor’s Secret Sleuth guess.' }
   };
 
   // The six Investor scoring categories, $0-$50 each (rulebook section 9).
   C.categories = [
     { id: 'invention', name: 'Invention', hint: 'Product concept, name, and how well the invention is presented.' },
     { id: 'ingenuity', name: 'Ingenuity', hint: 'Originality, creative thinking, and adaptation under pressure.' },
-    { id: 'factFinding', name: 'Fact-Finding', hint: 'Questions, listening, follow-ups, and discoveries across Prospects.' },
+    { id: 'factFinding', name: 'Fact-Finding', hint: 'Questions, listening, follow-ups, and how much they found out about the Prospect.' },
     { id: 'objections', name: 'Overcoming Objections', hint: 'Direct, confident, credible handling of SCREW! and customer concerns.' },
     { id: 'pitch', name: 'Overall Pitch', hint: 'Persuasion, clear value, and delivery.' },
     { id: 'close', name: 'The Close', hint: 'Clear call to action and appropriate request for commitment.' }

@@ -5,7 +5,7 @@
 
   function create(root, opts) {
     // opts: send(action), profile, onProfile(profile), onLeave(), practice
-    const st = { pub: null, priv: null, recvAt: Date.now(), assets: {}, drafts: {}, pads: {}, confirm: null, host: true, conn: 'online', lastErr: 0, sent: {}, tab: null, chooser: null };
+    const st = { pub: null, priv: null, recvAt: Date.now(), assets: {}, drafts: {}, pads: {}, confirm: null, host: true, conn: 'online', lastErr: 0, sent: {}, tab: null, chooser: null, cardIdx: 0 };
     const send = (a) => opts.send(a);
     const draft = (k, d) => (k in st.drafts ? st.drafts[k] : d);
 
@@ -52,30 +52,63 @@
     function card(kind, label, text, act, idx, on) {
       return '<button class="deck deck-' + kind + (on ? ' on' : '') + '" data-act="' + act + '" data-deck="' + kind + '" data-idx="' + idx + '"><span class="deck-k">' + label + '</span><span class="deck-t">' + esc(text) + '</span>' + (on ? '<span class="pick">Picked</span>' : '') + '</button>';
     }
-    /** The Prospect's own character card. Hidden details are listed here until the checklist takes over (Fact-Finding on). */
-    /** The Prospect's character sheet. `learned` (during play) marks the details the Peddler already knows. */
-    function profileCard(pr, withSecret, learned) {
-      const head = '<div class="profile"><div class="eyebrow">Your character</div><h3>' + esc(pr.name) + '</h3>' +
-        '<p class="lbl hidden-lbl">Hidden from the Peddler until they find out</p><ul class="facts">' +
-          C.detailFields.filter((f) => pr[f.id] != null).map((f) => '<li' + (learned && learned[f.id] ? ' class="known"' : '') + '><b>' + esc(f.name) + '</b> ' + esc(C.detailText(f.id, pr)) +
-            (learned && learned[f.id] ? ' <em class="known-tag">✓ Peddler knows</em>' : '') + '</li>').join('') + '</ul>';
-      // the fun fact and secret are tied to the Peddler's product, so they arrive once an Item is picked
-      if (!pr.secret) return head + '<p class="story-wait"><b>Your fun fact and secret are on the way.</b> They’re tied to the product, so they appear the moment the Peddler picks an Item.</p></div>';
-      return head + '<p class="bg"><b>Fun fact (everyone sees this):</b> ' + esc(pr.background) + '</p>' +
-        (withSecret && pr.opener ? '<div class="opener"><span class="lbl">Your opening line</span><p>“' + esc(pr.opener) + '”</p><span class="hint">Say it when Fact-Finding starts and the Peddler turns to you.</span></div>' : '') +
-        (withSecret ? '<div class="top-secret"><span class="lbl">Top secret: only you can see this</span>' + esc(pr.secret) + '</div>' +
-          (pr.secretHints && pr.secretHints.length ? '<div class="secret-tip"><b>How to play it</b><ul class="hint-list">' + pr.secretHints.map((h) => '<li>' + esc(h) + '</li>').join('') + '</ul></div>' : '') +
-          '<p class="hint">Stay in character and leave clues, but don’t just say it. Tap “They found my secret!” at the bottom of your screen only when they figure it out.</p>' : '') + '</div>';
-    }
-    /** The Prospect ticks off each hidden detail as the Peddler learns it: it shows on the TV and earns them $5. */
-    const myCard = () => profileCard(st.priv.profile, true, st.priv.learned || {});
-    function detailChecklist() {
+    /** The Prospect's character as swipeable cards: who you are, one card per hidden detail (with how to play it),
+     *  the secret, and tips. Details the Peddler already found out are marked. */
+    function characterCards() {
       const p = st.priv, pr = p.profile, got = p.learned || {};
+      if (!pr) return '';
+      const cards = [];
+      cards.push('<div class="ccard cc-who"><span class="eyebrow">You are</span><h2>' + esc(pr.name) + '</h2>' +
+        (pr.background ? '<p class="cc-fun"><b>Fun fact</b> (everyone sees this)<br>' + esc(pr.background) + '</p>' : '<p class="story-wait"><b>Your fun fact and secret are on the way.</b> They appear the moment the Peddler picks an Item.</p>') +
+        (pr.opener ? '<div class="opener"><span class="lbl">Your opening line</span><p>“' + esc(pr.opener) + '”</p><span class="hint">Say it when the pitch starts.</span></div>' : '') +
+        '<p class="cc-next">Swipe to see the details the Peddler has to find out →</p></div>');
+      C.detailFields.forEach((f) => {
+        const tip = C.detailTips[f.id] || { tips: [] };
+        cards.push('<div class="ccard cc-detail' + (got[f.id] ? ' known' : '') + '"><span class="eyebrow">Hidden · ' + esc(f.name) + '</span>' +
+          '<div class="cc-big">' + esc(C.detailText(f.id, pr)) + '</div>' +
+          (got[f.id] ? '<p class="cc-known">✓ The Peddler found this out</p>' : '<p class="cc-worth">Worth +' + U.money(E.DETAIL_BONUS) + ' to the Peddler when they figure it out</p>') +
+          (tip.q ? '<p class="cc-q">They might ask: <i>“' + esc(tip.q) + '”</i></p>' : '') +
+          '<ul class="cc-tips">' + tip.tips.map((t) => '<li>' + esc(t) + '</li>').join('') + '</ul></div>');
+      });
+      if (pr.secret) {
+        cards.push('<div class="ccard cc-secret"><span class="eyebrow">Top secret · only you see this</span><div class="cc-big">' + esc(pr.secret) + '</div>' +
+          '<p class="cc-worth">Worth <b>$25</b> to the Peddler if they guess it</p>' +
+          '<p class="cc-q"><b>Your job:</b> leave clues, but never just say it.</p>' +
+          (pr.secretHints && pr.secretHints.length ? '<ul class="cc-tips">' + pr.secretHints.map((h) => '<li>' + esc(h) + '</li>').join('') + '</ul>' : '') +
+          '<p class="cc-rule">When the Peddler says it out loud (close enough counts), tap <b>🔓 They found my secret!</b> at the bottom of your screen.</p></div>');
+      }
+      cards.push('<div class="ccard cc-tipsc"><span class="eyebrow">How to be a great Prospect</span><ul class="cc-tips big">' +
+        ['Answer questions, but make the Peddler work for it. One clue per question.', 'Stay in character the whole time: voice, attitude, opinions.',
+          'Bring up your biggest objection, more than once.', 'Play your SCREW! card when the pitch gets comfortable.',
+          'Investors can award you up to $25 for great role-play.'].map((t) => '<li>' + esc(t) + '</li>').join('') + '</ul></div>');
+      const n = cards.length, idx = Math.min(st.cardIdx, n - 1);
+      return '<div class="cards-wrap"><div class="cards-head"><span class="eyebrow">Your character · swipe</span><span class="cards-count">' + (idx + 1) + ' / ' + n + '</span></div>' +
+        '<div class="swipe" data-swipe="1" data-key="swipe-' + (st.pub.round ? st.pub.round.n : 0) + '">' + cards.join('') + '</div>' +
+        '<div class="cards-nav"><button type="button" class="btn ghost sm" data-act="cardGo" data-dir="-1" aria-label="Previous card"' + (idx ? '' : ' disabled') + '>‹</button>' +
+        '<div class="dots">' + cards.map((_, i) => '<i class="' + (i === idx ? 'on' : '') + '"></i>').join('') + '</div>' +
+        '<button type="button" class="btn ghost sm" data-act="cardGo" data-dir="1" aria-label="Next card"' + (idx < n - 1 ? '' : ' disabled') + '>›</button></div></div>';
+    }
+    /** Bottom of the Prospect's screen: what the Investors have ticked off so far (read-only). */
+    function learnedList() {
+      const got = st.priv.learned || {};
       const n = C.detailFields.filter((f) => got[f.id]).length;
       return '<section class="learn-list"><div class="sec-head"><h3>What has the Peddler learned?</h3><span class="muted">' + n + ' of ' + C.detailFields.length + ' · +' + U.money(n * E.DETAIL_BONUS) + '</span></div>' +
-        '<p class="muted">Tap each detail the Peddler finds out: it appears on the big screen and earns them ' + U.money(E.DETAIL_BONUS) + '.</p>' +
-        C.detailFields.map((f) => '<button type="button" class="learn-row' + (got[f.id] ? ' on' : '') + '" data-act="learned" data-field="' + f.id + '" data-on="' + (got[f.id] ? '0' : '1') + '" aria-pressed="' + !!got[f.id] + '">' +
-          '<span><b>' + esc(f.name) + '</b></span><em>' + (got[f.id] ? '✓ Learned' : '+' + U.money(E.DETAIL_BONUS)) + '</em></button>').join('') + '</section>';
+        '<p class="muted">The Investors tick these off as the Peddler finds them out.</p><ul class="learned-ro">' +
+        C.detailFields.map((f) => '<li class="' + (got[f.id] ? 'on' : '') + '"><span>' + esc(f.name) + '</span><em>' + (got[f.id] ? '✓ Learned' : 'Not yet') + '</em></li>').join('') + '</ul></section>';
+    }
+    /** The Investors' main job during the pitch: award +$5 each time the Peddler learns a hidden fact. */
+    function prospectFile() {
+      const files = st.priv.prospectFiles;
+      if (!files || !files.length) return '';
+      const open = ['pitch', 'close'].indexOf(st.pub.phase) >= 0;
+      return files.map((f) => {
+        const n = f.details.filter((d) => f.learned[d.id]).length;
+        return '<section class="pfile" data-key="pfile-' + esc(f.pid) + '"><div class="sec-head"><h3>' + esc(f.name) + '’s file</h3><span class="muted">' + n + ' of ' + f.details.length + ' · +' + U.money(n * E.DETAIL_BONUS) + '</span></div>' +
+          '<p class="muted">' + (open ? 'Your job: listen. The moment the Peddler finds out one of these, tap it to award <b>+' + U.money(E.DETAIL_BONUS) + '</b>. It flips open on the big screen.' : 'Awards are closed.') + '</p>' +
+          f.details.map((d) => '<button type="button" class="learn-row' + (f.learned[d.id] ? ' on' : '') + '" data-act="learned" data-target="' + esc(f.pid) + '" data-field="' + d.id + '" data-on="' + (f.learned[d.id] ? '0' : '1') + '" aria-pressed="' + !!f.learned[d.id] + '"' + (open ? '' : ' disabled') + '>' +
+            '<span><small>' + esc(d.name) + '</small><b>' + esc(d.text) + '</b></span><em>' + (f.learned[d.id] ? '✓ Awarded' : '+' + U.money(E.DETAIL_BONUS)) + '</em></button>').join('') +
+          (open ? '<p class="hint">Tapped by mistake? Tap it again to take it back. The secret isn’t on this list: guess it below.</p>' : '') + '</section>';
+      }).join('');
     }
     function confirmBtn(key, label, act, data, cls) {
       const attrs = Object.keys(data || {}).map((k) => ' data-' + k + '="' + esc(data[k]) + '"').join('');
@@ -115,24 +148,24 @@
       const done = r.briefed && r.briefed[p.pid];
       const items = {
         peddler: ['<b>Creation Lab (' + mm(t.lab) + '):</b> pick one Item and one Function card, name your invention, and sketch how it works.',
-          '<b>Fact-Finding (' + mm(t.fact) + '):</b> ask every Prospect real questions and say your guesses out loud. You only see their first name and fun fact: each hidden detail you find out (age, family, job, what they want, what worries them) is <b>+$5</b>, and each secret is <b>$25</b>. Stuck? A 💡 hint costs <b>$10</b>. No typing needed.',
-          '<b>PITCH! (' + mm(t.pitch) + '):</b> sell it using what you learned. Each Prospect can SCREW! you once; you get ' + t.screw + ' seconds to respond, then the table votes on how you did.',
+          '<b>The Pitch (' + mm(t.pitch) + '):</b> get to know the Prospect and sell to them, all in one go. You only see their first name and fun fact. Every hidden fact you learn (age, relationship, family, job, what they want, what worries them) earns <b>+$5</b> from the Investors, and guessing their secret is <b>$25</b>. Stuck? A 💡 hint costs <b>$10</b>.',
+          '<b>SCREW!</b> The Prospect can interrupt you once. You get ' + t.screw + ' seconds to respond, then the Investors vote on how you did.',
           '<b>Objections + Close (' + mm(t.close) + '):</b> answer every objection, then clearly ask for the sale.',
           'Investors score you in six categories, $0–$50 each.'],
-        prospect: ['<b>Draw</b> a portrait of your character during the Creation Lab.',
-          '<b>Open with your line:</b> when Fact-Finding starts, say the opening line on your phone to the Peddler.',
-          '<b>Keep your details hidden:</b> the Peddler only knows your first name and fun fact. When they find out your age, family, job, motivation or objection, tick it off on your phone (+$5 for them).',
-          '<b>Answer in character</b> when the Peddler questions you. Your phone gives you ways to hint at your secret. When they guess it out loud, tap <b>They found my secret!</b> at the bottom of your phone',
-          '<b>During the pitch,</b> play one of your three SCREW! cards to throw the Peddler off. When another Prospect plays one, vote on your phone: did the Peddler nail it?',
-          '<b>In Objections + Close,</b> the Investors may send you an objection. It pops up on your phone: say it out loud, in character, then tap Done.',
-          '<b>After the pitch,</b> raise one objection and decide whether your character would buy.',
+        prospect: ['<b>Swipe through your character cards</b> below: who you are, your hidden details, and your secret.',
+          '<b>Draw</b> a portrait of your character during the Creation Lab.',
+          '<b>Start with your opening line</b> when the pitch begins.',
+          '<b>Answer in character.</b> Make the Peddler work to find out your details. The Investors keep score.',
+          '<b>Leave clues to your secret.</b> When the Peddler guesses it out loud, tap <b>They found my secret!</b>',
+          '<b>Play one SCREW! card</b> to throw the Peddler off.',
+          '<b>In Objections + Close,</b> raise an objection and decide whether you’d buy.',
           'Investors can award you up to <b>$25</b> for great role-play.'],
-        phil: ['<b>Watch closely:</b> the Peddler invents, questions the Prospects, and pitches.',
-          '<b>Vote on every SCREW!</b> when it pops up on your phone: did the Peddler nail it or miss it?',
-          '<b>Send objections:</b> during Objections + Close, vote funny objections onto the Prospects’ phones. They have to act them out.',
+        phil: ['<b>During the pitch you keep score:</b> your phone shows the Prospect’s hidden facts. Each time the Peddler finds one out, tap it to award <b>+$5</b>.',
+          '<b>Vote on the SCREW!</b> when it pops up: did the Peddler nail it or miss it?',
+          '<b>Send objections:</b> during Objections + Close, vote funny objections onto the Prospect’s phone. They have to act them out.',
           '<b>Then score</b> six categories, $0–$50 each: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close.',
-          '<b>Reward the Prospects</b> up to $25 each for role-play.'].concat(
-          v.settings.sleuth ? ['<b>Secret Sleuth:</b> during Fact-Finding, guess each Prospect’s secret on your phone for <b>$10</b> each. Listen for hints, and lock in before the Peddler finds it!'] : [],
+          '<b>Reward the Prospect</b> up to $25 for role-play.'].concat(
+          v.settings.sleuth ? ['<b>Secret Sleuth:</b> during the pitch, guess the Prospect’s secret for <b>$10</b>. Lock it in before the Peddler finds it!'] : [],
           v.settings.trimOutliers && r.phils.length >= E.OUTLIER_MIN_CARDS ? ['Score fairly: a scorecard way out of line with the room gets set aside.'] : [])
       }[p.role];
       if (!items) return '<section class="hello"><h2>Sitting out this round</h2><p>Enjoy the show. You’ll be in the next one.</p></section>';
@@ -140,7 +173,7 @@
       return '<section class="brief-card rb-bg-' + p.role + '"><span class="eyebrow">This round you are</span><h2>' + title + '</h2>' +
         '<ul class="brief-list">' + items.map((x) => '<li>' + x + '</li>').join('') + '</ul>' +
         (done ? '<p class="ok center">Ready ✓ Waiting for the others…</p>' : '<button class="btn gold big" data-act="briefed">Got it</button>') + '</section>' +
-        (p.role === 'prospect' && p.profile ? profileCard(p.profile, true) : '');
+        (p.role === 'prospect' && p.profile ? characterCards() : '');
     }
 
     function lobbyScreen() {
@@ -165,7 +198,7 @@
       if (p.wallet.inventory.knowPeople > 0 && !st.pub.round.nepoUsed) {
         const r = st.pub.round;
         const pool = st.pub.players.filter((x) => x.connected && x.id !== p.pid && r.prospects.indexOf(x.id) < 0 && x.prefs.prospect && !x.excluded.prospect);
-        nepo = '<section class="nepo-use"><h3>I KNOW PEOPLE</h3><p class="muted">Before fact-finding, swap one Prospect for another player.</p>' +
+        nepo = '<section class="nepo-use"><h3>I KNOW PEOPLE</h3><p class="muted">Before the pitch, swap the Prospect for another player.</p>' +
           (st.chooser === 'know' ? '<label class="field"><span>Replace</span><select id="kp-out" data-draft="kp-out">' + r.prospects.map((id) => '<option value="' + esc(id) + '"' + (draft('kp-out', r.prospects[0]) === id ? ' selected' : '') + '>' + esc(r.profiles[id] ? r.profiles[id].name : '') + ' (' + esc(st.pub.players.find((x) => x.id === id).name) + ')</option>').join('') + '</select></label>' +
             '<label class="field"><span>With</span><select id="kp-in" data-draft="kp-in">' + pool.map((x) => '<option value="' + esc(x.id) + '"' + (draft('kp-in', pool[0] && pool[0].id) === x.id ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</select></label>' +
             (pool.length ? '<button class="btn violet" data-act="knowGo">Make the call</button>' : '<p class="muted">Nobody else has opted in as a Prospect.</p>') + ' <button class="btn ghost" data-act="chooser" data-c="">Cancel</button>'
@@ -184,41 +217,23 @@
       const p = st.priv;
       const k = 'r' + st.pub.round.n;
       pad(k + '-portrait', 'portrait');
-      return profileCard(p.profile, true) +
+      return characterCards() +
         '<section><h3>Draw your character</h3><p class="muted">A playful portrait. It goes on the big screen.</p><div class="pad-host" data-keep="' + k + '-portrait" data-pad="' + k + '-portrait"></div>' +
         (p.labDone ? '<p class="ok center">Ready ✓</p>' : '<button class="btn gold big" data-act="labDone">I’m ready</button>') + '</section>' +
         '<section><h3>Your SCREW! cards</h3><p class="muted">During the pitch you may play one of these. Choose wisely.</p><div class="screws">' + p.screws.map((c) => '<div class="screw-c"><b>' + esc(c.t) + '</b><p>' + esc(c.d) + '</p></div>').join('') + '</div></section>';
     }
 
     function philWait(text) {
-      return '<section class="hello"><h2>' + text + '</h2><p>Watch the big screen. You’ll score the Peddler in six categories, $0–$50 each, and can reward each Prospect’s role-play up to $25.</p></section>' + objectBoard() + sleuthBlock() + scorecard(false);
+      return '<section class="hello"><h2>' + text + '</h2><p>Watch the big screen. You’ll score the Peddler in six categories, $0–$50 each, and can reward the Prospect’s role-play up to $25.</p></section>' + objectBoard() + prospectFile() + sleuthBlock() + scorecard(false);
     }
 
-    function peddlerFact() {
-      const v = st.pub, r = v.round, p = st.priv;
-      return coach('Fact-Finding game plan', [
-        { t: 'Let each Prospect give their opening line first. Listen for clues.' },
-        { t: 'Talk to every Prospect. Their secret grows out of their fun fact, and it’s tied to your product.' },
-        { t: 'Find out their age, relationship, family, job, what they want and what worries them. Each one they tick off is +' + U.money(E.DETAIL_BONUS) + '.' },
-        { t: 'Ask follow-up questions until something sounds off. Then say your guess out loud.' },
-        { t: 'Stuck on someone? Tap their 💡 Hint for a question to try. It costs ' + U.money(E.HINT_COST) + ' of this round’s earnings.' },
-        { t: 'They tap it in on their phone if you’re right. Each secret is +$25.' }
-      ]) + r.prospects.map((id) => {
-          const pr = r.profiles[id], found = r.secrets[id] === 'confirmed';
-          return '<section class="pros-card' + (found ? ' done' : '') + '" data-key="pf-' + esc(id) + '"><h3>' + (found ? '✓ ' : '') + esc(pr.name) + ' <span class="muted played">' + esc(playerName(id)) + '</span></h3>' +
-            '<p class="bg"><b>Fun fact:</b> ' + esc(pr.background) + '</p>' +
-            (found ? '<div class="secret unlocked"><span class="lbl">Secret unlocked +$25</span>' + esc(pr.secret || '') + '</div>'
-              : hintBox(id, pr)) +
-            knownDetails(pr) + '</section>';
-        }).join('') + insiderUse() + daddyUse() + notes();
-    }
     /** A paid hint: the Prospect's opening question, hidden behind a button that costs $10 of this round's earnings. */
     function hintBox(id, pr) {
       if (pr.ask) return '<p class="try-q"><b>Hint:</b> try asking “' + esc(pr.ask) + '”</p>';
       if (st.confirm === 'hint-' + id) return '<div class="confirm hint-confirm"><span>Use a hint for −' + U.money(E.HINT_COST) + '?</span><button class="btn gold sm" data-act="hint" data-target="' + esc(id) + '">Yes, show it</button><button class="btn ghost sm" data-act="cancel">No</button></div>';
       return '<button class="btn ghost sm hint-btn" data-act="ask" data-ck="hint-' + esc(id) + '">💡 Hint · −' + U.money(E.HINT_COST) + '</button>';
     }
-    /** Hint buttons for every Prospect whose secret is still hidden (PITCH! and close; Fact-Finding has them on each card). */
+    /** Hint buttons for every Prospect whose secret is still hidden (used during the close). */
     function hintList() {
       const r = st.pub.round;
       const open = r.prospects.filter((id) => r.secrets[id] !== 'confirmed');
@@ -257,47 +272,46 @@
       return '<section class="nepo-use"><h3>DADDY MADE A CALL</h3><p>Who gets the call?</p><div class="btn-col">' + r.prospects.map((id) => '<button class="btn violet" data-act="daddy" data-target="' + esc(id) + '">' + esc(r.profiles[id].name) + '</button>').join('') + '<button class="btn ghost" data-act="chooser" data-c="">Cancel</button></div></section>';
     }
 
-    /** The Prospect awards the secret: shown at the top of their phone from Fact-Finding through the close. */
     /** Top of the Prospect's screen once their secret is out. (The button itself is the bar pinned to the bottom.) */
     function foundSecret() {
       return st.priv.secretStatus === 'confirmed' ? '<section class="found-sec"><p class="ok center">🔓 Your secret is out. The Peddler earned $25.</p></section>' : '';
     }
-    /** "They found my secret!" pinned to the bottom of the Prospect's phone from Fact-Finding until the money is revealed. */
+    /** "They found my secret!" pinned to the bottom of the Prospect's phone from the pitch until the money is revealed. */
     function secretBar() {
       const v = st.pub, p = st.priv;
-      if (!v || !p || p.role !== 'prospect' || ['fact', 'pitch', 'close', 'scoring'].indexOf(v.phase) < 0 || p.secretStatus === 'confirmed') return '';
+      if (!v || !p || p.role !== 'prospect' || ['pitch', 'close', 'scoring'].indexOf(v.phase) < 0 || p.secretStatus === 'confirmed') return '';
       return '<div class="secret-bar">' + (st.confirm === 'reveal'
         ? '<p><b>Did they really figure out your secret?</b></p><div class="confirm"><button class="btn mint" data-act="selfReveal">Yes, award them $25</button><button class="btn ghost" data-act="cancel">Not yet</button></div>'
         : '<button class="btn mint big found-btn" data-act="ask" data-ck="reveal">🔓 They found my secret! · +$25</button>') + '</div>';
-    }
-
-    function prospectFact() {
-      return foundSecret() + myCard() + detailChecklist();
     }
 
     function peddlerPitch() {
       const v = st.pub, r = v.round, p = st.priv, inv = r.invention;
       let screw = '';
       if (r.activeScrew) {
-        screw = '<section class="screw-live">' + U.screwIcon() + '<div class="screw-word">SCREW!</div><h3>' + esc(r.activeScrew.card.t) + '</h3><p>' + esc(r.activeScrew.card.d) + '</p><p class="muted">You have 15 seconds. The pitch clock is paused. The table votes on how you did.</p>' +
+        screw = '<section class="screw-live">' + U.screwIcon() + '<div class="screw-word">SCREW!</div><h3>' + esc(r.activeScrew.card.t) + '</h3><p>' + esc(r.activeScrew.card.d) + '</p><p class="muted">You have 15 seconds. The pitch clock is paused. The Investors vote on how you did.</p>' +
           '<div class="btn-row"><button class="btn gold" data-act="screwDone">I’m done responding</button>' +
           (p.wallet.inventory.notToday > 0 && !r.nepoUsed ? '<button class="btn violet big" data-act="notToday">Play NOT TODAY!</button>' : '') + '</div></section>';
       }
-      const sellTo = r.prospects.map((id) => {
+      const who = r.prospects.map((id) => r.profiles[id].name).join(' and ');
+      const prospects = r.prospects.map((id) => {
         const pr = r.profiles[id], found = r.secrets[id] === 'confirmed';
-        const extra = (pr.motive ? ' Wants: ' + pr.motive : '') + (pr.concern ? ' Worry: ' + pr.concern : '');
-        return '<b>' + esc(pr.name) + ':</b> ' + esc((found ? 'their secret: ' + pr.secret : 'fun fact: ' + pr.background) + extra);
-      }).join('<br>');
-      return screw + coach('Your pitch, step by step', [
-        { t: 'Point at your sketch on the big screen.' },
-        { t: 'Say what it is in one sentence.', try: 'Meet ' + inv.name + '! It ' + String(inv.func).charAt(0).toLowerCase() + String(inv.func).slice(1) + '.' },
-        { t: 'Sell it to each Prospect using what you learned:<br>' + sellTo },
+        return '<section class="pros-card' + (found ? ' done' : '') + '" data-key="pf-' + esc(id) + '"><h3>' + esc(pr.name) + ' <span class="muted played">' + esc(playerName(id)) + '</span></h3>' +
+          '<p class="bg"><b>Fun fact:</b> ' + esc(pr.background) + '</p>' +
+          (found ? '<div class="secret unlocked"><span class="lbl">Secret unlocked +$25</span>' + esc(pr.secret || '') + '</div>'
+            : '<p class="secret-clue">🔒 <b>Secret ($25):</b> it grows out of the fun fact and ties to your product. Listen for clues, then guess out loud.</p>' + hintBox(id, pr)) +
+          knownDetails(pr) + '</section>';
+      }).join('');
+      return screw + coach('The Pitch, step by step', [
+        { t: 'Let ' + esc(who) + ' say their opening line.' },
+        { t: 'Get to know them: age, relationship, family, job, what they want, what worries them. The Investors award <b>+' + U.money(E.DETAIL_BONUS) + '</b> for each one you learn.' },
+        { t: 'Spot the secret: ask about the fun fact, follow the clues, and guess out loud for <b>+$25</b>.' },
+        { t: 'Sell it, using what you learned. Point at your sketch on the big screen.', try: 'Meet ' + inv.name + '! It ' + String(inv.func).charAt(0).toLowerCase() + String(inv.func).slice(1) + '.' },
         { t: 'Got SCREW!ed? Answer it in 15 seconds, then tap “I’m done responding.”' },
         { t: 'Finished? Tap “I’m done pitching” below.' }
-      ]) + hintList() + '<section><h2>' + esc(inv.name) + '</h2>' + (inv.slogan ? '<p class="slogan">“' + esc(inv.slogan) + '”</p>' : '') +
+      ]) + prospects + '<section><h2>' + esc(inv.name) + '</h2>' + (inv.slogan ? '<p class="slogan">“' + esc(inv.slogan) + '”</p>' : '') +
         '<div class="hand">' + '<div class="deck deck-item"><span class="deck-k">Item</span><span class="deck-t">' + esc(inv.item) + '</span></div><div class="deck deck-func"><span class="deck-k">Function</span><span class="deck-t">' + esc(inv.func) + '</span></div></div>' +
-        '<p class="hint">Show the drawing on the big screen, and connect the benefits to what you learned about each Prospect.</p>' +
-        (!r.activeScrew ? confirmBtn('pdone', 'I’m done pitching', 'pitchDone', {}, 'ghost') : '') + '</section>' + daddyUse() + notes();
+        (!r.activeScrew ? confirmBtn('pdone', 'I’m done pitching', 'pitchDone', {}, 'ghost') : '') + '</section>' + insiderUse() + daddyUse() + notes();
     }
 
     function prospectPitch() {
@@ -306,23 +320,23 @@
       const remaining = t ? (t.running ? t.remaining - (Date.now() - st.recvAt) : t.remaining) : 0;
       if (p.screwPlayed) {
         const sv = (r.screwVotes || {})[p.pid], t = p.screwPlayed.tally;
-        return foundSecret() + myCard() + '<section class="screw-live">' + U.screwIcon() + '<div class="screw-word">SCREW!</div><h3>You played ' + esc(p.screwPlayed.card.t) + '</h3><p>' + esc(p.screwPlayed.card.d) + '</p>' +
+        return foundSecret() + characterCards() + '<section class="screw-live">' + U.screwIcon() + '<div class="screw-word">SCREW!</div><h3>You played ' + esc(p.screwPlayed.card.t) + '</h3><p>' + esc(p.screwPlayed.card.d) + '</p>' +
           (p.screwPlayed.result ? '<p class="muted">The table says: ' + esc({ done: 'they nailed it', missed: 'they missed it', split: 'split decision', cancelled: 'cancelled with NOT TODAY!' }[p.screwPlayed.result]) + (t ? ' (' + t.done + '–' + t.missed + ')' : '') + '</p>'
-            : sv && sv.open ? '<p class="muted">The table is voting… ' + sv.n + ' of ' + sv.of + ' in</p>' : '') + '</section>' + detailChecklist();
+            : sv && sv.open ? '<p class="muted">The Investors are voting… ' + sv.n + ' of ' + sv.of + ' in</p>' : '') + '</section>' + learnedList();
       }
       let why = '';
       if (r.activeScrew) why = 'Another SCREW! is in progress.';
       else if (v.hostPaused) why = 'The game is paused.';
       else if (remaining <= E.SCREW_LOCKOUT_MS) why = 'Too late: no SCREW! in the final 10 seconds.';
-      return foundSecret() + myCard() + '<section><h2>Your SCREW! cards</h2><p class="muted">Interrupt the pitch once with one of these. The other two are discarded.</p>' + (why ? '<p class="warn-text">' + esc(why) + '</p>' : '') +
+      return foundSecret() + characterCards() + '<section><h2>Your SCREW! cards</h2><p class="muted">Interrupt the pitch once with one of these. The other two are discarded.</p>' + (why ? '<p class="warn-text">' + esc(why) + '</p>' : '') +
         '<div class="screws">' + p.screws.map((c, i) => '<div class="screw-c" data-key="sc-' + i + '"><b>' + esc(c.t) + '</b><p>' + esc(c.d) + '</p>' +
-          (why ? '' : confirmBtn('screw-' + i, 'Play this SCREW!', 'screw', { idx: i }, 'red')) + '</div>').join('') + '</div></section>' + detailChecklist();
+          (why ? '' : confirmBtn('screw-' + i, 'Play this SCREW!', 'screw', { idx: i }, 'red')) + '</div>').join('') + '</div></section>' + learnedList();
     }
 
     function prospectClose() {
       const p = st.priv, r = st.pub.round;
       const raised = !!r.objections[p.pid];
-      return foundSecret() + myCard() + '<section><h2>Objections + Close</h2>' + (raised ? '<p class="ok">You raised your objection ✓</p>' : '<p class="muted">Raise one final objection. The Peddler has to address it and ask for the sale.</p><button class="btn red big" data-act="objection">I have an objection!</button>') + '</section>' + verdictBlock() + detailChecklist();
+      return foundSecret() + characterCards() + '<section><h2>Objections + Close</h2>' + (raised ? '<p class="ok">You raised your objection ✓</p>' : '<p class="muted">Raise one final objection. The Peddler has to address it and ask for the sale.</p><button class="btn red big" data-act="objection">I have an objection!</button>') + '</section>' + verdictBlock() + learnedList();
     }
     function verdictBlock() {
       const p = st.priv;
@@ -347,14 +361,14 @@
         (canSubmit ? '<button class="btn gold big" data-act="submitScore">' + (p.scorecard ? 'Update my scorecard' : 'Submit scorecard') + '</button>' + (p.scorecard ? '<p class="ok center">Submitted ✓ You can change it until the reveal.</p>' : '') : '') + '</section>';
     }
 
-    /** Secret Sleuth: during Fact-Finding, pick each Prospect's secret from 4 options for +$10.
-     *  A pick locks once that secret is uncovered, and all picks lock when Fact-Finding ends. */
+    /** Secret Sleuth: during the pitch, pick the Prospect's secret from 4 options for +$10.
+     *  A pick locks once that secret is uncovered, and all picks lock when the pitch ends. */
     function sleuthBlock() {
       const list = st.priv.sleuth, picks = st.priv.sleuthPicks || {};
       if (!list || !list.length || st.pub.phase === 'reveal') return '';
-      const open = st.pub.phase === 'fact';
+      const open = st.pub.phase === 'pitch';
       return '<section class="sleuth"><div class="sleuth-head"><span class="eyebrow">Secret Sleuth</span><b>' + U.money(E.SLEUTH_BONUS) + ' for each secret you guess right</b></div>' +
-        '<p class="muted">' + (open ? 'Listen to the interviews. You can change a guess until that secret is uncovered.' : 'Guesses are locked. Results at the Money Reveal.') + '</p>' +
+        '<p class="muted">' + (open ? 'Which one is the Prospect’s secret? Listen for clues. You can change your guess until the Peddler uncovers it.' : 'Guesses are locked. Results at the Money Reveal.') + '</p>' +
         list.map((t) => '<fieldset class="sleuth-q" data-key="sq-' + esc(t.pid) + '"><legend>' + esc(t.name) + (t.locked && open ? ' · locked' : '') + '</legend>' + t.options.map((o, i) =>
           '<button type="button" class="sleuth-opt' + (picks[t.pid] === i ? ' on' : '') + '" data-act="sleuthPick" data-pid="' + esc(t.pid) + '" data-idx="' + i + '" aria-pressed="' + (picks[t.pid] === i) + '"' + (t.locked ? ' disabled' : '') + '>' + esc(o) + '</button>').join('') + '</fieldset>').join('') + '</section>';
     }
@@ -427,7 +441,7 @@
 
     function peddlerNext() {
       const v = st.pub;
-      const label = { brief: 'Start the Creation Lab ›', lab: 'Start Fact-Finding ›', fact: 'Start my PITCH! ›', close: 'Open scoring ›' }[v.phase];
+      const label = { brief: 'Start the Creation Lab ›', lab: 'Start the Pitch ›', close: 'Open scoring ›' }[v.phase];
       if (!label || st.priv.role !== 'peddler') return '';
       const btn = st.confirm === 'pnext'
         ? '<div class="confirm"><button class="btn gold" data-act="peddlerNext">Yes, move on</button><button class="btn ghost" data-act="cancel">Not yet</button></div>'
@@ -435,7 +449,6 @@
       const when = {
         brief: 'Everyone read their role? Start the lab.',
         lab: 'Picked an Item and Function, named it and sketched it? Move on.',
-        fact: 'Asked every Prospect at least one question? Move on to your pitch.',
         close: 'Every objection answered and you asked for the sale? Open scoring.'
       }[v.phase];
       return '<section class="ped-next">' + btn + '<p class="hint center"><b>When to move on:</b> ' + when + '</p></section>';
@@ -454,8 +467,7 @@
       if (role === 'sitout' || !role) return '<section class="hello"><h2>Sitting out this round</h2><p>Enjoy the show. You’ll be in the next one.</p></section>';
       if (ph === 'brief') return briefScreen() + peddlerNext();
       if (ph === 'lab') return role === 'peddler' ? peddlerLab() + peddlerNext() : role === 'prospect' ? prospectLab() : philWait(esc((st.pub.players.find((x) => x.id === st.pub.round.peddler) || { name: 'The Peddler' }).name) + ' is inventing…');
-      if (ph === 'fact') return role === 'peddler' ? peddlerNext() + peddlerFact() : role === 'prospect' ? prospectFact() : philWait('Fact-Finding');
-      if (ph === 'pitch') return role === 'peddler' ? peddlerPitch() : role === 'prospect' ? prospectPitch() : philWait('PITCH!');
+      if (ph === 'pitch') return role === 'peddler' ? peddlerPitch() : role === 'prospect' ? prospectPitch() : philWait('The Pitch');
       if (ph === 'close') return role === 'peddler' ? closeCoach() + peddlerNext() + hintList() + notes()
         : role === 'prospect' ? prospectClose() : philWait('Objections + Close');
       if (ph === 'scoring') return role === 'phil' ? scorecard(true) : role === 'prospect' ? '<section class="hello"><h2>The Investors are scoring</h2></section>' + (p.verdict ? '' : verdictBlock())
@@ -500,12 +512,19 @@
     function render() {
       U.morph(root, '<div class="phone">' + header() + banners() + '<main class="ph-body" data-key="pb-' + (st.pub ? st.pub.phase + '-' + (st.priv && st.priv.role) : 'x') + '">' + body() + '</main>' + secretBar() + screwPop() + objectPop() + '</div>');
       mountPads();
+      // keep the character cards on the card the player was reading (a new phase, or the page moving
+      // things around, would otherwise snap them back to the first card)
+      root.querySelectorAll('[data-swipe]').forEach((el) => {
+        const w = el.clientWidth;
+        if (w && Math.round(el.scrollLeft / w) !== st.cardIdx) el.scrollTo({ left: st.cardIdx * w, behavior: 'instant' });
+      });
     }
 
     // ---------- updates from the Host ----------
     function onPublic(v, at) {
       const prev = st.pub;
       st.pub = v; st.recvAt = at || Date.now();
+      if (prev && prev.round && v.round && prev.round.n !== v.round.n) st.cardIdx = 0;
       if (prev && prev.phase !== v.phase) {
         // leaving the lab: send any unsent drawing right away
         if (prev.phase === 'lab') Object.keys(st.pads).forEach(sendDrawing);
@@ -561,6 +580,22 @@
         }, 500);
       }
     });
+    // swiping the character cards: keep the counter and dots in step without a full redraw
+    root.addEventListener('scroll', (e) => {
+      const el = e.target;
+      if (!el.dataset || !el.dataset.swipe || !el.clientWidth) return;
+      const i = Math.round(el.scrollLeft / el.clientWidth);
+      if (i === st.cardIdx) return;
+      st.cardIdx = i;
+      const wrap = el.closest('.cards-wrap');
+      if (!wrap) return;
+      const n = el.children.length;
+      wrap.querySelectorAll('.dots i').forEach((d, k) => d.classList.toggle('on', k === i));
+      const cnt = wrap.querySelector('.cards-count'); if (cnt) cnt.textContent = (i + 1) + ' / ' + n;
+      const nav = wrap.querySelectorAll('[data-act="cardGo"]');
+      if (nav[0]) nav[0].disabled = i === 0;
+      if (nav[1]) nav[1].disabled = i >= n - 1;
+    }, true);
     root.addEventListener('change', (e) => {
       const el = e.target;
       if (el.dataset.draft) st.drafts[el.dataset.draft] = el.value;
@@ -599,7 +634,15 @@
       else if (a === 'peddlerNext') { send({ type: 'peddlerNext' }); st.confirm = null; }
       else if (a === 'screwVote') { (st.priv.screwVotes || []).forEach((x) => { if (x.by === d.by) x.mine = d.result; }); send({ type: 'screwVote', by: d.by, result: d.result }); U.toast('Vote in ✓'); }
       else if (a === 'answer') send({ type: 'secretAnswer', yes: d.yes === '1' });
-      else if (a === 'learned') { st.priv.learned = Object.assign({}, st.priv.learned); if (d.on === '1') st.priv.learned[d.field] = true; else delete st.priv.learned[d.field]; send({ type: 'learned', field: d.field, on: d.on === '1' }); }
+      else if (a === 'learned') {
+        (st.priv.prospectFiles || []).forEach((f) => { if (f.pid === d.target) { f.learned = Object.assign({}, f.learned); if (d.on === '1') f.learned[d.field] = st.priv.pid; else delete f.learned[d.field]; } });
+        send({ type: 'learned', target: d.target, field: d.field, on: d.on === '1' });
+        if (d.on === '1') U.vibrate(30);
+      } else if (a === 'cardGo') {
+        const sw = root.querySelector('[data-swipe]');
+        if (sw) sw.scrollBy({ left: Number(d.dir) * sw.clientWidth, behavior: 'smooth' });
+        return;
+      }
       else if (a === 'hint') { send({ type: 'hint', target: d.target }); st.confirm = null; }
       else if (a === 'selfReveal') { send({ type: 'secretAnswer', yes: true }); st.confirm = null; }
       else if (a === 'vote') { st.priv.votes = Object.assign({}, st.priv.votes, { [d.cat]: d.key2 }); send({ type: 'vote', cat: d.cat, key: d.key2 }); }
