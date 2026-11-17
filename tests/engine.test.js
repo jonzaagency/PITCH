@@ -221,6 +221,66 @@ section('SCREW! voting');
   ok(!r3.screwVotes[c].open, 'open votes close when the pitch ends');
 }
 
+section('Investors SCREW! the Peddler');
+{
+  let clock = Date.now();
+  const g = game(7, 'pitch', (g) => { g.now = () => clock; }), s = g.s, r = s.round, inv = r.phils, pro = r.prospects[0];
+  const b = () => g.privateView(inv[0]).invBoard;
+  ok(b() && b().screw.options.length === 3 && b().challenge.options.length === 3, 'Investors see 3 SCREW! cards and 3 challenges');
+  ok(!g.privateView(pro).invBoard && !g.privateView(r.peddler).invBoard, 'only Investors get the board');
+  ok(!g.act(pro, { type: 'investorVote', deck: 'screw', idx: 0 }).ok, 'the Prospect cannot vote Investor cards');
+  const card = s.round.invBoards.screw.options[1];
+  g.act(inv[0], { type: 'investorVote', deck: 'screw', idx: 1 });
+  ok(!r.activeScrew, 'one vote is not a majority of ' + inv.length);
+  inv.forEach((id) => g.act(id, { type: 'investorVote', deck: 'screw', idx: 1 }));
+  ok(r.activeScrew && r.activeScrew.by === 'investors-1' && r.activeScrew.card.t === card.t && r.activeScrew.from === 'The Investors', 'a majority sends the SCREW! to the Peddler');
+  ok(!s.timer.main.endsAt && s.timer.screw, 'the pitch clock pauses');
+  ok(g.privateView(inv[1]).screwVotes[0].name === 'The Investors' && !(g.privateView(pro).screwVotes || []).length, 'Investors judge it; the Prospect keeps their eyes up');
+  g.host('screwEnd');
+  inv.forEach((id) => g.act(id, { type: 'screwVote', by: 'investors-1', result: 'done' }));
+  ok(r.screwPlayed['investors-1'].result === 'done', 'the Investors’ vote settles it');
+  ok(!g.act(inv[0], { type: 'investorVote', deck: 'screw', idx: 0 }).ok, 'a short wait between Investor SCREW!s');
+  clock += E.INV_COOLDOWN_MS + 1;
+  inv.forEach((id) => g.act(id, { type: 'investorVote', deck: 'screw', idx: 0 })); g.host('screwEnd');
+  clock += E.INV_COOLDOWN_MS + 1;
+  ok(!g.act(inv[0], { type: 'investorVote', deck: 'screw', idx: 0 }).ok && Object.keys(r.screwPlayed).filter((k) => k.indexOf('investors-') === 0).length === E.INV_SCREW_MAX, 'at most ' + E.INV_SCREW_MAX + ' Investor SCREW!s per round');
+  ok(g.act(pro, { type: 'screw', idx: 0 }).ok, 'the Prospect still has their own SCREW!');
+}
+
+section('Secret challenges for the Prospect');
+{
+  let clock = Date.now();
+  const g = game(6, 'pitch', (g) => { g.now = () => clock; }), s = g.s, r = s.round, inv = r.phils, pro = r.prospects[0];
+  ok(C.prospectChallenges.length >= 25 && C.prospectChallenges.some((c) => /British accent/.test(c)) && C.prospectChallenges.some((c) => /eye contact/.test(c)), 'a deck of challenges (British accent, eye contact…)');
+  const text = r.invBoards.challenge.options[2];
+  inv.forEach((id) => g.act(id, { type: 'investorVote', deck: 'challenge', idx: 2 }));
+  ok(r.challenges.length === 1 && r.challenges[0].text === text, 'a majority sends the challenge');
+  ok(g.privateView(pro).challenge && g.privateView(pro).challenge.text === text, 'it pops up on the Prospect’s phone');
+  ok(g.publicView().round.challenges[0].text === null, 'the big screen (and the Peddler) don’t see it while it’s in play');
+  ok(!g.privateView(r.peddler).challenge && !g.privateView(r.peddler).challengeVote, 'the Peddler’s phone doesn’t either');
+  ok(g.act(pro, { type: 'challengeSeen' }).ok && !g.privateView(pro).challenge, 'one tap and it’s gone');
+  clock += E.INV_COOLDOWN_MS + 1;
+  ok(!g.act(inv[0], { type: 'investorVote', deck: 'challenge', idx: 0 }).ok, 'no new challenge until this one is judged');
+  ok(!g.act(pro, { type: 'challengeVote', result: 'done' }).ok, 'the Prospect cannot judge their own challenge');
+  ok(g.privateView(inv[0]).challengeVote.text === text, 'Investors see what they are judging');
+  g.act(inv[0], { type: 'challengeVote', result: 'missed' });
+  inv.slice(1).forEach((id) => g.act(id, { type: 'challengeVote', result: 'done' }));
+  ok(r.challenges[0].result === 'done' && g.publicView().round.challenges[0].text === text, 'majority says pulled it off; the screen reveals it');
+  inv.forEach((id) => g.act(id, { type: 'investorVote', deck: 'challenge', idx: 0 }));
+  g.host('next'); // to the close
+  ok(r.challenges.length === 2 && r.challenges[1].open, 'a second challenge goes out');
+  while (s.phase !== 'scoring') g.host('next');
+  ok(!r.challenges[1].open && r.challenges[1].result === 'missed', 'unjudged challenges close as missed when scoring opens');
+  const before = s.players[pro].session.earned;
+  r.phils.forEach((id) => g.act(id, { type: 'scorecard', cats: {}, prospects: {} }));
+  if (s.phase === 'scoring') g.host('reveal');
+  ok(r.results.challenges[pro].done === 1 && r.results.challenges[pro].of === 2 && Math.abs(s.players[pro].session.earned - before - E.CHALLENGE_BONUS) < 0.001, 'the Prospect earns $' + E.CHALLENGE_BONUS + ' per challenge pulled off');
+  ok(g.privateView(pro).myEarnings === E.CHALLENGE_BONUS, 'and sees it on their phone');
+  const g2 = game(3, 'pitch'), r2 = g2.s.round;
+  g2.act(r2.phils[0], { type: 'investorVote', deck: 'challenge', idx: 0 });
+  ok(r2.challenges && r2.challenges.length === 1, 'with one Investor, a single tap sends it');
+}
+
 section('Peddler moves the round on');
 {
   const g = game(6, 'brief'), s = g.s, r = s.round;

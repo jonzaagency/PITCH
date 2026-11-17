@@ -20,7 +20,7 @@
         phone('<div class="tut-btn mint">🔓 They found my secret!</div><div class="price-tag tut-tag"><span>Peddler</span><b>+$25</b></div>'),
       lines: ['Five minutes to <b>get to know the Prospect and sell to them</b>, all at once.', 'The Peddler only sees a first name and fun fact. Each hidden fact they find out (age, relationship, family, job, wants, worries) gets ticked off by the <b>Investors: +$5</b>.', 'Right secret guess? The Prospect taps it in: <b>+$25</b>.'] },
     { title: 'SCREW!', art: () => '<div class="tut-row">' + U.screwIcon('tut-screw') + '</div>',
-      lines: ['The Prospect can <b>SCREW!</b> the Peddler once during the pitch: 15 seconds to answer, then the Investors vote.'] },
+      lines: ['The Prospect can <b>SCREW!</b> the Peddler once, and the <b>Investors</b> can vote SCREW!s onto them too: 15 seconds to answer, then the Investors vote.', 'Investors also send the Prospect <b>secret challenges</b> (“answer in a British accent”). Pull it off without the Peddler noticing: <b>+$10</b>.'] },
     { title: '3 · Objections + Close', art: () => '<div class="tut-objection"><span class="eyebrow">The Investors object!</span>“I object! My dog would hate this.”</div><div class="tut-chat">' + bubble('Peddler', 'It has a dog-calming mode. So, can I count you in today?') + '</div>',
       lines: ['The Prospect raises one last objection, and Investors send funny <b>objections</b> for them to act out.', 'The Peddler answers every one and <b>asks for the sale</b>.'] },
     { title: 'How Investors score', art: () => '<div class="tut-anchors">' + C.scoreAnchors.map((a, k) =>

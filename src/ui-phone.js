@@ -149,7 +149,7 @@
       const items = {
         peddler: ['<b>Creation Lab (' + mm(t.lab) + '):</b> pick one Item and one Function card, name your invention, and sketch how it works.',
           '<b>The Pitch (' + mm(t.pitch) + '):</b> get to know the Prospect and sell to them, all in one go. You only see their first name and fun fact. Every hidden fact you learn (age, relationship, family, job, what they want, what worries them) earns <b>+$5</b> from the Investors, and guessing their secret is <b>$25</b>. Stuck? A 💡 hint costs <b>$10</b>.',
-          '<b>SCREW!</b> The Prospect can interrupt you once. You get ' + t.screw + ' seconds to respond, then the Investors vote on how you did.',
+          '<b>SCREW!</b> The Prospect (once) and the Investors (up to ' + E.INV_SCREW_MAX + ' times) can interrupt you. You get ' + t.screw + ' seconds to respond, then the table votes on how you did.',
           '<b>Objections + Close (' + mm(t.close) + '):</b> answer every objection, then clearly ask for the sale.',
           'Investors score you in six categories, $0–$50 each.'],
         prospect: ['<b>Swipe through your character cards</b> below: who you are, your hidden details, and your secret.',
@@ -158,10 +158,12 @@
           '<b>Answer in character.</b> Make the Peddler work to find out your details. The Investors keep score.',
           '<b>Leave clues to your secret.</b> When the Peddler guesses it out loud, tap <b>They found my secret!</b>',
           '<b>Play one SCREW! card</b> to throw the Peddler off.',
+          '<b>Secret challenges:</b> the Investors may send you one (like “avoid eye contact”). Pull it off without the Peddler noticing: <b>+' + U.money(E.CHALLENGE_BONUS) + '</b> each.',
           '<b>In Objections + Close,</b> raise an objection and decide whether you’d buy.',
           'Investors can award you up to <b>$25</b> for great role-play.'],
         phil: ['<b>During the pitch you keep score:</b> your phone shows the Prospect’s hidden facts. Each time the Peddler finds one out, tap it to award <b>+$5</b>.',
-          '<b>Vote on the SCREW!</b> when it pops up: did the Peddler nail it or miss it?',
+          '<b>Make trouble:</b> vote SCREW! cards onto the Peddler (up to ' + E.INV_SCREW_MAX + '), and secret challenges onto the Prospect (up to ' + E.CHALLENGE_MAX + '), like “answer in a British accent.”',
+          '<b>Judge everything:</b> did the Peddler nail the SCREW!? Did the Prospect pull off the challenge? (+' + U.money(E.CHALLENGE_BONUS) + ' to them if so.)',
           '<b>Send objections:</b> during Objections + Close, vote funny objections onto the Prospect’s phone. They have to act them out.',
           '<b>Then score</b> six categories, $0–$50 each: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close.',
           '<b>Reward the Prospect</b> up to $25 for role-play.'].concat(
@@ -224,7 +226,7 @@
     }
 
     function philWait(text) {
-      return '<section class="hello"><h2>' + text + '</h2><p>Watch the big screen. You’ll score the Peddler in six categories, $0–$50 each, and can reward the Prospect’s role-play up to $25.</p></section>' + objectBoard() + prospectFile() + sleuthBlock() + scorecard(false);
+      return '<section class="hello"><h2>' + text + '</h2><p>Watch the big screen. You’ll score the Peddler in six categories, $0–$50 each, and can reward the Prospect’s role-play up to $25.</p></section>' + challengeVote() + objectBoard() + prospectFile() + investorMoves() + sleuthBlock() + scorecard(false);
     }
 
     /** A paid hint: the Prospect's opening question, hidden behind a button that costs $10 of this round's earnings. */
@@ -486,6 +488,39 @@
         b.options.map((o, i) => '<button type="button" class="object-opt' + (b.mine === i ? ' on' : '') + '" data-act="objectVote" data-idx="' + i + '"><span>' + esc(o) + '</span><b>' + b.counts[i] + '/' + need + '</b></button>').join('') +
         '<p class="hint">One every 20 seconds, up to ' + b.max + ' per round.</p></section>';
     }
+    /** Investor moves: vote a SCREW! onto the Peddler, or a secret challenge onto the Prospect. A majority sends it. */
+    function investorMoves() {
+      const b = st.priv.invBoard;
+      if (!b || (!b.screw && !b.challenge)) return '';
+      const need = Math.floor(b.voters / 2) + 1;
+      const deck = (kind, title, blurb, d) => {
+        if (!d) return '';
+        const done = d.sent >= d.max;
+        return '<div class="inv-deck inv-' + kind + '" data-key="invd-' + kind + '"><div class="sec-head"><h4>' + title + '</h4><span class="muted">' + d.sent + ' of ' + d.max + ' sent</span></div><p class="muted">' + blurb + '</p>' +
+          (done ? '' : d.options.map((o, i) => '<button type="button" class="object-opt' + (d.mine === i ? ' on' : '') + '" data-act="invVote" data-deck="' + kind + '" data-idx="' + i + '"' + (d.blocked ? ' disabled' : '') + '><span>' + esc(o) + '</span><b>' + d.counts[i] + '/' + need + '</b></button>').join('')) +
+          (d.blocked ? '<p class="hint">' + esc(d.blocked) + '</p>' : '') + '</div>';
+      };
+      return '<section class="inv-moves"><h3>Investor moves</h3><p class="muted">' + (need === 1 ? 'Tap a card to send it.' : 'Vote for a card. When ' + need + ' Investors agree, it’s sent.') + '</p>' +
+        deck('screw', 'SCREW! the Peddler', 'A curveball for the Peddler. The pitch clock pauses while they answer, then you vote.', b.screw) +
+        deck('challenge', 'Challenge the Prospect', 'A secret challenge pops up on the Prospect’s phone. Then you judge it: pulled off = +' + U.money(E.CHALLENGE_BONUS) + ' for them.', b.challenge) + '</section>';
+    }
+    /** Investors judge the challenge in play. */
+    function challengeVote() {
+      const c = st.priv.challengeVote;
+      if (!c) return '';
+      return '<section class="ch-vote" data-key="chv-' + c.n + '"><span class="eyebrow">🎭 Challenge in play</span><p class="ch-text">“' + esc(c.text) + '”</p>' +
+        '<p class="muted">' + (c.seen ? esc(c.name) + ' has it. Watch closely!' : 'Waiting for ' + esc(c.name) + ' to read it…') + ' ' + c.votes + ' of ' + c.of + ' voted.</p>' +
+        '<p><b>Did ' + esc(c.name) + ' pull it off?</b></p><div class="btn-row"><button class="btn ' + (c.mine === 'done' ? 'mint' : 'ghost') + '" data-act="challengeVote" data-result="done">Pulled it off</button>' +
+        '<button class="btn ' + (c.mine === 'missed' ? 'red' : 'ghost') + '" data-act="challengeVote" data-result="missed">Missed it</button></div></section>';
+    }
+    /** The Prospect's pop-up when the Investors send them a secret challenge. One tap and back to the game. */
+    function challengePop() {
+      const c = st.priv && st.priv.challenge;
+      if (!c) return '';
+      return '<div class="overlay object-ov" role="alertdialog" aria-label="Secret challenge"><div class="object-pop challenge-pop"><div class="eyebrow">🎭 Secret challenge from the Investors</div>' +
+        '<p class="object-text">' + esc(c.text) + '</p><p class="ch-small">Don’t tell the Peddler. Pull it off and the Investors pay you <b>+' + U.money(E.CHALLENGE_BONUS) + '</b>.</p>' +
+        '<button class="btn gold big" data-act="challengeSeen">Got it</button></div></div>';
+    }
     /** A Prospect's pop-up when the Investors send them an objection. */
     function objectPop() {
       const o = st.priv && st.priv.investorObjection;
@@ -503,14 +538,14 @@
       const sv = list[0], live = v.round.activeScrew && v.round.activeScrew.by === sv.by;
       const ped = playerName(v.round.peddler);
       return '<div class="overlay screw-ov screw-pop-wrap" role="alertdialog" aria-label="SCREW! vote"><div class="screw-pop">' + U.screwIcon() +
-        '<div class="screw-word">SCREW!</div><p class="by">' + esc(sv.name) + ' plays</p><h3>' + esc(sv.card.t) + '</h3><p>' + esc(sv.card.d) + '</p>' +
+        '<div class="screw-word">SCREW!</div><p class="by">' + esc(sv.name) + (sv.name === 'The Investors' ? ' play' : ' plays') + '</p><h3>' + esc(sv.card.t) + '</h3><p>' + esc(sv.card.d) + '</p>' +
         (live ? '<p class="pop-q">Watch ' + esc(ped) + ' respond…</p>' + U.timerHTML(v.timer.screw, st.recvAt, 'screw-timer') : '<p class="pop-q">Did ' + esc(ped) + ' nail it?</p>') +
         '<div class="btn-row pop-btns"><button class="btn mint big" data-act="screwVote" data-by="' + esc(sv.by) + '" data-result="done"' + (live ? ' disabled' : '') + '>Nailed it</button>' +
         '<button class="btn ghost big" data-act="screwVote" data-by="' + esc(sv.by) + '" data-result="missed"' + (live ? ' disabled' : '') + '>Missed it</button></div></div></div>';
     }
 
     function render() {
-      U.morph(root, '<div class="phone">' + header() + banners() + '<main class="ph-body" data-key="pb-' + (st.pub ? st.pub.phase + '-' + (st.priv && st.priv.role) : 'x') + '">' + body() + '</main>' + secretBar() + screwPop() + objectPop() + '</div>');
+      U.morph(root, '<div class="phone">' + header() + banners() + '<main class="ph-body" data-key="pb-' + (st.pub ? st.pub.phase + '-' + (st.priv && st.priv.role) : 'x') + '">' + body() + '</main>' + secretBar() + screwPop() + (objectPop() || challengePop()) + '</div>');
       mountPads();
       // keep the character cards on the card the player was reading (a new phase, or the page moving
       // things around, would otherwise snap them back to the first card)
@@ -539,7 +574,9 @@
       const prev = st.priv;
       st.priv = p;
       const fresh = (p.screwVotes || []).some((x) => !(prev && prev.screwVotes || []).some((y) => y.by === x.by)) ||
-        (p.investorObjection && !(prev && prev.investorObjection && prev.investorObjection.text === p.investorObjection.text));
+        (p.investorObjection && !(prev && prev.investorObjection && prev.investorObjection.text === p.investorObjection.text)) ||
+        (p.challenge && !(prev && prev.challenge && prev.challenge.n === p.challenge.n)) ||
+        (p.challengeVote && !(prev && prev.challengeVote && prev.challengeVote.n === p.challengeVote.n));
       if (fresh) U.vibrate([120, 60, 120]);
       if (p.lastError && p.lastError.at !== st.lastErr) {
         if (st.lastErr) U.toast(p.lastError.error, 'warn');
@@ -630,6 +667,9 @@
       else if (a === 'notToday') send({ type: 'nepo', card: 'notToday' });
       else if (a === 'screwDone') send({ type: 'screwDone' });
       else if (a === 'objectVote') { if (st.priv.objectBoard) st.priv.objectBoard.mine = Number(d.idx); send({ type: 'objectVote', idx: Number(d.idx) }); }
+      else if (a === 'invVote') { const b = st.priv.invBoard && st.priv.invBoard[d.deck]; if (b) b.mine = Number(d.idx); send({ type: 'investorVote', deck: d.deck, idx: Number(d.idx) }); }
+      else if (a === 'challengeVote') { if (st.priv.challengeVote) st.priv.challengeVote.mine = d.result; send({ type: 'challengeVote', result: d.result }); }
+      else if (a === 'challengeSeen') { st.priv.challenge = null; send({ type: 'challengeSeen' }); }
       else if (a === 'objectionDone') { st.priv.investorObjection = null; send({ type: 'objectionDone' }); }
       else if (a === 'peddlerNext') { send({ type: 'peddlerNext' }); st.confirm = null; }
       else if (a === 'screwVote') { (st.priv.screwVotes || []).forEach((x) => { if (x.by === d.by) x.mine = d.result; }); send({ type: 'screwVote', by: d.by, result: d.result }); U.toast('Vote in ✓'); }

@@ -28,6 +28,10 @@
   E.DETAIL_BONUS = 5;          // per hidden Prospect detail the Peddler learns (an Investor awards it)
   E.OBJECT_MAX = 3;            // Investor objections sent per round
   E.OBJECT_COOLDOWN_MS = 20000; // at least this long between Investor objections
+  E.INV_SCREW_MAX = 2;          // SCREW! cards the Investors can send the Peddler per round
+  E.CHALLENGE_MAX = 3;          // secret challenges the Investors can send the Prospect per round
+  E.CHALLENGE_BONUS = 10;       // paid to the Prospect for each challenge the Investors say they pulled off
+  E.INV_COOLDOWN_MS = 20000;    // at least this long between two Investor SCREW!s (or two challenges)
   E.CATEGORY_MAX = 50;
   E.PROSPECT_AWARD_MAX = 25;
   E.SCREW_LOCKOUT_MS = 10000; // no SCREW! in the final 10 seconds of the pitch
@@ -281,6 +285,7 @@
       if (!p || !p.connected) return;
       p.connected = false;
       this.log('leave', p.name + ' disconnected.');
+      if (this.s.round) (this.s.round.challenges || []).forEach((c) => this.tallyChallenge(c));
       if (this.s.phase === 'roles') this.ensureProposal();
       this.checkAllDone();
     }
@@ -493,7 +498,8 @@
       if (s.round) { s.round.activeScrew = null; if (phase !== 'pitch' && phase !== 'close') s.round.daddy = null; }
       if (s.round && phase !== 'pitch') this.closeScrewVotes();
       s.timer.main = TIMED_PHASES[phase] ? this.newTimer(s.settings.timers[TIMED_PHASES[phase]]) : null;
-      if (phase === 'pitch') { this.finalizeInvention(); this.setupSleuth(); }
+      if (phase === 'pitch') { this.finalizeInvention(); this.setupSleuth(); this.newInvestorBoard('screw'); this.newInvestorBoard('challenge'); }
+      if (phase === 'scoring' && s.round) (s.round.challenges || []).forEach((c) => this.tallyChallenge(c, true));
       if (phase === 'close' && s.round && !s.round.objectBoard) this.newObjectBoard();
       if (phase === 'scoring') this.checkAllDone();
     }
@@ -586,6 +592,14 @@
       };
       pay(r.peddler, res.total);
       r.prospects.forEach((id) => pay(id, res.prospectAwards[id]));
+      // +$10 to the Prospect for each Investor challenge they pulled off
+      res.challenges = {};
+      r.prospects.forEach((id) => {
+        const list = (r.challenges || []).filter((c) => c.to === id);
+        const done = list.filter((c) => c.result === 'done').length;
+        res.challenges[id] = { done, of: list.length, amount: done * E.CHALLENGE_BONUS };
+        pay(id, res.challenges[id].amount);
+      });
       // Secret Sleuth payouts: every pick made during the pitch counts, even if the Peddler found that secret later.
       if (r.sleuth) {
         const targets = r.sleuth.targets;
@@ -684,10 +698,10 @@
       this.tallyScrew(by);
     }
 
-    /** Everyone at the table except the Peddler and the Prospect who played it votes on each SCREW!. */
+    /** The Investors vote on every SCREW! (the Prospect and the Peddler keep their eyes up). */
     screwVoters(by) {
       const r = this.s.round;
-      return r.phils.concat(r.prospects).filter((id) => id !== by && this.s.players[id] && this.s.players[id].connected);
+      return r.phils.filter((id) => id !== by && this.s.players[id] && this.s.players[id].connected);
     }
     /** Settles a SCREW! vote once everyone has voted (or, with force, when the pitch ends). Majority wins. */
     tallyScrew(by, force) {
@@ -879,15 +893,22 @@
       if (s.hostPaused) return { ok: false, error: 'The game is paused.' };
       if (this.remaining(s.timer.main) <= E.SCREW_LOCKOUT_MS) return { ok: false, error: 'Too late: no SCREW! in the last 10 seconds.' };
       const idx = clampInt(a.idx, 0, 2);
-      const card = r.screwHands[p.id][idx];
-      r.screwPlayed[p.id] = { idx, card, result: null, at: this.now() };
-      r.screwVotes[p.id] = { open: true, voters: this.screwVoters(p.id), votes: {} };
-      r.activeScrew = { by: p.id, card };
-      this.pauseT(s.timer.main);
-      s.timer.screw = this.newTimer(s.settings.timers.screw);
-      this.log('screw', 'SCREW! ' + r.profiles[p.id].name + ' plays ' + card.t, { big: true });
+      this.startScrew(p.id, r.screwHands[p.id][idx], r.profiles[p.id].name);
+      r.screwPlayed[p.id].idx = idx;
       return { ok: true };
     }
+    /** A SCREW! hits the Peddler: the pitch clock pauses, they get a few seconds to respond, then the table votes.
+     *  `by` is the Prospect's id, or "investors-1", "investors-2" for one the Investors sent. */
+    startScrew(by, card, from) {
+      const s = this.s, r = s.round;
+      r.screwPlayed[by] = { idx: null, card, result: null, at: this.now(), from };
+      r.screwVotes[by] = { open: true, voters: this.screwVoters(by), votes: {} };
+      r.activeScrew = { by, card, from };
+      this.pauseT(s.timer.main);
+      s.timer.screw = this.newTimer(s.settings.timers.screw);
+      this.log('screw', 'SCREW! ' + from + ' play' + (from === 'The Investors' ? ' ' : 's ') + card.t, { big: true });
+    }
+    screwFrom(by) { const r = this.s.round, pl = r.screwPlayed[by]; return (pl && pl.from) || (r.profiles[by] ? r.profiles[by].name : 'The Investors'); }
 
     a_screwVote(p, a) {
       const r = this.s.round;
@@ -957,6 +978,105 @@
       if (!o) return { ok: false, error: 'No objection to finish.' };
       o.done = true;
       return { ok: true };
+    }
+
+    // ---------- Investor moves: SCREW! the Peddler, challenge the Prospect ----------
+    /** Three fresh options for the Investors to vote on. */
+    newInvestorBoard(kind) {
+      const r = this.s.round;
+      if (!r) return;
+      r.invBoards = r.invBoards || {};
+      let options;
+      if (kind === 'screw') {
+        const taken = [].concat.apply([], Object.values(r.screwHands)).concat(Object.values(r.screwPlayed).map((x) => x.card)).map((c) => c.t);
+        options = this.shuffle(C.screws.filter((c) => taken.indexOf(c.t) < 0)).slice(0, 3);
+      } else options = this.draw('challenges', C.prospectChallenges, 3);
+      r.invBoards[kind] = { options, votes: {} };
+    }
+    investorScrews() { const r = this.s.round; return Object.keys(r.screwPlayed).filter((by) => by.indexOf('investors-') === 0); }
+    /** Why the Investors can't send this kind of card right now (null when they can). */
+    investorBlock(kind) {
+      const s = this.s, r = s.round;
+      if (!r) return 'No round in play.';
+      if (kind === 'screw') {
+        if (s.phase !== 'pitch') return 'SCREW! cards are sent during the pitch.';
+        const sent = this.investorScrews();
+        if (sent.length >= E.INV_SCREW_MAX) return 'You’ve sent all ' + E.INV_SCREW_MAX + ' SCREW! cards this round.';
+        if (r.activeScrew) return 'A SCREW! is in progress.';
+        if (s.hostPaused) return 'The game is paused.';
+        if (this.remaining(s.timer.main) <= E.SCREW_LOCKOUT_MS) return 'Too late: no SCREW! in the last 10 seconds.';
+        const last = sent.length ? r.screwPlayed[sent[sent.length - 1]].at : 0;
+        if (last && this.now() - last < E.INV_COOLDOWN_MS) return 'Give the Peddler a moment before the next SCREW!.';
+      } else {
+        if (['pitch', 'close'].indexOf(s.phase) < 0) return 'Challenges are sent during the pitch and the close.';
+        const list = r.challenges || [];
+        if (list.length >= E.CHALLENGE_MAX) return 'You’ve sent all ' + E.CHALLENGE_MAX + ' challenges this round.';
+        if (list.some((c) => c.open)) return 'Vote on the current challenge first.';
+        const last = list[list.length - 1];
+        if (last && this.now() - last.at < E.INV_COOLDOWN_MS) return 'Give the Prospect a moment before the next challenge.';
+      }
+      return null;
+    }
+    liveInvestors() { const r = this.s.round; return r.phils.filter((id) => this.s.players[id] && this.s.players[id].connected); }
+    /** An Investor votes for a SCREW! (to the Peddler) or a challenge (to the Prospect). A majority sends it. */
+    a_investorVote(p, a) {
+      const r = this.s.round;
+      if (!r || r.phils.indexOf(p.id) < 0) return { ok: false, error: 'Only Investors send these.' };
+      const kind = a.deck === 'screw' ? 'screw' : a.deck === 'challenge' ? 'challenge' : null;
+      if (!kind) return { ok: false, error: 'Unknown card.' };
+      const why = this.investorBlock(kind);
+      if (why) return { ok: false, error: why };
+      if (!r.invBoards || !r.invBoards[kind]) this.newInvestorBoard(kind);
+      const b = r.invBoards[kind];
+      const idx = clampInt(a.idx, 0, b.options.length - 1);
+      b.votes[p.id] = idx;
+      const voters = this.liveInvestors();
+      const count = Object.keys(b.votes).filter((id) => b.votes[id] === idx && voters.indexOf(id) >= 0).length;
+      if (count >= Math.floor(voters.length / 2) + 1) {
+        const card = b.options[idx];
+        if (kind === 'screw') this.startScrew('investors-' + (this.investorScrews().length + 1), card, 'The Investors');
+        else this.sendChallenge(card);
+        this.newInvestorBoard(kind);
+      }
+      return { ok: true };
+    }
+    sendChallenge(text) {
+      const r = this.s.round;
+      const live = r.prospects.filter((id) => this.s.players[id] && this.s.players[id].connected);
+      const to = live[0] || r.prospects[0];
+      r.challenges = r.challenges || [];
+      r.challenges.push({ n: r.challenges.length + 1, to, text, at: this.now(), seen: false, open: true, voters: this.liveInvestors(), votes: {}, result: null });
+      this.log('challenge', '🎭 The Investors sent ' + r.profiles[to].name.split(' ')[0] + ' a secret challenge!', { big: true });
+    }
+    a_challengeSeen(p) {
+      const r = this.s.round;
+      const c = r && (r.challenges || []).filter((x) => x.to === p.id && !x.seen).pop();
+      if (!c) return { ok: false, error: 'No challenge to read.' };
+      c.seen = true;
+      return { ok: true };
+    }
+    /** Investors judge the open challenge: did the Prospect pull it off? */
+    a_challengeVote(p, a) {
+      const r = this.s.round;
+      const c = r && (r.challenges || []).find((x) => x.open);
+      if (!c) return { ok: false, error: 'No challenge to judge.' };
+      if (c.voters.indexOf(p.id) < 0) return { ok: false, error: 'Only the Investors judge challenges.' };
+      c.votes[p.id] = a.result === 'done' ? 'done' : 'missed';
+      this.tallyChallenge(c);
+      return { ok: true };
+    }
+    /** Settles a challenge once every Investor has voted (or, with force, when scoring opens). Ties go to the Prospect. */
+    tallyChallenge(c, force) {
+      if (!c.open) return;
+      const live = c.voters.filter((id) => this.s.players[id] && this.s.players[id].connected);
+      const cast = Object.keys(c.votes).filter((id) => c.voters.indexOf(id) >= 0);
+      if (!force && cast.filter((id) => live.indexOf(id) >= 0).length < live.length) return;
+      const done = cast.filter((id) => c.votes[id] === 'done').length, missed = cast.length - done;
+      c.open = false;
+      c.tally = { done, missed };
+      c.result = cast.length && done >= missed ? 'done' : 'missed';
+      const name = this.s.round.profiles[c.to].name.split(' ')[0];
+      this.log('challenge', '🎭 Challenge: “' + c.text + '” ' + name + (c.result === 'done' ? ' pulled it off! +$' + E.CHALLENGE_BONUS : ' missed it.'), { big: true });
     }
 
     a_pitchDone(p) {
@@ -1308,6 +1428,8 @@
             item: r.hand.items[inv.item], func: r.hand.functions[inv.func]
           } : { started: !!inv.name, sketch: inv.sketch ? { id: inv.sketch.id, v: inv.sketch.v, hidden: true } : null },
           screwPlayed: r.screwPlayed, activeScrew: r.activeScrew,
+          // challenge text stays secret from the room (and the Peddler) until the Investors have judged it
+          challenges: (r.challenges || []).map((c) => ({ n: c.n, to: c.to, open: c.open, result: c.result, tally: c.tally || null, text: c.open ? null : c.text, votes: Object.keys(c.votes).length, of: c.voters.length })),
           screwVotes: Object.keys(r.screwVotes || {}).reduce((o, by) => { const sv = r.screwVotes[by]; o[by] = { open: sv.open, n: Object.keys(sv.votes).length, of: sv.voters.length }; return o; }, {}),
           objections: r.objections,
           verdicts: s.phase === 'reveal' ? r.verdicts : Object.keys(r.verdicts).reduce((o, k) => { o[k] = 'decided'; return o; }, {}),
@@ -1377,10 +1499,27 @@
       if (r && role === 'prospect') {
         const o = (r.investorObjections || []).filter((x) => x.to === pid && !x.done).pop();
         out.investorObjection = o && s.phase === 'close' ? { text: o.text } : null;
+        const ch = (r.challenges || []).filter((x) => x.to === pid && !x.seen).pop();
+        out.challenge = ch && ['pitch', 'close'].indexOf(s.phase) >= 0 ? { n: ch.n, text: ch.text } : null;
+      }
+      if (r && role === 'phil' && ['pitch', 'close'].indexOf(s.phase) >= 0) {
+        const board = (kind) => {
+          const b = (r.invBoards || {})[kind];
+          if (!b) return null;
+          return {
+            options: kind === 'screw' ? b.options.map((c) => c.t + ': ' + c.d) : b.options, mine: b.votes[pid] == null ? null : b.votes[pid],
+            counts: b.options.map((_, i) => Object.keys(b.votes).filter((id) => b.votes[id] === i).length),
+            sent: kind === 'screw' ? this.investorScrews().length : (r.challenges || []).length,
+            max: kind === 'screw' ? E.INV_SCREW_MAX : E.CHALLENGE_MAX, blocked: this.investorBlock(kind)
+          };
+        };
+        out.invBoard = { voters: this.liveInvestors().length, screw: s.phase === 'pitch' ? board('screw') : null, challenge: board('challenge') };
+        const open = (r.challenges || []).find((x) => x.open && x.voters.indexOf(pid) >= 0);
+        out.challengeVote = open ? { n: open.n, text: open.text, name: r.profiles[open.to].name.split(' ')[0], seen: open.seen, mine: open.votes[pid] || null, votes: Object.keys(open.votes).length, of: open.voters.length } : null;
       }
       if (r && (role === 'phil' || role === 'prospect')) {
         out.screwVotes = Object.keys(r.screwVotes || {}).filter((by) => r.screwVotes[by].open && r.screwVotes[by].voters.indexOf(pid) >= 0)
-          .map((by) => ({ by, name: r.profiles[by].name, card: r.screwPlayed[by].card, mine: r.screwVotes[by].votes[pid] || null }));
+          .map((by) => ({ by, name: this.screwFrom(by), card: r.screwPlayed[by].card, mine: r.screwVotes[by].votes[pid] || null }));
       }
       if (r && role === 'phil') {
         out.scorecard = r.scorecards[pid] || null;
@@ -1403,7 +1542,7 @@
       if (r && (s.phase === 'reveal')) {
         out.hofChoice = r.hof[pid];
         if (role === 'peddler') out.myEarnings = r.results.total;
-        if (role === 'prospect') out.myEarnings = r.results.prospectAwards[pid];
+        if (role === 'prospect') out.myEarnings = round2(r.results.prospectAwards[pid] + ((r.results.challenges || {})[pid] || { amount: 0 }).amount);
         if (role === 'phil' && r.results.sleuth && r.results.sleuth.targets.length) out.myEarnings = out.sleuthResult ? out.sleuthResult.amount : 0;
       }
       return out;

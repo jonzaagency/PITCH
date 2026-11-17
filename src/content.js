@@ -606,6 +606,41 @@
     { t: 'Weather Report', d: 'Deliver the benefits as a weather forecast.' }
   ];
 
+  // PROSPECT CHALLENGES: the Investors vote one onto the Prospect's phone during the pitch. It's secret from
+  // the Peddler; the Investors then vote on whether the Prospect pulled it off (+$10 to the Prospect).
+  C.prospectChallenges = [
+    'Answer your next question in a British accent.',
+    'Avoid eye contact with the Peddler until your next answer is over.',
+    'Personality swap: you are now suspicious of absolutely everything.',
+    'Personality swap: you are now wildly in love with this product.',
+    'Personality swap: you are now a cranky old cowboy.',
+    'Answer the next question with a question.',
+    'Work the word “banana” into your next answer.',
+    'Whisper your next two answers.',
+    'Laugh way too hard at the next thing the Peddler says.',
+    'Start your next sentence with “Back in my day…”',
+    'Pretend your phone is ringing and take the call.',
+    'Answer like a pirate next time you speak.',
+    'Sincerely compliment the Peddler’s shoes.',
+    'Talk about yourself in the third person for the next minute.',
+    'Get distracted by something across the room.',
+    'Take a long, dramatic pause before your next answer.',
+    'Talk like a sports commentator for your next answer.',
+    'Insist you have met the Peddler somewhere before.',
+    'Sing your next answer.',
+    'Answer the next three questions with one word each.',
+    'Try to haggle the price down, even before you know it.',
+    'Mention your (imaginary) pet in your next answer.',
+    'Speak in slow motion for your next answer.',
+    'Agree with everything the Peddler says. Enthusiastically.',
+    'Pretend you can’t hear well: “WHAT?”',
+    'Act like a secret agent who suspects a trap.',
+    'Use a fancy French word in your next answer. Mispronounce it.',
+    'Turn your next answer into a dramatic movie trailer.',
+    'Keep checking your watch like you have somewhere to be.',
+    'Answer as if you are a robot who is learning human feelings.'
+  ];
+
   // DADDY MADE A CALL challenges: a Prospect has to do one of these.
   // Hidden Prospect details: what would make them buy, and what holds them back. The Peddler has to
   // find these out (+$5 each when the Prospect ticks them off).

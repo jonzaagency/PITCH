@@ -71,11 +71,11 @@
       '<p>Everyone else plays on their phone as either a <b>Prospect</b>, the person being sold to, or an <b>Investor</b>, the person giving their money away.</p></div>' +
       '<div><h4>Roles</h4><ul><li><b>Peddler</b> invents a product from an Item card and a Function card, gets to know the Prospect, pitches, and closes.</li>' +
       '<li><b>Prospect</b> (one per round) plays a fictional character whose fun fact and secret are tied to the product, draws a portrait, and can play one SCREW! card.</li>' +
-      '<li><b>Investors</b> (everyone else) award $5 for every hidden fact the Peddler learns, vote on the SCREW!, send funny objections to the Prospect, guess the secret, and score the Peddler with game money.</li></ul></div>' +
-      '<div><h4>Each round</h4><ol><li>Creation Lab · 2:00</li><li>The Pitch · 5:00 · get to know the Prospect and sell to them: $5 per hidden fact, $25 for the secret. The Prospect may SCREW! once (15 s, clock pauses, then the Investors vote)</li><li>Objections + Close · 0:45</li><li>Money Reveal</li></ol></div>' +
+      '<li><b>Investors</b> (everyone else) award $5 for every hidden fact the Peddler learns, vote SCREW! cards onto the Peddler and secret challenges onto the Prospect, judge every SCREW! and challenge, send funny objections, guess the secret, and score the Peddler with game money.</li></ul></div>' +
+      '<div><h4>Each round</h4><ol><li>Creation Lab · 2:00</li><li>The Pitch · 5:00 · get to know the Prospect and sell to them: $5 per hidden fact, $25 for the secret. The Prospect may SCREW! once and the Investors up to twice (15 s, clock pauses, then the Investors vote). The Investors can also send the Prospect up to 3 secret challenges (“answer in a British accent”)</li><li>Objections + Close · 0:45</li><li>Money Reveal</li></ol></div>' +
       '<div><h4>Money</h4><p>Each Investor awards $0–$50 in six categories: Invention, Ingenuity, Fact-Finding, Overcoming Objections, Overall Pitch, The Close. ' +
       'Scoring guide: ' + P.content.scoreAnchors.map((a) => '<b>$' + a.min + '–$' + a.max + '</b> ' + U.esc(a.desc.replace(/\.$/, '').toLowerCase())).join('; ') + '. ' +
-      'The Peddler earns the average scorecard plus $25 per secret and $5 per hidden detail learned, minus $10 per hint used (with 4+ Investors, a scorecard more than $100 away from the rest of the room is set aside). The Prospect earns the average of up to $25 for role-play. ' +
+      'The Peddler earns the average scorecard plus $25 per secret and $5 per hidden detail learned, minus $10 per hint used (with 4+ Investors, a scorecard more than $100 away from the rest of the room is set aside). The Prospect earns the average of up to $25 for role-play, plus $10 for each challenge the Investors say they pulled off. ' +
       '<b>Secret Sleuth:</b> during the pitch, Investors guess the Prospect’s secret from 4 options, $10 for a correct guess. The Peddler can buy <b>INSIDE TRADING</b> to peek at a guess. Most money tonight wins.</p>' +
       '<p>Spend cash between rounds on NEPO BABY! Power Cards: NOT TODAY! ($75), I KNOW PEOPLE ($100), INSIDE TRADING ($100), DADDY MADE A CALL ($125).</p></div></div>';
   }
@@ -303,6 +303,14 @@
       (p.sleuth || []).forEach((t) => { if (!t.locked && (p.sleuthPicks || {})[t.pid] === undefined) once('sleuth-' + t.pid, () => setTimeout(() => { if (st.pub.phase === 'pitch') send({ type: 'sleuthPick', target: t.pid, idx: rnd(t.options.length) }); }, 1500 + rnd(6000))); });
       (p.prospectFiles || []).forEach((f) => { if (chance(0.01)) { const d = f.details[rnd(f.details.length)]; if (!f.learned[d.id]) send({ type: 'learned', target: f.pid, field: d.id }); } });
     }
+    // Investors: now and then vote a SCREW! or a challenge, and judge the challenge in play
+    if ((v.phase === 'pitch' || v.phase === 'close') && p.role === 'phil') {
+      const b = p.invBoard || {};
+      ['screw', 'challenge'].forEach((k) => { const d = b[k]; if (d && !d.blocked && d.mine == null && d.sent < d.max && chance(0.006)) send({ type: 'investorVote', deck: k, idx: rnd(d.options.length) }); });
+      const c = p.challengeVote;
+      if (c && c.seen && !c.mine) once('chv-' + c.n, () => setTimeout(() => send({ type: 'challengeVote', result: chance(0.7) ? 'done' : 'missed' }), 3000 + rnd(5000)));
+    }
+    if (p.role === 'prospect' && p.challenge) once('chs-' + p.challenge.n, () => setTimeout(() => send({ type: 'challengeSeen' }), 1500 + rnd(2000)));
     if (v.phase === 'pitch' && p.role === 'prospect' && p.secretStatus !== 'confirmed' && chance(0.003)) send({ type: 'secretAnswer', yes: true });
     if (v.phase === 'brief' && p.role && p.role !== 'sitout') {
       once('brief', () => setTimeout(() => send({ type: 'briefed' }), 800 + rnd(2500)));

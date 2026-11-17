@@ -151,7 +151,7 @@
       return '<section class="brief"><div class="round-title"><h2>Check your phone for your role</h2><p class="muted">Read it, then tap “Got it.”</p></div>' +
         '<div class="rcols">' + who([r.peddler], 'peddler') + who(r.prospects, 'prospect') + who(r.phils, 'phil') + '</div>' +
         '<ol class="brief-steps"><li><b>Creation Lab</b> ' + mm(st.lab) + '<span>The Peddler invents; the Prospect draws their character.</span></li>' +
-        '<li><b>The Pitch</b> ' + mm(st.pitch) + '<span>The Peddler gets to know the Prospect and sells to them. Investors award ' + U.money(E.DETAIL_BONUS) + ' for every hidden fact learned; the secret is $25. The Prospect can SCREW! once.' + (v.settings.sleuth ? ' Investors also guess the secret.' : '') + '</span></li>' +
+        '<li><b>The Pitch</b> ' + mm(st.pitch) + '<span>The Peddler gets to know the Prospect and sells to them. Investors award ' + U.money(E.DETAIL_BONUS) + ' for every hidden fact learned; the secret is $25. The Prospect can SCREW! once; the Investors can SCREW! the Peddler and send the Prospect secret challenges.' + (v.settings.sleuth ? ' Investors also guess the secret.' : '') + '</span></li>' +
         '<li><b>Objections + Close</b> ' + mm(st.close) + '<span>Final objections, then ask for the sale. Investors send funny objections to the Prospect.</span></li>' +
         '<li><b>Money Reveal</b><span>Investors score six categories, $0–$50 each.</span></li></ol></section>';
     }
@@ -185,21 +185,40 @@
         (sv && sv.open && !(r.activeScrew && r.activeScrew.by === id) ? '<span class="tag">Investors voting · ' + sv.n + ' of ' + sv.of + '</span>' : '') + '</div>';
     }
 
+    /** Secret challenges sent to a Prospect: hidden while in play, revealed once the Investors have judged them. */
+    function challengeTags(v, id) {
+      const list = (v.round.challenges || []).filter((c) => c.to === id);
+      if (!list.length) return '';
+      return '<div class="pf-tags ch-tags">' + list.map((c) => c.open
+        ? '<span class="tag violet" data-key="cht-' + c.n + '">🎭 Secret challenge in play · ' + c.votes + ' of ' + c.of + ' judged</span>'
+        : '<span class="tag ' + (c.result === 'done' ? 'ok' : '') + '" data-key="cht-' + c.n + '">🎭 “' + esc(c.text) + '” · ' + (c.result === 'done' ? 'pulled it off +' + U.money(E.CHALLENGE_BONUS) : 'missed it') + '</span>').join('') + '</div>';
+    }
+    /** SCREW! cards the Investors sent the Peddler. */
+    function investorScrewTags(v) {
+      const r = v.round, ids = Object.keys(r.screwPlayed).filter((by) => by.indexOf('investors-') === 0);
+      if (!ids.length) return '';
+      return '<div class="pf-tags">' + ids.map((by) => {
+        const pl = r.screwPlayed[by], sv = (r.screwVotes || {})[by], t = pl.tally;
+        return '<span class="tag red" data-key="ist-' + by + '">Investor SCREW!: ' + esc(pl.card.t) + ({ done: ' · nailed it', missed: ' · missed it', split: ' · split decision', cancelled: ' · NOT TODAY!' }[pl.result] || '') + (t ? ' (' + t.done + '–' + t.missed + ')' : '') +
+          (sv && sv.open && !(r.activeScrew && r.activeScrew.by === by) ? ' · voting ' + sv.n + ' of ' + sv.of : '') + '</span>';
+      }).join('') + '</div>';
+    }
+
     /** The Pitch: Prospect portfolio on the left, the Peddler's product on the right. */
     function pitch(v) {
       const r = v.round;
       return '<section class="pitch duo">' +
-        '<div class="duo-left">' + r.prospects.map((id) => portfolio(v, id, screwTag(v, id))).join('') + '</div>' +
-        '<div class="duo-right">' + inventionShow(v) +
+        '<div class="duo-left">' + r.prospects.map((id) => portfolio(v, id, screwTag(v, id) + challengeTags(v, id))).join('') + '</div>' +
+        '<div class="duo-right">' + inventionShow(v) + investorScrewTags(v) +
         '<p class="duo-call"><b>' + esc(player(r.peddler).name) + ':</b> get to know ' + esc(r.prospects.map((id) => r.profiles[id].name).join(', ')) + ', then sell it to them. ' +
-        '<b>Investors:</b> tap each fact on your phone the moment the Peddler learns it (+' + U.money(E.DETAIL_BONUS) + ').' + (v.settings.sleuth ? ' And guess the secret!' : '') + '</p>' +
+        '<b>Investors:</b> tap each fact on your phone the moment the Peddler learns it (+' + U.money(E.DETAIL_BONUS) + '), and vote SCREW!s and secret challenges onto the table.' + (v.settings.sleuth ? ' And guess the secret!' : '') + '</p>' +
         disputes(v) + '</div></section>';
     }
 
     function close(v) {
       const r = v.round;
       const tags = (id) => '<div class="pf-tags">' + (r.objections[id] ? '<span class="tag red">Objection raised</span>' : '<span class="tag">No objection yet</span>') +
-        (r.verdicts[id] ? '<span class="tag ok">Decided</span>' : '') + '</div>';
+        (r.verdicts[id] ? '<span class="tag ok">Decided</span>' : '') + '</div>' + challengeTags(v, id);
       return '<section class="close duo">' +
         '<div class="duo-left">' + r.prospects.map((id) => portfolio(v, id, tags(id))).join('') + '</div>' +
         '<div class="duo-right">' + inventionShow(v, true) +
@@ -234,6 +253,7 @@
           '<p class="rv-secret">' + (r.secrets[id] === 'confirmed' ? '<span class="ok">Found:</span> ' : '<span class="muted">Hidden:</span> ') + esc(gr.profiles[id].secret) + '</p>' +
           '<span class="stamp ' + (r.verdicts[id] === 'buy' ? 'buy' : 'pass') + '">' + (r.verdicts[id] === 'buy' ? 'Would buy' : r.verdicts[id] === 'pass' ? 'Pass' : 'Undecided') + '</span>' +
           '<span class="award">Role-play award ' + U.money2(res.prospectAwards[id]) + '</span>' +
+          (res.challenges && res.challenges[id] && res.challenges[id].of ? '<span class="award">Challenges ' + res.challenges[id].done + ' of ' + res.challenges[id].of + ' · +' + U.money2(res.challenges[id].amount) + '</span>' : '') +
           (res.sleuth && res.sleuth.byTarget[id] && res.sleuth.byTarget[id].of ? '<span class="sleuth-tally">Sleuths: ' + res.sleuth.byTarget[id].right + ' of ' + res.sleuth.byTarget[id].of + ' guessed it</span>' : '') + '</div></div>').join('') +
         sleuthBoard(res) +
         '<h3>Session money</h3>' + leaderboard(v, 8) + '</div></section>';
@@ -289,9 +309,9 @@
       const r = v.round;
       if (!r || !r.activeScrew) return '';
       const a = r.activeScrew;
-      return '<div class="overlay screw-ov" role="alert"><div class="screw-card">' + U.screwIcon() + '<div class="screw-word">SCREW!</div><p class="by">' + esc(r.profiles[a.by].name) + ' plays</p>' +
+      return '<div class="overlay screw-ov" role="alert"><div class="screw-card">' + U.screwIcon() + '<div class="screw-word">SCREW!</div><p class="by">' + esc(a.from || (r.profiles[a.by] || {}).name || 'The Investors') + ' play' + (a.from === 'The Investors' ? '' : 's') + '</p>' +
         '<h2>' + esc(a.card.t) + '</h2><p class="desc">' + esc(a.card.d) + '</p>' + U.timerHTML(v.timer.screw, recvAt, 'screw-timer', true) +
-        '<p class="muted">Pitch clock paused. ' + esc(player(r.peddler).name) + ' has ' + v.settings.timers.screw + ' seconds. Then the table votes on their phones: nailed it or missed it?</p>' +
+        '<p class="muted">Pitch clock paused. ' + esc(player(r.peddler).name) + ' has ' + v.settings.timers.screw + ' seconds. Then the Investors vote on their phones: nailed it or missed it?</p>' +
         '<button class="btn ghost" data-act="screwEnd">Response done ›</button></div></div>';
     }
     function daddyOverlay(v) {
