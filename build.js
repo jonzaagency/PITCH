@@ -25,6 +25,9 @@ function bundle(artifact) {
   const assets = `/* ===== assets ===== */\nwindow.PITCH = window.PITCH || {};\nwindow.PITCH.assets = { logo: '${ASSETS.logo}', wordmark: '${ASSETS.wordmark}' };\nwindow.PITCH.build = '${BUILD}';\n`;
   const head = [
     '<title>P!TCH Party Game</title>',
+    '<meta name="description" content="Do you have what it takes to sell the impossible, learn about your prospect, and survive their objections? A party game for 3 to 20+ players.">',
+    '<meta property="og:title" content="P!TCH Party Game">',
+    '<meta property="og:description" content="Do you have what it takes to sell the impossible, learn about your prospect, and survive their objections? A party game for 3 to 20+ players.">',
     '<meta name="claude:viewport-fit-sides" content="cover">',
     `<link rel="icon" type="image/png" href="${ASSETS.icon}">`,
     `<link rel="apple-touch-icon" href="${ASSETS.touchIcon}">`,

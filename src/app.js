@@ -20,7 +20,10 @@
   const onlineAllowed = () => !P.config.artifact;
   // Practice mode is for the owner only: unlocked per device with ?owner=<code>. The offline artifact copy keeps it.
   const fingerprint = (str) => { let x = 0x811c9dc5; for (const ch of String(str).trim().toLowerCase()) { x ^= ch.charCodeAt(0); x = Math.imul(x, 0x01000193) >>> 0; } return x.toString(16); };
-  const isOwner = () => !onlineAllowed() || location.protocol === 'file:' || U.store.get('pitch.owner', false) === true;
+  // Unlock lasts only for this tab, so the public site never shows Practice on a device that once used the backdoor link.
+  const ses = { get: (k) => { try { return sessionStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { if (v == null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) {} } };
+  U.store.del('pitch.owner');
+  const isOwner = () => !onlineAllowed() || location.protocol === 'file:' || ses.get('pitch.owner') === '1';
   function siteUrl() {
     if (P.config.artifact || location.protocol === 'file:') return P.config.pagesUrl;
     return location.origin + location.pathname;
@@ -36,7 +39,7 @@
     const hofCount = U.store.get('pitch.hof', []).length;
     root.innerHTML =
       '<div class="home"><header class="hero"><div class="eyebrow">The party game of impossible sales</div><h1 class="hero-logo">' + U.logo() + '</h1>' +
-      '<p class="tagline">Do you have what it takes to sell the impossible, learn about your prospects, and survive their objections?</p>' +
+      '<p class="tagline">Do you have what it takes to sell the impossible, learn about your prospect, and survive their objections?</p>' +
       '<p class="meta">3–20+ players · 1 Peddler · 1 Prospect · everyone else: Investors</p></header>' +
       '<div class="choices">' +
       (onlineAllowed()
@@ -382,8 +385,8 @@
     const q = new URLSearchParams(location.search);
     if (q.get('owner') != null) {
       const key = q.get('owner');
-      if (key.toLowerCase() === 'off') U.store.del('pitch.owner');
-      else if (fingerprint(key) === P.config.ownerKey) U.store.set('pitch.owner', true);
+      if (key.toLowerCase() === 'off') ses.set('pitch.owner', null);
+      else if (fingerprint(key) === P.config.ownerKey) ses.set('pitch.owner', '1');
       history.replaceState(null, '', location.pathname); // keep the code out of the address bar
     }
     const room = (q.get('room') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
